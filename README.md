@@ -1,1 +1,1 @@
-# bouhaws-logic-graph-ql
+# bouhaws-frontend-logic

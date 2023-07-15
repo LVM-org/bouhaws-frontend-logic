@@ -3,7 +3,7 @@ import moment from 'moment'
 import { CombinedError } from 'urql'
 import { reactive } from 'vue'
 import {
-  NavigationGuardNext,
+  // NavigationGuardNext,
   RouteLocationNormalized,
   Router,
 } from 'vue-router'
@@ -12,6 +12,7 @@ import { FetchRule, LoaderSetup } from '../types/common'
 
 export default class Common {
   public router: Router | undefined = undefined
+  public route: RouteLocationNormalized | undefined = undefined
 
   public apiUrl: string | undefined = undefined
 
@@ -21,6 +22,10 @@ export default class Common {
 
   public SetRouter = (router: Router) => {
     this.router = router
+  }
+
+public SetRoute = (route: RouteLocationNormalized) => {
+    this.route = route
   }
 
   public loaderSetup: LoaderSetup = reactive({
@@ -217,8 +222,7 @@ export default class Common {
   }
 
   public preFetchRouteData = (
-    routeTo: RouteLocationNormalized,
-    next: NavigationGuardNext,
+    routeTo: RouteLocationNormalized, 
     _routeFrom: RouteLocationNormalized,
   ) => {
     const allActions: Promise<any>[] = []
@@ -279,8 +283,7 @@ export default class Common {
       if (error !== BreakException) throw error
     }
 
-    // save user activities
-
+    // save user activities 
     if (routeMiddlewares.tracking_data) {
       const trackingData: any = routeMiddlewares.tracking_data
     }
@@ -294,11 +297,11 @@ export default class Common {
 
       Promise.all(allActions).then(() => {
         this.hideLoader()
-        return next()
+        return Logic.Common.GoToRoute(routeTo.path)
       })
     } else {
       this.hideLoader()
-      return next()
+      return Logic.Common.GoToRoute(routeTo.path)
     }
   }
 }

@@ -3,13 +3,12 @@ import moment from 'moment'
 import { CombinedError } from 'urql'
 import { reactive } from 'vue'
 import {
-  // NavigationGuardNext,
+  NavigationGuardNext,
   RouteLocationNormalized,
   Router,
 } from 'vue-router'
 import { Logic } from '..'
-import { FetchRule, LoaderSetup } from '../types/common'
-
+import { FetchRule, LoaderSetup } from '../types/common' 
 export default class Common {
   public router: Router | undefined = undefined
   public route: RouteLocationNormalized | undefined = undefined
@@ -24,7 +23,7 @@ export default class Common {
     this.router = router
   }
 
-public SetRoute = (route: RouteLocationNormalized) => {
+  public SetRoute = (route: RouteLocationNormalized) => {
     this.route = route
   }
 
@@ -222,7 +221,8 @@ public SetRoute = (route: RouteLocationNormalized) => {
   }
 
   public preFetchRouteData = (
-    routeTo: RouteLocationNormalized, 
+    routeTo: RouteLocationNormalized,
+    next: NavigationGuardNext,
     _routeFrom: RouteLocationNormalized,
   ) => {
     const allActions: Promise<any>[] = []
@@ -283,7 +283,8 @@ public SetRoute = (route: RouteLocationNormalized) => {
       if (error !== BreakException) throw error
     }
 
-    // save user activities 
+    // save user activities
+
     if (routeMiddlewares.tracking_data) {
       const trackingData: any = routeMiddlewares.tracking_data
     }
@@ -297,11 +298,11 @@ public SetRoute = (route: RouteLocationNormalized) => {
 
       Promise.all(allActions).then(() => {
         this.hideLoader()
-        return Logic.Common.GoToRoute(routeTo.path)
+        return next()
       })
     } else {
       this.hideLoader()
-      return Logic.Common.GoToRoute(routeTo.path)
+      return next()
     }
   }
 }

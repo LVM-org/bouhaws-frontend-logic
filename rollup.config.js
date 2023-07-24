@@ -75,7 +75,7 @@ export default () => {
 			external: ['vue'],
 			output: {
 				format: 'esm',
-				file: 'dist/roof-library.mjs',
+				file: 'dist/bouhaws-library.mjs',
 				banner: banner
 			},
 			plugins: [
@@ -115,8 +115,8 @@ export default () => {
 			external: ['vue'],
 			output: {
 				format: 'umd',
-				name: capitalize('roof-library'),
-				file: 'dist/roof-library.js',
+				name: capitalize('bouhaws-library'),
+				file: 'dist/bouhaws-library.js',
 				exports: 'named',
 				banner: banner,
 				globals: {

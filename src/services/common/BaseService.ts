@@ -1,5 +1,5 @@
 import { createClient, Client, dedupExchange, cacheExchange, CombinedError, fetchExchange } from 'urql';
-import { multipartFetchExchange } from '@urql/exchange-multipart-fetch';
+// import { multipartFetchExchange } from '@urql/exchange-multipart-fetch';
 import { Logic } from "../../logic/modules";
 import { API_URL } from "../../common/constants";
 
@@ -48,7 +48,8 @@ export class BaseApiService {
 					headers: { authorization: Logic.Auth.AccessToken ? `Bearer ${Logic.Auth.AccessToken}` : '' },
 				};
 			},
-			exchanges: [dedupExchange, cacheExchange, multipartFetchExchange],
+			// exchanges: [dedupExchange, cacheExchange, multipartFetchExchange],
+			exchanges: [dedupExchange, cacheExchange  ],
 		});
 
 		return this.graphqlInstance.mutation(query, variables)
@@ -70,4 +71,4 @@ export class BaseApiService {
 			return
 		}
 	}
-}
+}  

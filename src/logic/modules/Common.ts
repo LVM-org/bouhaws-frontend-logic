@@ -24,7 +24,7 @@ export default class Common {
     this.router = router
   }
 
-public SetRoute = (route: RouteLocationNormalized) => {
+  public SetRoute = (route: RouteLocationNormalized) => {
     this.route = route
   }
 
@@ -222,7 +222,7 @@ public SetRoute = (route: RouteLocationNormalized) => {
   }
 
   public preFetchRouteData = (
-    routeTo: RouteLocationNormalized, 
+    routeTo: RouteLocationNormalized,
     _routeFrom: RouteLocationNormalized,
   ) => {
     const allActions: Promise<any>[] = []
@@ -241,10 +241,10 @@ public SetRoute = (route: RouteLocationNormalized) => {
     try {
       fetchRules?.forEach((rule) => {
         if (rule.requireAuth) {
-          if (!Logic.Auth.AuthUser) {
-            this.GoToRoute('/auth/login')
-            throw BreakException
-          }
+          // if (!Logic.Auth.AuthUser) {
+          //   this.GoToRoute('/auth/login')
+          //   throw BreakException
+          // }
         }
         // @ts-ignore
         const domain = Logic[rule.domain]
@@ -283,7 +283,7 @@ public SetRoute = (route: RouteLocationNormalized) => {
       if (error !== BreakException) throw error
     }
 
-    // save user activities 
+    // save user activities
     if (routeMiddlewares.tracking_data) {
       const trackingData: any = routeMiddlewares.tracking_data
     }

@@ -7,14 +7,17 @@ import { Logic } from '..'
 export default class Auth extends Common {
   constructor() {
     super()
-    this.AccessToken = localStorage.getItem('access_token')
-    this.AuthUser = localStorage.getItem('auth_user')
-      ? JSON.parse(localStorage.getItem('auth_user') || '{}')
-      : undefined
   }
 
   public AccessToken: string | null = null
   public AuthUser: any | undefined = undefined
+
+  public SetAuthDataFromLocal = () => {
+    this.AccessToken = localStorage?.getItem('access_token')
+    this.AuthUser = localStorage?.getItem('auth_user')
+      ? JSON.parse(localStorage?.getItem('auth_user') || '{}')
+      : undefined
+  }
 
   public SignUpForm: SignUpForm = {
     password: '',

@@ -20,8 +20,6 @@ export class BaseApiService {
       this.baseUrl = Logic.Common.apiUrl || ''
     }
 
-    Logic.Auth.SetAuthDataFromLocal()
-
     this.graphqlInstance = createClient({
       url: this.baseUrl,
       fetchOptions: () => {
@@ -53,9 +51,6 @@ export class BaseApiService {
     if (Logic.Common.apiUrl) {
       this.baseUrl = Logic.Common.apiUrl || ''
     }
-
-    Logic.Auth.SetAuthDataFromLocal()
-
     this.graphqlInstance = createClient({
       url: this.baseUrl,
       fetchOptions: () => {
@@ -67,7 +62,7 @@ export class BaseApiService {
           },
         }
       },
-      exchanges: [dedupExchange, cacheExchange],
+      exchanges: [dedupExchange, cacheExchange, fetchExchange],
     })
 
     return this.graphqlInstance
@@ -85,10 +80,18 @@ export class BaseApiService {
 
   public handleErrors(err: CombinedError): void {
     // Note: here you may want to add your errors handling
-    if (err.graphQLErrors[0].message == 'Unauthenticated.') {
-      Logic.Common.GoToRoute('/auth/login')
-      Logic.Common.hideLoader()
-      return
+
+    if (err.graphQLErrors) {
+      if (err.graphQLErrors[0].message == 'Unauthenticated.') {
+        if (localStorage.getItem('passcode')) {
+          Logic.Common.GoToRoute('/auth/passcode')
+        } else {
+          Logic.Common.GoToRoute('/auth/login')
+        }
+        Logic.Common.hideLoader()
+        return
+      }
+    } else {
     }
   }
 }

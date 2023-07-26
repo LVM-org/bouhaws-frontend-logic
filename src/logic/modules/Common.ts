@@ -3,13 +3,12 @@ import moment from 'moment'
 import { CombinedError } from 'urql'
 import { reactive } from 'vue'
 import {
-  // NavigationGuardNext,
+  NavigationGuardNext,
   RouteLocationNormalized,
   Router,
 } from 'vue-router'
 import { Logic } from '..'
 import { FetchRule, LoaderSetup } from '../types/common'
-
 export default class Common {
   public router: Router | undefined = undefined
   public route: RouteLocationNormalized | undefined = undefined
@@ -224,6 +223,7 @@ export default class Common {
   public preFetchRouteData = (
     routeTo: RouteLocationNormalized,
     _routeFrom: RouteLocationNormalized,
+    next: any,
   ) => {
     const allActions: Promise<any>[] = []
     if (this.loaderSetup.loading) {
@@ -297,11 +297,11 @@ export default class Common {
 
       Promise.all(allActions).then(() => {
         this.hideLoader()
-        return Logic.Common.GoToRoute(routeTo.path)
+        return next()
       })
     } else {
       this.hideLoader()
-      return Logic.Common.GoToRoute(routeTo.path)
+      return next()
     }
   }
 }

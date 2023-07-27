@@ -12,12 +12,12 @@ import {
 export default class AuthApi extends BaseApiService {
   public SignUp = (data: MutationSignUpArgs) => {
     const requestData = `
-		mutation SignUp(
+		mutation SignUp ( 
 			$email: String!,
-			$password: String!,
+			$password: String!, 
 			$username: String!
 		) {
-			SignUp(
+			SignUp (
 				email: $email, 
 				password: $password, 
 				username: $username
@@ -34,9 +34,27 @@ export default class AuthApi extends BaseApiService {
     return response
   } 
   
+  
+//   public SignIn = (data: MutationSignInArgs) => {
+//     const requestData = `
+// 		mutation  SignIn {
+// 			SignIn(email: "test@gmail.com", password: "Testing") {
+// 				token
+// 			}
+// 		}`
+
+// 		console.log(requestData)
+
+//     const response: Promise<OperationResult<{
+//       SignIn: any
+//     }>> = this.mutation(requestData, data)
+
+//     return response
+//   } 
+
   public SignIn = (data: MutationSignInArgs) => {
     const requestData = `
-		mutation SignIn(
+		mutation SignIn (
 			$email: String!,
 			$password: String!
 		) {

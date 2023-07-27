@@ -60,39 +60,34 @@ export default class Auth extends Common {
   }
 
   // 
-  public SignUp = (formIsValid: boolean) => {
-    if (formIsValid) {
-      Logic.Common.showLoader({ loading: true, show: true, useModal: true })
-      $api.auth
-        .SignUp(this.SignUpPayload)
-        .then((response) => {
-          this.AuthUser = response.data?.SignUp
-          console.log("signup  response", response)
-          Logic.Common.hideLoader()
-          Logic.Common.GoToRoute('/')
-        })
-        .catch((error: CombinedError) => {
-          Logic.Common.showError(error, 'Oops!', 'error-alert')
-        })
-    }
+  public SignUp = () => {  
+    $api.auth
+      .SignUp(this.SignUpPayload)
+      .then((response) => {
+        this.AuthUser = response.data?.SignUp
+        console.log("signup  response", response)
+        Logic.Common.hideLoader()
+        Logic.Common.GoToRoute('/')
+      })
+      .catch((error: CombinedError) => {
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
   } 
 
   // 
-  public SignIn = (formIsValid: boolean) => {
-    if (formIsValid) {
-      Logic.Common.showLoader({ loading: true, show: true, useModal: true })
-      $api.auth
-        .SignIn(this.SignInPayload)
-        .then((response) => {
-          this.AuthUser = response.data?.SignIn
-          console.log("signin  response", response)
-          Logic.Common.hideLoader()
-          Logic.Common.GoToRoute('/')
-        })
-        .catch((error: CombinedError) => {
-          Logic.Common.showError(error, 'Oops!', 'error-alert')
-        })
-    }
+  public SignIn = () => { 
+    console.log("this.SignInPayload", this.SignInPayload)
+    $api.auth
+      .SignIn(this.SignInPayload)
+      .then((response) => {
+        this.AuthUser = response.data?.SignIn
+        console.log("signin  response", response)
+        Logic.Common.hideLoader()
+        Logic.Common.GoToRoute('/')
+      })
+      .catch((error: CombinedError) => {
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
   }
  
   // 

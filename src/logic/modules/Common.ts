@@ -8,7 +8,7 @@ import {
   Router,
 } from 'vue-router'
 import { Logic } from '..'
-import { FetchRule, LoaderSetup } from '../types/common' 
+import { FetchRule, LoaderSetup } from '../types/common'
 export default class Common {
   public router: Router | undefined = undefined
   public route: RouteLocationNormalized | undefined = undefined
@@ -222,8 +222,8 @@ export default class Common {
 
   public preFetchRouteData = (
     routeTo: RouteLocationNormalized,
-    next: NavigationGuardNext,
     _routeFrom: RouteLocationNormalized,
+    next: any,
   ) => {
     const allActions: Promise<any>[] = []
     if (this.loaderSetup.loading) {
@@ -241,10 +241,10 @@ export default class Common {
     try {
       fetchRules?.forEach((rule) => {
         if (rule.requireAuth) {
-          if (!Logic.Auth.AuthUser) {
-            this.GoToRoute('/auth/login')
-            throw BreakException
-          }
+          // if (!Logic.Auth.AuthUser) {
+          //   this.GoToRoute('/auth/login')
+          //   throw BreakException
+          // }
         }
         // @ts-ignore
         const domain = Logic[rule.domain]
@@ -284,7 +284,6 @@ export default class Common {
     }
 
     // save user activities
-
     if (routeMiddlewares.tracking_data) {
       const trackingData: any = routeMiddlewares.tracking_data
     }

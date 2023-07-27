@@ -12,10 +12,180 @@ import {
   MutationSaveProjectEntryBookmarkArgs,
   MutationSaveProjectEntryCommentArgs,
   MutationSaveProjectEntryLikeArgs,
-  MutationUpdateProjectEntryArgs
+  MutationUpdateProjectEntryArgs,
+  QueryGetProjectCategoriesArgs,
+  QueryProjectEntryArgs,
+  QueryProjectCategoryArgs,
+  QueryGetProjectEntriesArgs,
+  QueryProjectArgs,
+  QueryGetProjectsArgs
 } from '../gql/graphql'
 
 export default class AuthApi extends BaseApiService {
+  
+  public GetProjectCategories = (data: QueryGetProjectCategoriesArgs) => {
+	const requestData = `
+		query GetProjectCategories (first: Int!, pages: !Int)  {
+			GetProjectCategories (first: $first, page: $page){ 
+				data {
+					created_at
+					description
+					id
+					title
+					updated_at
+					uuid
+				}
+				paginatorInfo {
+					count
+					currentPage
+					firstItem
+					hasMorePages    
+					lastPage
+					lastItem
+					total
+					perPage
+				}
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      GetProjectCategories: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  } 
+
+//   
+  public GetProjectEntries = (data: QueryGetProjectEntriesArgs) => {
+	const requestData = `
+		query GetProjectEntries (first: Int!, pages: !Int)  {
+			GetProjectEntries (first: $first, page: $page){ 
+				data {
+					current_milestone_index
+					description
+					id
+				}
+				paginatorInfo {
+					count
+					currentPage
+					firstItem
+					hasMorePages    
+					lastPage
+					lastItem
+					total
+					perPage
+				}
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      GetProjectEntries: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  } 
+
+  public GetProjects = (data: QueryGetProjectsArgs) => {
+	const requestData = `
+		query GetProjects (first: Int!, pages: !Int)  {
+			GetProjects (first: $first, page: $page){ 
+				data {				
+					created_at
+					currency
+					description
+					end_date
+				}
+				paginatorInfo {
+					count
+					currentPage
+					firstItem
+					hasMorePages    
+					lastPage
+					lastItem
+					total
+					perPage
+				}
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      GetProjects: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  } 
+
+  public ProjectCategory = (data: QueryProjectCategoryArgs) => {
+	const requestData = `
+		query ProjectCategory (uuid: String!)  {
+			ProjectCategory (uuid: $uuid){ 
+				data {
+					id
+					created_at
+					title
+					updated_at
+					uuid
+				} 
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      ProjectCategory: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  } 
+
+  public ProjectEntry = (data: QueryProjectEntryArgs) => {
+	const requestData = `
+		query ProjectEntry (uuid: String!)  {
+			ProjectEntry (uuid: $uuid){ 
+				data {
+					id
+					images
+					description
+					created_at
+					status
+					title
+				} 
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      ProjectEntry: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  } 
+
+  public Project = (data: QueryProjectArgs) => {
+	const requestData = `
+		query Project (uuid: String!)  {
+			Project (uuid: $uuid){ 
+				data {
+					created_at
+					currency
+					description
+					end_date
+					id
+					uuid
+				} 
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      Project: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  } 
+
   public CreateProject = (data: MutationCreateProjectArgs) => {
     const requestData = `
 		mutation CreateProject(
@@ -52,6 +222,7 @@ export default class AuthApi extends BaseApiService {
     return response
   }
  
+//   
   public CreateProjectCategory = (data: MutationCreateProjectCategoryArgs) => {
     const requestData = `
 		mutation CreateProjectCategory($title: String!) {

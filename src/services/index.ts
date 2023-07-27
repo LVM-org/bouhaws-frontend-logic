@@ -5,6 +5,7 @@ import CourseApi from "./CourseApi";
 import ProfileApi from "./ProfileApi"; 
 import ConversationApi from "./ConversationApi"; 
 import UploadApi from "./UploadApi"; 
+import WalletApi from "./WalletApi"; 
 
 export const $api = {
 	auth: new AuthApi(),
@@ -14,4 +15,5 @@ export const $api = {
 	profile: new ProfileApi(),
 	conversation: new ConversationApi(),
 	upload: new UploadApi(),
+	wallet: new WalletApi()
 };

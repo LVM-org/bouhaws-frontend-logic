@@ -3,10 +3,29 @@ import { OperationResult } from 'urql'
 import {
   MutationJoinConversationArgs, 
   MutationSaveConversationMessageArgs,
-  MutationStartConversationArgs
+  MutationStartConversationArgs,
+  QueryConversationArgs
 } from '../gql/graphql'
 
 export default class AuthApi extends BaseApiService {
+  public Conversation = (data: QueryConversationArgs) => {
+	const requestData = `
+		query Conversation (uuid: String!)  {
+			Conversation (uuid: $uuid){ 
+				created_at
+				id
+				updated_at
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      Conversation: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  }
+
   public JoinConversation = (data: MutationJoinConversationArgs) => {
     const requestData = `
 		mutation JoinConversation(

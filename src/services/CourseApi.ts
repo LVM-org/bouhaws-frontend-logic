@@ -2,10 +2,62 @@ import { BaseApiService } from './common/BaseService'
 import { OperationResult } from 'urql' 
 import {
   MutationCreateCourseArgs, 
-  MutationUpdateCourseArgs 
+  MutationUpdateCourseArgs,
+  QueryCourseArgs,
+  QueryGetCoursesArgs
 } from '../gql/graphql'
 
 export default class AuthApi extends BaseApiService {
+  public Course = (data: QueryCourseArgs) => {
+	const requestData = `
+		query Course (uuid: String!)  {
+			Course (uuid: $uuid){ 
+				created_at
+				id
+				updated_at
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      Course: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  }
+  
+  public GetCourses = (data: QueryGetCoursesArgs) => {
+	const requestData = `
+		query GetCourses (first: Int!, pages: !Int)  {
+			GetCourses (first: $first, page: $page){ 
+				data {
+					code
+					created_at
+					status
+					title
+					uuid
+				}
+				paginatorInfo {
+					count
+					currentPage
+					firstItem
+					hasMorePages    
+					lastPage
+					lastItem
+					total
+					perPage
+				}
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      GetCourses: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  }
+
   public CreateCourse = (data: MutationCreateCourseArgs) => {
     const requestData = `
 		mutation CreateCourse (

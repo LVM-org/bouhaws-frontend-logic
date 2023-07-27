@@ -2,10 +2,65 @@ import { BaseApiService } from './common/BaseService'
 import { OperationResult } from 'urql'
 import {
   MutationCreateBouhawsClassArgs,
-  MutationUpdateBouhawsClassArgs 
+  MutationUpdateBouhawsClassArgs,
+  QueryBouhawsClassArgs,
+  QueryGetBouhawsClassesArgs
 } from '../gql/graphql'
 
-export default class AuthApi extends BaseApiService {
+export default class AuthApi extends BaseApiService { 
+  public BouhawsClass = (data: QueryBouhawsClassArgs) => {
+	const requestData = `
+		query BouhawsClass (uuid: String!)  {
+			BouhawsClass (uuid: $uuid){ 
+				created_at
+				description
+				id
+				title
+				updated_at
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      BouhawsClass: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  }
+  
+  public GetBouhawsClasses = (data: QueryGetBouhawsClassesArgs) => {
+	const requestData = `
+		query GetBouhawsClasses (first: Int!, pages: !Int)  {
+			GetBouhawsClasses (first: $first, page: $page){ 
+				data {
+					created_at
+					description
+					id
+					title
+					updated_at
+					uuid
+				}
+				paginatorInfo {
+					count
+					currentPage
+					firstItem
+					hasMorePages    
+					lastPage
+					lastItem
+					total
+					perPage
+				}
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      GetBouhawsClasses: any
+    }>> = this.query(requestData, data) 
+ 
+    return response
+  } 
+
   public CreateClass = (data: MutationCreateBouhawsClassArgs) => {
     const requestData = `
 		mutation CreateClass(

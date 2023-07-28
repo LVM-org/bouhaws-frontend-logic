@@ -10,7 +10,7 @@ import {
 export default class AuthApi extends BaseApiService { 
   public BouhawsClass = (data: QueryBouhawsClassArgs) => {
 	const requestData = `
-		query BouhawsClass (uuid: String!)  {
+		query BouhawsClass ($uuid: String!)  {
 			BouhawsClass (uuid: $uuid){ 
 				created_at
 				description
@@ -30,7 +30,7 @@ export default class AuthApi extends BaseApiService {
   
   public GetBouhawsClasses = (data: QueryGetBouhawsClassesArgs) => {
 	const requestData = `
-		query GetBouhawsClasses (first: Int!, pages: !Int)  {
+		query GetBouhawsClasses ($first: Int!, page: Int!)  {
 			GetBouhawsClasses (first: $first, page: $page){ 
 				data {
 					created_at

@@ -12,17 +12,7 @@ export default class Auth extends Common {
   }
   
   // 
-  public UpdateProfilePayload: MutationUpdateProfileArgs = { 
-    bio: '', 
-    name: '', 
-    photo_url: '', 
-    push_notification_enabled: false,
-    school: '', 
-    student_number: '', 
-    type: '', 
-    username: '', 
-    year_of_enrollment: ''
-  } 
+  public UpdateProfilePayload: MutationUpdateProfileArgs = undefined
 
   // 
   public UpdateProfile = () => { 

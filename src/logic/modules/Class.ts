@@ -3,7 +3,9 @@ import { CombinedError } from 'urql'
 import Common from './Common'
 import  {
   MutationCreateBouhawsClassArgs,
-  MutationUpdateBouhawsClassArgs 
+  MutationUpdateBouhawsClassArgs,
+  QueryBouhawsClassArgs,
+  QueryGetBouhawsClassesArgs 
 } from '../../gql/graphql'  
 import { Logic } from '..'
 
@@ -23,6 +25,42 @@ export default class Auth extends Common {
     projects_id: '', 
     bouhaws_class_uuid: '', 
   }  
+
+  public BouhawsClass: any =  {}
+  public ClassPayload: QueryBouhawsClassArgs =  undefined
+  public BouhawsClassesPayload: QueryGetBouhawsClassesArgs =  undefined
+  public AllBouhawsClasses: any =  []
+
+
+  // 
+  public GetBouhawsClasses = () => {  
+    $api.class
+      .GetBouhawsClasses(this.BouhawsClassesPayload)
+      .then((response) => { 
+        console.log("GetBouhawsClasses response:::", response)
+        this.AllBouhawsClasses = response.data?.GetBouhawsClasses?.data
+        Logic.Common.hideLoader() 
+      }) 
+      .catch((error: CombinedError) => { 
+        console.log("error", error) 
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
+
+  // 
+  public GetBouhawsClass = () => {  
+    $api.class
+      .BouhawsClass(this.ClassPayload)
+      .then((response) => { 
+        console.log("BouhawsClass response:::", response)
+        this.BouhawsClass = response.data?.BouhawsClass
+        Logic.Common.hideLoader()
+      })
+      .catch((error: CombinedError) => { 
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
 
   // 
   public CreateClass = () => { 

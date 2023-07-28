@@ -4,7 +4,8 @@ import Common from './Common'
 import  {
   MutationJoinConversationArgs, 
   MutationSaveConversationMessageArgs,
-  MutationStartConversationArgs
+  MutationStartConversationArgs,
+  QueryConversationArgs
 } from '../../gql/graphql'  
 import { Logic } from '..'
 
@@ -27,7 +28,25 @@ export default class Auth extends Common {
   public StartConversationPayload: MutationStartConversationArgs = { 
     associated_users_uuid: '' || undefined
   }    
+  public Conversation: any =  {}
+  public ConversationPayload: QueryConversationArgs =  undefined
  
+
+  // 
+  public GetConversation = () => {   
+    $api.conversation
+      .Conversation(this.ConversationPayload)
+      .then((response) => { 
+        console.log("Conversation response:::", response)
+        this.Conversation = response.data?.Conversation
+        Logic.Common.hideLoader()
+      })
+      .catch((error: CombinedError) => { 
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
+
   // 
   public JoinConversation = () => { 
     Logic.Common.showLoader({ loading: true, show: true, useModal: true })

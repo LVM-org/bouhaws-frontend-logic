@@ -3,7 +3,9 @@ import { CombinedError } from 'urql'
 import Common from './Common'
 import  {
   MutationCreateCourseArgs, 
-  MutationUpdateCourseArgs 
+  MutationUpdateCourseArgs,
+  QueryCourseArgs,
+  QueryGetCoursesArgs
 } from '../../gql/graphql'  
 import { Logic } from '..'
 
@@ -26,7 +28,44 @@ export default class Auth extends Common {
     status: '', 
     title: ''
   }   
+  public Course: any =  {}
+  public CoursePayload: QueryCourseArgs =  undefined
+  public GetCoursesPayload: QueryGetCoursesArgs =  undefined
+  public AllCourses: any =  []
 
+
+  // 
+  public GetCourses = () => {  
+    console.log(43)
+    $api.course
+      .GetCourses(this.GetCoursesPayload)
+      .then((response) => { 
+        console.log("GetCourses response:::", response)
+        this.AllCourses = response.data?.GetCourses?.data
+        Logic.Common.hideLoader() 
+      })
+      .catch((error: CombinedError) => {
+        console.log(5623928923)
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
+
+  // 
+  public GetCourse = () => {  
+    console.log(43)
+    $api.course
+      .Course(this.CoursePayload)
+      .then((response) => { 
+        console.log("Course response:::", response)
+        this.Course = response.data?.Course
+        Logic.Common.hideLoader()
+      })
+      .catch((error: CombinedError) => { 
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
 
   // 
   public CreateCourse = () => { 

@@ -25,7 +25,7 @@ export default class AuthApi extends BaseApiService {
   
   public GetProjectCategories = (data: QueryGetProjectCategoriesArgs) => {
 	const requestData = `
-		query GetProjectCategories (first: Int!, pages: !Int)  {
+		query GetProjectCategories ($first: Int!, $page: Int!)  {
 			GetProjectCategories (first: $first, page: $page){ 
 				data {
 					created_at
@@ -59,7 +59,7 @@ export default class AuthApi extends BaseApiService {
 //   
   public GetProjectEntries = (data: QueryGetProjectEntriesArgs) => {
 	const requestData = `
-		query GetProjectEntries (first: Int!, pages: !Int)  {
+		query GetProjectEntries ($first: Int!, $pages: Int!)  {
 			GetProjectEntries (first: $first, page: $page){ 
 				data {
 					current_milestone_index
@@ -89,27 +89,33 @@ export default class AuthApi extends BaseApiService {
 
   public GetProjects = (data: QueryGetProjectsArgs) => {
 	const requestData = `
-		query GetProjects (first: Int!, pages: !Int)  {
+		query GetProjects ($first: Int!, $page: Int!)  {
 			GetProjects (first: $first, page: $page){ 
-				data {				
+				data {
+					id
+					title
+					type
 					created_at
-					currency
 					description
 					end_date
+					photo_url
+					uuid
+					milestones {
+						index
+						points
+						id
+						uuid
+					}
 				}
 				paginatorInfo {
 					count
 					currentPage
-					firstItem
-					hasMorePages    
-					lastPage
-					lastItem
-					total
-					perPage
+					firstItem 
 				}
 			}
 		}
 	`
+    console.log(2393)
 
     const response: Promise<OperationResult<{
       GetProjects: any
@@ -120,7 +126,7 @@ export default class AuthApi extends BaseApiService {
 
   public ProjectCategory = (data: QueryProjectCategoryArgs) => {
 	const requestData = `
-		query ProjectCategory (uuid: String!)  {
+		query ProjectCategory ($uuid: String!)  {
 			ProjectCategory (uuid: $uuid){ 
 				data {
 					id
@@ -142,7 +148,7 @@ export default class AuthApi extends BaseApiService {
 
   public ProjectEntry = (data: QueryProjectEntryArgs) => {
 	const requestData = `
-		query ProjectEntry (uuid: String!)  {
+		query ProjectEntry ($uuid: String!)  {
 			ProjectEntry (uuid: $uuid){ 
 				data {
 					id
@@ -165,16 +171,43 @@ export default class AuthApi extends BaseApiService {
 
   public Project = (data: QueryProjectArgs) => {
 	const requestData = `
-		query Project (uuid: String!)  {
-			Project (uuid: $uuid){ 
-				data {
-					created_at
-					currency
-					description
-					end_date
-					id
+		query Project ($uuid: String!)  {
+			Project (uuid: $uuid){  
+				created_at
+				end_date
+				description
+				requirements
+				title
+				total_points
+				type
+				uuid
+				prize
+				photo_url
+				user {
+					username
 					uuid
-				} 
+					id
+					name
+					profile {
+						photo_url
+					}
+				}
+				entries {
+					images
+					uuid
+					user { 
+						profile {
+							photo_url
+						}
+					}
+				}
+				milestones {
+					created_at
+					id
+					index
+					points
+					title
+				}
 			}
 		}
 	`

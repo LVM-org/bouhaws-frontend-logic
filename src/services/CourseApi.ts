@@ -10,7 +10,7 @@ import {
 export default class AuthApi extends BaseApiService {
   public Course = (data: QueryCourseArgs) => {
 	const requestData = `
-		query Course (uuid: String!)  {
+		query Course ($uuid: String!)  {
 			Course (uuid: $uuid){ 
 				created_at
 				id
@@ -28,7 +28,7 @@ export default class AuthApi extends BaseApiService {
   
   public GetCourses = (data: QueryGetCoursesArgs) => {
 	const requestData = `
-		query GetCourses (first: Int!, pages: !Int)  {
+		query GetCourses ($first: Int!, $page: Int!)  {
 			GetCourses (first: $first, page: $page){ 
 				data {
 					code

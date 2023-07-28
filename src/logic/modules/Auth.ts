@@ -67,10 +67,10 @@ export default class Auth extends Common {
         .then((response) => {
           this.AuthUser = response.data?.SignUp
           console.log('signup  response', response)
-          Logic.Common.hideLoader()
-          // Logic.Common.GoToRoute('/')
+          Logic.Common.hideLoader() 
         })
         .catch((error: CombinedError) => {
+          console.log("error", error)
           Logic.Common.showError(error, 'Oops!', 'error-alert')
         })
     }
@@ -91,6 +91,7 @@ export default class Auth extends Common {
           Logic.Common.GoToRoute('/home')
         })
         .catch((error: CombinedError) => {
+          console.log("error", error)
           Logic.Common.showError(error, 'Oops!', 'error-alert')
         })
     }

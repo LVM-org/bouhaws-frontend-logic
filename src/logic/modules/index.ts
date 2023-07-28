@@ -4,8 +4,9 @@ import Form from "./form";
 import Conversation from "./Conversation";
 import Project from "./Project";
 import Course from "./Course";
-import Class from "./Class";
+import Class from "./Class"; 
 import Upload from "./Upload";
+import Wallet from "./Wallet";
 
 export const Logic = {
 	Auth: new Auth(),
@@ -16,4 +17,5 @@ export const Logic = {
 	Course: new Course(),
 	Class: new Class(),
 	Upload: new Upload(),
+	Wallet: new Wallet(),
 };

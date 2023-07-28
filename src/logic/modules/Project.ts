@@ -13,7 +13,13 @@ import  {
   MutationSaveProjectEntryBookmarkArgs,
   MutationSaveProjectEntryCommentArgs,
   MutationSaveProjectEntryLikeArgs,
-  MutationUpdateProjectEntryArgs
+  MutationUpdateProjectEntryArgs,
+  QueryGetProjectCategoriesArgs,
+  QueryProjectEntryArgs,
+  QueryProjectCategoryArgs,
+  QueryGetProjectEntriesArgs,
+  QueryProjectArgs,
+  QueryGetProjectsArgs
 } from '../../gql/graphql'  
 import { Logic } from '..'
 
@@ -92,7 +98,111 @@ export default class Auth extends Common {
     project_entry_uuid: '',
     status: '',
   }  
+  public GetProjectsPayload: QueryGetProjectsArgs =  undefined
+  public ProjectPayload: QueryProjectArgs =  undefined
+  public ProjectEntryPayload: QueryProjectEntryArgs =  undefined
+  public ProjectCategoryPayload: QueryProjectCategoryArgs =  undefined
+  public ProjectEntriesPayload: QueryGetProjectEntriesArgs =  undefined
+  public ProjectCategoriesPayload: QueryGetProjectCategoriesArgs =  undefined
+  public AllProjects: any =  []
+  public Project: any =  {}
+  public ProjectEntry: any =  {}
+  public ProjectCategory: any =  {}
+  public ProjectEntries: any =  []
+  public ProjectCategories: any =  []
+  
 
+  // 
+  public GetProjects = () => {  
+    console.log(43)
+    $api.project
+      .GetProjects(this.GetProjectsPayload)
+      .then((response) => { 
+        console.log("GetProjects response:::", response)
+        this.AllProjects = response.data?.GetProjects?.data
+        Logic.Common.hideLoader() 
+      })
+      .catch((error: CombinedError) => {
+        console.log(5623928923)
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
+
+  // 
+  public GetProject = () => {  
+    console.log(43)
+    $api.project
+      .Project(this.ProjectPayload)
+      .then((response) => { 
+        console.log("Project response:::", response)
+        this.Project = response.data?.Project
+        Logic.Common.hideLoader()
+      })
+      .catch((error: CombinedError) => { 
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
+
+  // 
+  public GetProjectEntry = () => {  
+    console.log(43)
+    $api.project
+      .ProjectEntry(this.ProjectEntryPayload)
+      .then((response) => { 
+        console.log("ProjectEntry response:::", response)
+        this.ProjectEntry = response.data?.ProjectEntry 
+      })
+      .catch((error: CombinedError) => { 
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
+
+  // 
+  public GetProjectCategory = () => {   
+    $api.project
+      .ProjectCategory(this.ProjectCategoryPayload)
+      .then((response) => { 
+        console.log("ProjectCategory response:::", response)
+        this.ProjectCategory = response.data?.ProjectCategory 
+      })
+      .catch((error: CombinedError) => { 
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
+
+  // 
+  public GetProjectEntries = () => {  
+    $api.project
+      .GetProjectEntries(this.ProjectEntriesPayload)
+      .then((response) => { 
+        console.log("GetProjectEntries response:::", response)
+        this.ProjectEntries = response.data?.GetProjectEntries
+        Logic.Common.hideLoader()
+      })
+      .catch((error: CombinedError) => { 
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
+
+  // 
+  public GetProjectCategories = () => {  
+    $api.project
+      .GetProjectCategories(this.ProjectCategoriesPayload)
+      .then((response) => { 
+        console.log("GetProjectCategories response:::", response)
+        this.ProjectCategories = response.data?.GetProjectCategories
+        Logic.Common.hideLoader()
+      })
+      .catch((error: CombinedError) => { 
+        console.log("error", error)
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      }) 
+  }
 
   // 
   public CreateProject = () => { 

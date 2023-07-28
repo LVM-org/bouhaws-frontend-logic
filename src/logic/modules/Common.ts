@@ -213,6 +213,26 @@ export default class Common {
     return moment(time).fromNow()
   }
 
+  public FormatDateToDaysAgo = (dateString: string): string => {
+    const postDate = new Date(dateString);
+    const currentDate = new Date();
+    const timeDifference = currentDate.getTime() - postDate.getTime();
+    const daysAgo = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+
+    if (daysAgo === 0) {
+      return "Posted today";
+    } else if (daysAgo === 1) {
+      return "Posted 1 day ago";
+    } else {
+      return `Posted ${daysAgo} days ago`;
+    }
+    
+    // Example usage:
+    // const dateStr = "2022-09-24 00:00:00";
+    // const formattedDate = formatDateToDaysAgo(dateStr);
+    // console.log(formattedDate); // Output: "Posted 308 days ago" (depending on the current date)
+  }
+
   public updatedData = (oldData: any, newData: any) => {
     if (oldData != undefined && newData != undefined) {
       return { ...oldData, ...newData }

@@ -10,7 +10,7 @@ import {
 export default class AuthApi extends BaseApiService {
   public Conversation = (data: QueryConversationArgs) => {
 	const requestData = `
-		query Conversation (uuid: String!)  {
+		query Conversation ($uuid: String!)  {
 			Conversation (uuid: $uuid){ 
 				created_at
 				id
@@ -54,13 +54,13 @@ export default class AuthApi extends BaseApiService {
 				$content: String!, 
 				$conversation_id: Int!, 
 				$media: String! 
-				$type: String!,  
+				$type: String!,
 			) {
 			SaveConversationMessage( 
 				content: $content, 
 				conversation_id: $conversation_id, 
 				media: $media,  
-				type: $type,  
+				type: $type, 
 			) {
 				description
 			}

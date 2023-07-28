@@ -1,51 +1,51 @@
 import { $api } from '../../services'
 import { CombinedError } from 'urql'
 import Common from './Common'
-import  {
+import {
   MutationCreateBouhawsClassArgs,
-  MutationUpdateBouhawsClassArgs 
-} from '../../gql/graphql'  
+  MutationUpdateBouhawsClassArgs,
+} from '../../gql/graphql'
 import { Logic } from '..'
 
-export default class Auth extends Common {
+export default class Upload extends Common {
   constructor() {
-    super() 
+    super()
   }
-  
-  // 
-  public CreateClassPayload: MutationCreateBouhawsClassArgs = { 
-    description: '',
-    title: '', 
-  }  
-  public UpdateClassPayload: MutationUpdateBouhawsClassArgs = { 
-    description: '',
-    title: '', 
-    projects_id: '', 
-    bouhaws_class_uuid: '', 
-  }  
 
-  // 
-  public CreateClass = () => { 
+  //
+  public CreateClassPayload: MutationCreateBouhawsClassArgs = {
+    description: '',
+    title: '',
+  }
+  public UpdateClassPayload: MutationUpdateBouhawsClassArgs = {
+    description: '',
+    title: '',
+    projects_id: '',
+    bouhaws_class_uuid: '',
+  }
+
+  //
+  public CreateClass = () => {
     Logic.Common.showLoader({ loading: true, show: true, useModal: true })
     $api.class
       .CreateClass(this.CreateClassPayload)
-      .then((response) => { 
-        console.log("CreateClass  response:::", response)
-        Logic.Common.hideLoader() 
+      .then((response) => {
+        console.log('CreateClass  response:::', response)
+        Logic.Common.hideLoader()
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
-      }) 
+      })
   }
 
-  // 
-  public UpdateClass = () => { 
+  //
+  public UpdateClass = () => {
     Logic.Common.showLoader({ loading: true, show: true, useModal: true })
     $api.class
       .UpdateClass(this.UpdateClassPayload)
-      .then((response) => { 
-        console.log("UpdateClass  response:::", response)
-        Logic.Common.hideLoader() 
+      .then((response) => {
+        console.log('UpdateClass  response:::', response)
+        Logic.Common.hideLoader()
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')

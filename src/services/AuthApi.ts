@@ -8,9 +8,40 @@ import {
   MutationUpdatePasswordArgs,
   MutationVerifyEmailOtpArgs,
   AuthResponse,
+  User,
 } from '../gql/graphql'
 
 export default class AuthApi extends BaseApiService {
+  public GetAuthUser = () => {
+    const requestData = `
+	query GetAuthUser {
+		AuthUser {
+		  id
+		  name
+		  username
+		  uuid
+		  email_verified_at
+		  wallet {
+			credited_amount
+			debited_amount
+			total_balance
+			updated_at
+		  }
+		  profile {
+			photo_url
+			points
+		  }
+		}
+	  }
+	`
+
+    const response: Promise<OperationResult<{
+      GetAuthUser: User
+    }>> = this.query(requestData, {})
+
+    return response
+  }
+
   public SignUp = (data: MutationSignUpArgs) => {
     const requestData = `
 	mutation SignUp($email: String!, $password: String!, $username: String!) {
@@ -33,21 +64,21 @@ export default class AuthApi extends BaseApiService {
 
   public SignIn = (data: MutationSignInArgs) => {
     const requestData = `
-		mutation SignIn(
-			$email: String!,
-			$password: String!
-		) {
-			SignIn(
-				email: $email,
-				password: $password
-			) {
-				token
-			}
+	mutation SignIn($email: String!, $password: String!) {
+		SignIn(email: $email, password: $password) {
+		  token
+		  user {
+			uuid
+			name
+			id
+			email_verified_at
+		  }
 		}
+	  }
 	`
 
     const response: Promise<OperationResult<{
-      SignIn: any
+      SignIn: AuthResponse
     }>> = this.mutation(requestData, data)
 
     return response
@@ -67,7 +98,7 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      ResendVerifyEmail: any
+      ResendVerifyEmail: Boolean
     }>> = this.mutation(requestData, data)
 
     return response
@@ -82,14 +113,12 @@ export default class AuthApi extends BaseApiService {
 			) {
 			SendResetPasswordEmail(  
 				email: $email,  
-			) {
-				email
-			}
+			)  
 		}
 	`
 
     const response: Promise<OperationResult<{
-      SendResetPasswordEmail: any
+      SendResetPasswordEmail: Boolean
     }>> = this.mutation(requestData, data)
 
     return response
@@ -99,7 +128,7 @@ export default class AuthApi extends BaseApiService {
     const requestData = `
 		mutation UpdatePassword(
 			$old_password: String!, 
-			$otp: String!, 
+			$otp: String, 
 			$password: String!, 
 			$user_uuid: String!,  
 		) {
@@ -108,14 +137,12 @@ export default class AuthApi extends BaseApiService {
 				otp: $otp, 
 				password: $password, 
 				user_uuid: $user_uuid,  
-			) {
-				otp
-			}
+			)  
 		}
 	`
 
     const response: Promise<OperationResult<{
-      UpdatePassword: any
+      UpdatePassword: Boolean
     }>> = this.mutation(requestData, data)
 
     return response
@@ -123,22 +150,31 @@ export default class AuthApi extends BaseApiService {
 
   public VerifyEmailOtp = (data: MutationVerifyEmailOtpArgs) => {
     const requestData = `
-		mutation VerifyEmailOtp(
-			$email: String!,
-			$otp: String!, 
-		) {
-			VerifyEmailOtp(
-				email: $email, 
-				otp: $otp,  
-			) {
-				token
-			}
+	mutation VerifyEmailOtp($email: String!, $otp: String!) {
+		VerifyEmailOTP(email: $email, otp: $otp) {
+		  id
+		  uuid
+		  name
 		}
+	  }
+	`
+    const response: Promise<OperationResult<{
+      VerifyEmailOtp: User
+    }>> = this.mutation(requestData, data)
+
+    return response
+  }
+
+  public SignOut = () => {
+    const requestData = `
+	mutation SignOut {
+		SignOut
+	  }
 	`
 
     const response: Promise<OperationResult<{
-      VerifyEmailOtp: any
-    }>> = this.mutation(requestData, data)
+      SignOut: boolean
+    }>> = this.mutation(requestData, {})
 
     return response
   }

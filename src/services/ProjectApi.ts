@@ -1,7 +1,7 @@
 import { BaseApiService } from './common/BaseService'
-import { OperationResult } from 'urql' 
+import { OperationResult } from 'urql'
 import {
-  MutationCreateProjectArgs, 
+  MutationCreateProjectArgs,
   MutationCreateProjectCategoryArgs,
   MutationCreateProjectMilestoneArgs,
   MutationUpdateProjectArgs,
@@ -12,10 +12,327 @@ import {
   MutationSaveProjectEntryBookmarkArgs,
   MutationSaveProjectEntryCommentArgs,
   MutationSaveProjectEntryLikeArgs,
-  MutationUpdateProjectEntryArgs
+  MutationUpdateProjectEntryArgs,
+  QueryGetProjectsOrderByOrderByClause,
+  ProjectPaginator,
+  Project,
+  QueryGetProjectCategoriesOrderByOrderByClause,
+  ProjectCategoryPaginator,
+  ProjectCategory,
+  QueryGetProjectEntriesOrderByOrderByClause,
+  QueryGetProjectsHasUserWhereHasConditions,
+  QueryGetProjectsHasCategoryWhereHasConditions,
+  QueryGetProjectEntriesHasUserWhereHasConditions,
+  QueryGetProjectEntriesHasProjectWhereHasConditions,
+  ProjectEntry,
+  ProjectMilestone,
+  ProjectEntryBookmark,
+  ProjectEntryComment,
+  ProjectEntryPaginator,
 } from '../gql/graphql'
 
-export default class AuthApi extends BaseApiService {
+export default class ProjectApi extends BaseApiService {
+  public GetProjects = (
+    page: number,
+    first: number,
+    orderBy: QueryGetProjectsOrderByOrderByClause | string,
+    hasUser: QueryGetProjectsHasUserWhereHasConditions | string = '',
+    hasCategory: QueryGetProjectsHasCategoryWhereHasConditions | string = '',
+  ) => {
+    const requestData = `
+		query Projects($page: Int!, $first: Int!) {
+			GetProjects(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser} ${hasCategory}) {
+			  paginatorInfo {
+				count
+				currentPage
+				firstItem
+				hasMorePages
+				lastItem
+				perPage
+				total
+			  }
+			  data {
+				id
+				uuid
+				title
+				user{
+				  uuid
+				  name
+				  username
+				  profile{
+					photo_url
+				  }
+				}
+				end_date
+				prize
+				currency
+				description
+				requirements
+				photo_url
+				type
+				total_points
+				category{
+				  uuid
+				  title
+				}
+				entries{
+				  uuid
+				  current_milestone_index
+				  title
+				  description
+				  images
+				  likes{
+					id
+				  }
+				  bookmarks{
+					id
+				  }
+				  comments{
+					id
+				  }
+				  created_at
+				}
+			  }
+			}
+		  }
+		`
+
+    const response: Promise<OperationResult<{
+      Projects: ProjectPaginator
+    }>> = this.query(requestData, {
+      page,
+      first,
+    })
+
+    return response
+  }
+
+  public GetProject = (uuid: string) => {
+    const requestData = `
+		query GetProject($uuid: String!) {
+			Project(uuid: $uuid) {
+				id
+				uuid
+				title
+				user{
+				  uuid
+				  name
+				  username
+				  profile{
+					photo_url
+				  }
+				}
+				end_date
+				prize
+				currency
+				description
+				requirements
+				photo_url
+				type
+				total_points
+				category{
+				  uuid
+				  title
+				}
+				entries{
+				  uuid
+				  current_milestone_index
+				  title
+				  description
+				  images
+				  likes{
+					id
+				  }
+				  bookmarks{
+					id
+				  }
+				  comments{
+					id
+				  }
+				  created_at
+				}
+			}
+		  }
+		`
+
+    const response: Promise<OperationResult<{
+      Project: Project
+    }>> = this.query(requestData, {
+      uuid,
+    })
+
+    return response
+  }
+
+  public GetProjectCategories = (
+    page: number,
+    first: number,
+    orderBy: QueryGetProjectCategoriesOrderByOrderByClause | string,
+  ) => {
+    const requestData = `
+		query ProjectCategories($page: Int!, $first: Int!) {
+			GetProjectCategories(first: $first, page: $page, orderBy: ${orderBy},) {
+			  paginatorInfo {
+				count
+				currentPage
+				firstItem
+				hasMorePages
+				lastItem
+				perPage
+				total
+			  }
+			  data {
+				id
+				uuid
+				title
+				created_at
+			  }
+			}
+		  }
+		`
+    const response: Promise<OperationResult<{
+      ProjectCategories: ProjectCategoryPaginator
+    }>> = this.query(requestData, {
+      page,
+      first,
+    })
+
+    return response
+  }
+
+  public GetProjectCategory = (uuid: string) => {
+    const requestData = `
+		query GetProjectCategory($uuid: String!) {
+			ProjectCategory(uuid: $uuid) {
+				id
+				uuid
+				title
+				created_at
+			}
+		  }
+		`
+
+    const response: Promise<OperationResult<{
+      ProjectCategory: ProjectCategory
+    }>> = this.query(requestData, {
+      uuid,
+    })
+
+    return response
+  }
+
+  public GetProjectEntries = (
+    page: number,
+    first: number,
+    orderBy: QueryGetProjectEntriesOrderByOrderByClause | string,
+    hasUser: QueryGetProjectEntriesHasUserWhereHasConditions | string = '',
+    hasProject:
+      | QueryGetProjectEntriesHasProjectWhereHasConditions
+      | string = '',
+  ) => {
+    const requestData = `
+		query ProjectEntries($page: Int!, $first: Int!) {
+			GetProjectEntries(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser}  ${hasProject}) {
+			  paginatorInfo {
+				count
+				currentPage
+				firstItem
+				hasMorePages
+				lastItem
+				perPage
+				total
+			  }
+			  data {
+				uuid
+				user {
+				  name
+				  uuid
+				  profile {
+					photo_url
+				  }
+				}
+				project {
+				  title
+				  uuid
+				}
+				current_milestone_index
+				title
+				images
+				likes {
+				  id
+				}
+				bookmarks {
+				  id
+				}
+				comments {
+				  id
+				}
+			  }
+			}
+		  }
+		`
+    const response: Promise<OperationResult<{
+      GetProjectEntries: ProjectEntryPaginator
+    }>> = this.query(requestData, {
+      page,
+      first,
+    })
+
+    return response
+  }
+
+  public GetProjectEntry = (uuid: string) => {
+    const requestData = `
+	query GetProjectEntry($uuid: String!) {
+		ProjectEntry(uuid: $uuid) {
+		  uuid
+		  user {
+			name
+			username
+			profile {
+			  photo_url
+			}
+		  }
+		  project {
+			title
+		  }
+		  current_milestone_index
+		  title
+		  description
+		  images
+		  likes {
+			id
+		  }
+		  bookmarks {
+			id
+		  }
+		  comments {
+			uuid
+			user {
+			  username
+			  name
+			  profile {
+				photo_url
+			  }
+			}
+			content
+			is_reply
+			replied_comment_id
+		  }
+		  created_at
+		}
+	  }
+		`
+
+    const response: Promise<OperationResult<{
+      ProjectEntry: ProjectEntry
+    }>> = this.query(requestData, {
+      uuid,
+    })
+
+    return response
+  }
+
   public CreateProject = (data: MutationCreateProjectArgs) => {
     const requestData = `
 		mutation CreateProject(
@@ -40,73 +357,121 @@ export default class AuthApi extends BaseApiService {
 				total_points: $total_points, 
 				type: $type,
 			) {
+				id
+				uuid
+				title
+				user{
+				  uuid
+				  name
+				  username
+				  profile{
+					photo_url
+				  }
+				}
+				end_date
+				prize
+				currency
 				description
+				requirements
+				photo_url
+				type
+				total_points
+				category{
+				  uuid
+				  title
+				}
+				entries{
+				  uuid
+				  current_milestone_index
+				  title
+				  description
+				  images
+				  likes{
+					id
+				  }
+				  bookmarks{
+					id
+				  }
+				  comments{
+					id
+				  }
+				  created_at
+				}
 			}
 		}
 		`
 
     const response: Promise<OperationResult<{
-      CreateProject: any
+      CreateProject: Project
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public CreateProjectCategory = (data: MutationCreateProjectCategoryArgs) => {
     const requestData = `
 		mutation CreateProjectCategory($title: String!) {
 			CreateProjectCategory (title: $title) {
+				id
+				uuid
 				title
+				created_at
 			}
 		} 
 	`
 
     const response: Promise<OperationResult<{
-      CreateProjectCategory: any
+      CreateProjectCategory: ProjectCategory
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public CreateProjectMilestone = (data: MutationCreateProjectMilestoneArgs) => {
+
+  public CreateProjectMilestone = (
+    data: MutationCreateProjectMilestoneArgs,
+  ) => {
     const requestData = `
-		mutation CreateProjectMilestone( 
-				$index: Int!, 
-				$project_id: String!, 
-				$title: String! 
-				$points: String!,  
-			) {
-			CreateProjectMilestone( 
-				index: $index, 
-				project_id: $project_id, 
-				title: $title,  
-				points: $points,  
-			) {
-				description
-			}
+	mutation CreateProjectMilestone($index: Int!, $project_id: String!, $title: String!, $points: String!) {
+		CreateProjectMilestone(
+		  index: $index
+		  project_id: $project_id
+		  title: $title
+		  points: $points
+		) {
+		  uuid
+		  title
+		  points
+		  index
+		  project {
+			uuid
+		  }
+		  updated_at
+		  created_at
 		}
+	  }
 	`
 
     const response: Promise<OperationResult<{
-      CreateProjectMilestone: any
+      CreateProjectMilestone: ProjectMilestone
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public UpdateProject = (data: MutationUpdateProjectArgs) => {
     const requestData = `
 		mutation UpdateProject(
-				$end_date: String!, 
-				$description: String!, 
-				$photo_url: Upload!, 
-				$title: String!,  
-				$prize: String!, 
-				$project_category_id: Int!, 
-				$requirements: String!, 
-				$total_points: String!, 
-				$type: String!
-				$status: String!
+				$end_date: String, 
+				$description: String, 
+				$photo_url: Upload, 
+				$title: String,  
+				$prize: String, 
+				$project_category_id: Int, 
+				$requirements: String, 
+				$total_points: String, 
+				$type: String
+				$status: String
+				$project_uuid: String!
 			) {
 			UpdateProject(
 				end_date: $end_date, 
@@ -119,26 +484,68 @@ export default class AuthApi extends BaseApiService {
 				total_points: $total_points, 
 				type: $type,
 				status: $status,
+				project_uuid: $project_uuid
 			) {
+				id
+				uuid
+				title
+				user{
+				  uuid
+				  name
+				  username
+				  profile{
+					photo_url
+				  }
+				}
+				end_date
+				prize
+				currency
 				description
+				requirements
+				photo_url
+				type
+				total_points
+				category{
+				  uuid
+				  title
+				}
+				entries{
+				  uuid
+				  current_milestone_index
+				  title
+				  description
+				  images
+				  likes{
+					id
+				  }
+				  bookmarks{
+					id
+				  }
+				  comments{
+					id
+				  }
+				  created_at
+				}
 			}
 		}
 		`
 
     const response: Promise<OperationResult<{
-      UpdateProject: any
+      UpdateProject: Project
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public UpdateProjectMilestone = (data: MutationUpdateProjectMilestoneArgs) => {
+
+  public UpdateProjectMilestone = (
+    data: MutationUpdateProjectMilestoneArgs,
+  ) => {
     const requestData = `
 		mutation UpdateProjectMilestone( 
-				$index: Int!, 
+				$index: Int, 
 				$project_milestone_uuid: String!, 
-				$title: String! 
-				$points: String!,  
+				$title: String 
+				$points: String,  
 			) {
 			UpdateProjectMilestone( 
 				index: $index, 
@@ -146,18 +553,26 @@ export default class AuthApi extends BaseApiService {
 				title: $title,  
 				points: $points,  
 			) {
-				description
+				uuid
+				title
+				points
+				index
+				project {
+				  uuid
+				}
+				updated_at
+				created_at
 			}
 		}
 	`
 
     const response: Promise<OperationResult<{
-      UpdateProjectMilestone: any
+      UpdateProjectMilestone: ProjectMilestone
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public UpdateProjectCategory = (data: MutationUpdateProjectCategoryArgs) => {
     const requestData = `
 		mutation UpdateProjectCategory(  
@@ -168,26 +583,30 @@ export default class AuthApi extends BaseApiService {
 				project_milestone_uuid: $project_milestone_uuid, 
 				title: $title,   
 			) {
-				description
+				id
+				uuid
+				title
+				created_at
+				updated_at
 			}
 		}
 	`
 
     const response: Promise<OperationResult<{
-      UpdateProjectCategory: any
+      UpdateProjectCategory: ProjectCategory
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public UpdateProjectEntry = (data: MutationUpdateProjectEntryArgs) => {
     const requestData = `
 		mutation UpdateProjectEntry( 
-				$description: String!, 
-				$images: String!, 
+				$description: String, 
+				$images: String, 
 				$project_entry_uuid: String! 
-				$status: String!,  
-				$title: String!,  
+				$status: String,  
+				$title: String,  
 			) {
 			UpdateProjectEntry( 
 				description: $description, 
@@ -196,38 +615,72 @@ export default class AuthApi extends BaseApiService {
 				status: $status,  
 				title: $title,  
 			) {
+				uuid
+				user {
+				  name
+				  username
+				  profile {
+					photo_url
+				  }
+				}
+				project {
+				  title
+				}
+				current_milestone_index
+				title
 				description
+				images
+				likes {
+				  id
+				}
+				bookmarks {
+				  id
+				}
+				comments {
+				  uuid
+				  user {
+					username
+					name
+					profile {
+					  photo_url
+					}
+				  }
+				  content
+				  is_reply
+				  replied_comment_id
+				}
+				created_at
 			}
 		}
 	`
 
     const response: Promise<OperationResult<{
-      UpdateProjectEntry: any
+      UpdateProjectEntry: ProjectEntry
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public DeleteProjectMilestone = (data: MutationDeleteProjectMilestoneArgs) => {
+
+  public DeleteProjectMilestone = (
+    data: MutationDeleteProjectMilestoneArgs,
+  ) => {
     const requestData = `
 		mutation DeleteProjectMilestone( 
 				$uuid: String!,  
 			) {
 			DeleteProjectMilestone(  
 				uuid: $uuid,  
-			) {
-				uuid
-			}
+			)  
 		}
 	`
 
     const response: Promise<OperationResult<{
-      DeleteProjectMilestone: any
+      DeleteProjectMilestone: Boolean
     }>> = this.mutation(requestData, data)
 
     return response
   }
-  
+
   public JoinProject = (data: MutationJoinProjectArgs) => {
     const requestData = `
 		mutation JoinProject(
@@ -240,64 +693,104 @@ export default class AuthApi extends BaseApiService {
 				description: $description, 
 				title: $title,  
 			) {
+				uuid
+				user {
+				  name
+				  username
+				  profile {
+					photo_url
+				  }
+				}
+				project {
+				  title
+				}
+				current_milestone_index
+				title
 				description
+				images
+				likes {
+				  id
+				}
+				bookmarks {
+				  id
+				}
+				comments {
+				  uuid
+				  user {
+					username
+					name
+					profile {
+					  photo_url
+					}
+				  }
+				  content
+				  is_reply
+				  replied_comment_id
+				}
+				created_at
 			}
 		}
 		`
 
     const response: Promise<OperationResult<{
-      JoinProject: any
+      JoinProject: ProjectEntry
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public SaveProjectEntryBookmark = (data: MutationSaveProjectEntryBookmarkArgs) => {
+
+  public SaveProjectEntryBookmark = (
+    data: MutationSaveProjectEntryBookmarkArgs,
+  ) => {
     const requestData = `
-		mutation SaveProjectEntryBookmark( 
-				$project_entry_id: Int!,  
-			) {
-			SaveProjectEntryBookmark(  
-				project_entry_id: $project_entry_id,  
-			) {
-				project_entry_id
-			}
+	mutation SaveProjectEntryBookmark($project_entry_id: Int!) {
+		SaveProjectEntryBookmark(project_entry_id: $project_entry_id) {
+		  uuid
 		}
+	  }
 	`
 
     const response: Promise<OperationResult<{
-      SaveProjectEntryBookmark: any
+      SaveProjectEntryBookmark: ProjectEntryBookmark
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public SaveProjectEntryComment = (data: MutationSaveProjectEntryCommentArgs) => {
+
+  public SaveProjectEntryComment = (
+    data: MutationSaveProjectEntryCommentArgs,
+  ) => {
     const requestData = `
-		mutation SaveProjectEntryComment( 
-				$content: String!, 
-				$is_reply: Boolean!, 
-				$project_entry_id: Int! 
-				$replied_comment_id: Int!,  
-			) {
-			SaveProjectEntryComment( 
-				content: $content, 
-				is_reply: $is_reply, 
-				project_entry_id: $project_entry_id,  
-				replied_comment_id: $replied_comment_id,  
-			) {
-				description
+	mutation SaveProjectEntryComment($content: String!, $is_reply: Boolean!, $project_entry_id: Int!, $replied_comment_id: Int!) {
+		SaveProjectEntryComment(
+		  content: $content
+		  is_reply: $is_reply
+		  project_entry_id: $project_entry_id
+		  replied_comment_id: $replied_comment_id
+		) {
+		  uuid
+		  user {
+			name
+			username
+			profile {
+			  photo_url
 			}
+		  }
+		  is_reply
+		  content
+		  replied_comment_id
+		  created_at
 		}
+	  }
 	`
 
     const response: Promise<OperationResult<{
-      SaveProjectEntryComment: any
+      SaveProjectEntryComment: ProjectEntryComment
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public SaveProjectEntryLike = (data: MutationSaveProjectEntryLikeArgs) => {
     const requestData = `
 		mutation SaveProjectEntryLike( 
@@ -306,7 +799,7 @@ export default class AuthApi extends BaseApiService {
 			SaveProjectEntryLike(  
 				project_entry_id: $project_entry_id,  
 			) {
-				project_entry_id
+				uuid
 			}
 		}
 	`
@@ -317,5 +810,4 @@ export default class AuthApi extends BaseApiService {
 
     return response
   }
- 
 }

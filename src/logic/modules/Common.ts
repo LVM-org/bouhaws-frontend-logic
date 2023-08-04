@@ -241,10 +241,10 @@ export default class Common {
     try {
       fetchRules?.forEach((rule) => {
         if (rule.requireAuth) {
-          // if (!Logic.Auth.AuthUser) {
-          //   this.GoToRoute('/auth/login')
-          //   throw BreakException
-          // }
+          if (!Logic.Auth.AuthUser) {
+            this.GoToRoute('/auth/login')
+            throw BreakException
+          }
         }
         // @ts-ignore
         const domain = Logic[rule.domain]

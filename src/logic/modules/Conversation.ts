@@ -1,72 +1,105 @@
 import { $api } from '../../services'
 import { CombinedError } from 'urql'
 import Common from './Common'
-import  {
-  MutationJoinConversationArgs, 
+import {
+  MutationJoinConversationArgs,
   MutationSaveConversationMessageArgs,
-  MutationStartConversationArgs
-} from '../../gql/graphql'  
+  MutationStartConversationArgs,
+  Conversation as ConversationModel,
+  ConversationMessagePaginator,
+} from '../../gql/graphql'
 import { Logic } from '..'
 
-export default class Auth extends Common {
+export default class Conversation extends Common {
   constructor() {
-    super() 
+    super()
   }
-  
-  // 
-  public JoinConversationPayload: MutationJoinConversationArgs = { 
-    associated_users_uuid: '' || undefined,
-    conversation_uuid: '', 
-  }  
-  public SaveConversationMessagePayload: MutationSaveConversationMessageArgs = { 
-    content: '', 
-    conversation_id: 0, 
-    media: '', 
-    type: '',  
-  }  
-  public StartConversationPayload: MutationStartConversationArgs = { 
-    associated_users_uuid: '' || undefined
-  }    
- 
-  // 
-  public JoinConversation = () => { 
-    Logic.Common.showLoader({ loading: true, show: true, useModal: true })
+
+  // Base variables
+  public ManyConversations: ConversationModel[]
+  public EachConversation: ConversationModel
+  public ConversationMessages: ConversationMessagePaginator
+
+  // Mutation payloads
+  public JoinConversationPayload: MutationJoinConversationArgs
+  public SaveConversationMessagePayload: MutationSaveConversationMessageArgs
+  public StartConversationPayload: MutationStartConversationArgs
+
+  // Queries
+  public GetUserConversation = () => {
+    return $api.conversation.GetUserConversations().then((response) => {
+      this.ManyConversations = response.data?.AuthUser.conversations
+      return response.data?.AuthUser.conversations
+    })
+  }
+
+  public GetConversation = (uuid: string) => {
+    return $api.conversation.GetConversation(uuid).then((response) => {
+      this.EachConversation = response.data?.Conversation
+      return response.data.Conversation
+    })
+  }
+
+  public GetConversationMessages = (
+    id: string,
+    page: number,
+    first: number,
+  ) => {
+    return $api.conversation
+      .GetConversationMessages(page, first, id)
+      .then((response) => {
+        this.ConversationMessages = response.data?.ConversationMessages
+        return response.data.ConversationMessages
+      })
+  }
+
+  // Mutations
+  public JoinConversation = () => {
+    Logic.Common.showLoader({
+      loading: true,
+      show: true,
+      useModal: true,
+    })
     $api.conversation
       .JoinConversation(this.JoinConversationPayload)
-      .then((response) => { 
-        console.log("JoinConversation response:::", response)
-        Logic.Common.hideLoader() 
+      .then((response) => {
+        this.EachConversation = response.data.JoinConversation
+        Logic.Common.hideLoader()
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
-      }) 
+      })
   }
- 
-  // 
-  public SaveConversationMessage = () => { 
-    Logic.Common.showLoader({ loading: true, show: true, useModal: true })
+
+  public SaveConversationMessage = () => {
+    Logic.Common.showLoader({
+      loading: true,
+      show: true,
+      useModal: true,
+    })
     $api.conversation
       .SaveConversationMessage(this.SaveConversationMessagePayload)
-      .then((response) => { 
-        console.log("SaveConversationMessage response:::", response)
-        Logic.Common.hideLoader() 
+      .then((response) => {
+        this.ConversationMessages.data.push(
+          response.data.SaveConversationMessage,
+        )
+        Logic.Common.hideLoader()
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
-      }) 
+      })
   }
- 
-  // 
-  public StartConversation = () => { 
+
+  public StartConversation = () => {
     Logic.Common.showLoader({ loading: true, show: true, useModal: true })
     $api.conversation
       .StartConversation(this.StartConversationPayload)
-      .then((response) => { 
-        console.log("StartConversation response:::", response)
-        Logic.Common.hideLoader() 
+      .then((response) => {
+        console.log('StartConversation response:::', response)
+        Logic.Common.hideLoader()
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
-      }) 
+      })
   }
 }

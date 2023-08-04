@@ -99,6 +99,15 @@ export type ConversationMessage = {
   uuid: Scalars['String'];
 };
 
+/** A paginated list of ConversationMessage items. */
+export type ConversationMessagePaginator = {
+  __typename?: 'ConversationMessagePaginator';
+  /** A list of ConversationMessage items. */
+  data: Array<ConversationMessage>;
+  /** Pagination information about the list of items. */
+  paginatorInfo: PaginatorInfo;
+};
+
 /** A single course */
 export type Course = {
   __typename?: 'Course';
@@ -176,7 +185,7 @@ export type Mutation = {
   /** Update user password */
   UpdatePassword: Scalars['Boolean'];
   /** Update authenticated user profile */
-  UpdateProfile: BouhawsClass;
+  UpdateProfile: Profile;
   /** Update a project */
   UpdateProject: Project;
   /** Update a project category */
@@ -348,6 +357,7 @@ export type MutationUpdateProjectArgs = {
   photo_url?: InputMaybe<Scalars['Upload']>;
   prize?: InputMaybe<Scalars['String']>;
   project_category_id?: InputMaybe<Scalars['Int']>;
+  project_uuid: Scalars['String'];
   requirements?: InputMaybe<Scalars['String']>;
   status?: InputMaybe<Scalars['String']>;
   title?: InputMaybe<Scalars['String']>;
@@ -671,6 +681,8 @@ export type Query = {
   BouhawsClass?: Maybe<BouhawsClass>;
   /** Get a single conversation */
   Conversation?: Maybe<Conversation>;
+  /** Get messages for a particular conversations */
+  ConversationMessages: ConversationMessagePaginator;
   /** Get a single course */
   Course?: Maybe<Course>;
   /** Get many classess */
@@ -703,6 +715,13 @@ export type QueryBouhawsClassArgs = {
 
 export type QueryConversationArgs = {
   uuid: Scalars['String'];
+};
+
+
+export type QueryConversationMessagesArgs = {
+  conversation_id: Scalars['String'];
+  first: Scalars['Int'];
+  page?: InputMaybe<Scalars['Int']>;
 };
 
 

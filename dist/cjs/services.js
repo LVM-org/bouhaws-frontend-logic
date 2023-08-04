@@ -2,7 +2,7 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var services = require('./index-3ff30d4d.js');
+var services = require('./index-38a74b34.js');
 require('vue');
 require('./constants-e53b255a.js');
 

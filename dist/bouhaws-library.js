@@ -14095,12 +14095,12 @@ spurious results.`);
               });
               Promise.all(allActions).then(() => {
                   this.hideLoader();
-                  return next();
+                  return next ? next() : true;
               });
           }
           else {
               this.hideLoader();
-              return next();
+              return next ? next() : true;
           }
       };
   }

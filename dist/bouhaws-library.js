@@ -1,4 +1,4 @@
-/*! Squareroof Frontend Library v0.0.1 */
+/*! Squareroof Frontend Library v0.0.2 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('vue')) :

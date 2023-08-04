@@ -1,4 +1,4 @@
-/*! Squareroof Frontend Library v0.0.1 */
+/*! Squareroof Frontend Library v0.0.2 */
 
 import { reactive } from 'vue';
 

@@ -7,7 +7,6 @@
     "build:vue": "rollup -c && rollup -c --environment MINIFY",
     "build:vue:watch": "rollup -c --watch",
     "build": "rimraf dist && npm run build:vue",
-    "publish": "npm run build && npm publish",
     "watch": "npm run build:vue:watch",
     "codegen": "graphql-codegen"
   },

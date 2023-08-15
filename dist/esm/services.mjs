@@ -1,3 +1,15 @@
-export { $ as $api } from './index-bed67f06.mjs';
+export { $ as $api } from './index-8aad0c9f.mjs';
 import 'vue';
+import 'util';
+import 'crypto';
+import 'stream';
+import 'buffer';
+import 'events';
+import 'assert';
+import 'net';
+import 'tls';
+import 'child_process';
+import 'fs';
+import 'http';
+import 'https';
 import './constants-55955de6.mjs';

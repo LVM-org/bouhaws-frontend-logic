@@ -10,8 +10,9 @@ import {
 import { Logic } from '..'
 import { FetchRule, LoaderSetup } from '../types/common'
 import Echo from 'laravel-echo'
+import * as pusher from 'pusher-js'
 // @ts-ignore
-window.Pusher = require('pusher-js')
+window.Pusher = pusher
 
 export default class Common {
   public router: Router | undefined = undefined

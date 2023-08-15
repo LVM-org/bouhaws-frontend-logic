@@ -1,4 +1,4 @@
-/*! Squareroof Frontend Library v0.0.6 */
+/*! Squareroof Frontend Library v0.0.7 */
 
 import { reactive } from 'vue';
 import require$$0 from 'util';
@@ -24674,7 +24674,7 @@ class Auth extends Common {
                 this.SetUpAuth(response.data.SignIn);
                 this.AuthUser = response.data?.SignIn.user;
                 this.GetAuthUser().then(() => {
-                    Logic.Common.GoToRoute('/');
+                    location.href = '/';
                     Logic.Common.hideLoader();
                 });
                 return response.data.SignIn;

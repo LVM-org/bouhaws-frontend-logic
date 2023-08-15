@@ -2,7 +2,7 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var services = require('./index-e36990e1.js');
+var services = require('./index-8449d44b.js');
 require('vue');
 require('util');
 require('crypto');

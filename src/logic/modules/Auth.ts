@@ -100,7 +100,7 @@ export default class Auth extends Common {
           this.AuthUser = response.data?.SignIn.user
 
           this.GetAuthUser().then(() => {
-            Logic.Common.GoToRoute('/')
+            location.href = '/'
             Logic.Common.hideLoader()
           })
           return response.data.SignIn

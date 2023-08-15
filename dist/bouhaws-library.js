@@ -1,4 +1,4 @@
-/*! Squareroof Frontend Library v0.0.6 */
+/*! Squareroof Frontend Library v0.0.7 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('vue'), require('util'), require('crypto'), require('stream'), require('buffer'), require('events'), require('assert'), require('net'), require('tls'), require('child_process'), require('fs'), require('http'), require('https')) :
@@ -24681,7 +24681,7 @@
                   this.SetUpAuth(response.data.SignIn);
                   this.AuthUser = response.data?.SignIn.user;
                   this.GetAuthUser().then(() => {
-                      Logic.Common.GoToRoute('/');
+                      location.href = '/';
                       Logic.Common.hideLoader();
                   });
                   return response.data.SignIn;

@@ -69,10 +69,22 @@ export default class AuthApi extends BaseApiService {
 		SignIn(email: $email, password: $password) {
 		  token
 		  user {
-			uuid
-			name
 			id
+			name
+			username
+			uuid
 			email_verified_at
+			wallet {
+				credited_amount
+				debited_amount
+				total_balance
+				updated_at
+			}
+			profile {
+				photo_url
+				points
+				type
+			}
 		  }
 		}
 	  }

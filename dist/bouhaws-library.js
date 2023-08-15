@@ -1,4 +1,4 @@
-/*! Squareroof Frontend Library v0.0.5 */
+/*! Squareroof Frontend Library v0.0.6 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('vue'), require('util'), require('crypto'), require('stream'), require('buffer'), require('events'), require('assert'), require('net'), require('tls'), require('child_process'), require('fs'), require('http'), require('https')) :
@@ -5142,7 +5142,7 @@
                       Logic.Common.GoToRoute('/auth/passcode');
                   }
                   else {
-                      Logic.Common.GoToRoute('/auth/login');
+                      location.href = '/auth/login';
                   }
                   Logic.Common.hideLoader();
                   return;
@@ -5199,10 +5199,22 @@
 		SignIn(email: $email, password: $password) {
 		  token
 		  user {
-			uuid
-			name
 			id
+			name
+			username
+			uuid
 			email_verified_at
+			wallet {
+				credited_amount
+				debited_amount
+				total_balance
+				updated_at
+			}
+			profile {
+				photo_url
+				points
+				type
+			}
 		  }
 		}
 	  }
@@ -24305,12 +24317,16 @@
       route = undefined;
       apiUrl = undefined;
       watchInterval = undefined;
+      NavigateTo;
       loadingState = false;
       SetRouter = (router) => {
           this.router = router;
       };
       SetRoute = (route) => {
           this.route = route;
+      };
+      SetNavigator = (navigator) => {
+          this.NavigateTo = navigator;
       };
       loaderSetup = vue.reactive({
           show: false,
@@ -24337,10 +24353,10 @@
               key: pusherKey,
               cluster: 'mt1',
               wsHost: `${websocketHost}`,
-              encrypted: false,
+              encrypted: true,
               wsPort: 6001,
               disableStats: true,
-              forceTLS: false,
+              forceTLS: true,
               enabledTransports: ['ws', 'wss'],
               disabledTransports: ['sockjs', 'xhr_polling', 'xhr_streaming'],
               auth: {
@@ -24607,15 +24623,17 @@
       VerifyEmailOtpPayload;
       // Queries
       GetAuthUser = () => {
-          $api.auth.GetAuthUser().then((response) => {
+          return $api.auth.GetAuthUser().then((response) => {
               if (response.data?.AuthUser) {
                   this.AuthUser = response.data?.AuthUser;
                   localStorage.setItem('auth_user', JSON.stringify(this.AuthUser));
+                  localStorage.setItem('account_type', this.AuthUser.profile.type);
               }
               else {
                   localStorage.removeItem('auth_user');
                   Logic.Common.GoToRoute('/auth/login');
               }
+              return response.data;
           });
       };
       setDefaultAuth = () => {
@@ -24662,8 +24680,10 @@
                   .then((response) => {
                   this.SetUpAuth(response.data.SignIn);
                   this.AuthUser = response.data?.SignIn.user;
-                  Logic.Common.hideLoader();
-                  Logic.Common.GoToRoute('/');
+                  this.GetAuthUser().then(() => {
+                      Logic.Common.GoToRoute('/');
+                      Logic.Common.hideLoader();
+                  });
                   return response.data.SignIn;
               })
                   .catch((error) => {

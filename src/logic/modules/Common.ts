@@ -22,6 +22,8 @@ export default class Common {
 
   public watchInterval: number | undefined = undefined
 
+  public NavigateTo: any
+
   public loadingState = false
 
   public SetRouter = (router: Router) => {
@@ -30,6 +32,10 @@ export default class Common {
 
   public SetRoute = (route: RouteLocationNormalized) => {
     this.route = route
+  }
+
+  public SetNavigator = (navigator: any) => {
+    this.NavigateTo = navigator
   }
 
   public loaderSetup: LoaderSetup = reactive({
@@ -64,10 +70,10 @@ export default class Common {
       key: pusherKey,
       cluster: 'mt1',
       wsHost: `${websocketHost}`, // Your domain
-      encrypted: false,
+      encrypted: true,
       wsPort: 6001, // Your http port
       disableStats: true, // Change this to your liking this disables statistics
-      forceTLS: false,
+      forceTLS: true,
       enabledTransports: ['ws', 'wss'],
       disabledTransports: ['sockjs', 'xhr_polling', 'xhr_streaming'], // Can be removed
       auth: {

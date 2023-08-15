@@ -35,14 +35,16 @@ export default class Auth extends Common {
 
   // Queries
   public GetAuthUser = () => {
-    $api.auth.GetAuthUser().then((response) => {
+    return $api.auth.GetAuthUser().then((response) => {
       if (response.data?.AuthUser) {
         this.AuthUser = response.data?.AuthUser
         localStorage.setItem('auth_user', JSON.stringify(this.AuthUser))
+        localStorage.setItem('account_type', this.AuthUser.profile.type)
       } else {
         localStorage.removeItem('auth_user')
         Logic.Common.GoToRoute('/auth/login')
       }
+      return response.data
     })
   }
 
@@ -96,8 +98,11 @@ export default class Auth extends Common {
         .then((response) => {
           this.SetUpAuth(response.data.SignIn)
           this.AuthUser = response.data?.SignIn.user
-          Logic.Common.hideLoader()
-          Logic.Common.GoToRoute('/')
+
+          this.GetAuthUser().then(() => {
+            Logic.Common.GoToRoute('/')
+            Logic.Common.hideLoader()
+          })
           return response.data.SignIn
         })
         .catch((error: CombinedError) => {

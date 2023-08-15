@@ -146,7 +146,7 @@ export class BaseApiService {
         if (localStorage.getItem('passcode')) {
           Logic.Common.GoToRoute('/auth/passcode')
         } else {
-          Logic.Common.GoToRoute('/auth/login')
+          location.href = '/auth/login'
         }
         Logic.Common.hideLoader()
         return

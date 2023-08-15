@@ -1,4 +1,4 @@
-/*! Squareroof Frontend Library v0.0.4 */
+/*! Squareroof Frontend Library v0.0.5 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('vue'), require('util'), require('crypto'), require('stream'), require('buffer'), require('events'), require('assert'), require('net'), require('tls'), require('child_process'), require('fs'), require('http'), require('https')) :
@@ -7,21 +7,6 @@
 })(this, (function (exports, vue, require$$0, require$$1, require$$2, require$$4, require$$5, require$$6, require$$7, require$$8, require$$9, require$$10, require$$11, require$$12) { 'use strict';
 
   function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-  function _mergeNamespaces(n, m) {
-    m.forEach(function (e) {
-      e && typeof e !== 'string' && !Array.isArray(e) && Object.keys(e).forEach(function (k) {
-        if (k !== 'default' && !(k in n)) {
-          var d = Object.getOwnPropertyDescriptor(e, k);
-          Object.defineProperty(n, k, d.get ? d : {
-            enumerable: true,
-            get: function () { return e[k]; }
-          });
-        }
-      });
-    });
-    return Object.freeze(n);
-  }
 
   var require$$0__default = /*#__PURE__*/_interopDefaultLegacy(require$$0);
   var require$$1__default = /*#__PURE__*/_interopDefaultLegacy(require$$1);
@@ -13129,7 +13114,7 @@
     return Echo;
   }();
 
-  var pusher$2 = {exports: {}};
+  var pusher$1 = {exports: {}};
 
   var url = {};
 
@@ -24309,17 +24294,12 @@
   	  /***/
   	}
   	/******/]);
-  } (pusher$2));
+  } (pusher$1));
 
-  var pusher = /*@__PURE__*/getDefaultExportFromCjs(pusher$2.exports);
-
-  var pusher$1 = /*#__PURE__*/_mergeNamespaces({
-    __proto__: null,
-    'default': pusher
-  }, [pusher$2.exports]);
+  var pusher = /*@__PURE__*/getDefaultExportFromCjs(pusher$1.exports);
 
   // @ts-ignore
-  window.Pusher = pusher$1;
+  window.Pusher = pusher;
   class Common {
       router = undefined;
       route = undefined;

@@ -10,7 +10,7 @@ import {
 import { Logic } from '..'
 import { FetchRule, LoaderSetup } from '../types/common'
 import Echo from 'laravel-echo'
-import * as pusher from 'pusher-js'
+import pusher from 'pusher-js'
 // @ts-ignore
 window.Pusher = pusher
 

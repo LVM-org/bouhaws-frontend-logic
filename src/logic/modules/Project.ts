@@ -20,6 +20,7 @@ import {
   ProjectCategory,
   ProjectEntryPaginator,
   ProjectEntry,
+  ProjectMilestone,
 } from '../../gql/graphql'
 import { Logic } from '..'
 
@@ -51,7 +52,13 @@ export default class Project extends Common {
   public UpdateProjectEntryPayload: MutationUpdateProjectEntryArgs
 
   // Queries
-  public GetProjects = (page: number, first: number) => {
+  public GetProjects = (
+    page: number,
+    first: number,
+    whereQuery = '',
+    hasUser = '',
+    hasCategory = '',
+  ) => {
     return $api.project
       .GetProjects(
         page,
@@ -60,17 +67,33 @@ export default class Project extends Common {
       column: CREATED_AT,
       order: DESC
     }`,
+        whereQuery,
+        hasUser,
+        hasCategory,
       )
       .then((response) => {
-        this.ManyProjects = response.data?.Projects
-        return response.data?.Projects
+        this.ManyProjects = response.data?.GetProjects
+        return response.data?.GetProjects
       })
   }
 
   public GetProject = (uuid: string) => {
-    return $api.project.GetProject(uuid).then((response) => {
-      this.EachProject = response.data?.Project
-    })
+    if (uuid) {
+      return $api.project
+        .GetProject(uuid, Logic.Auth.AuthUser.uuid)
+        .then((response) => {
+          this.EachProject = response.data?.Project
+          if (response.data.GetProjectEntries.data.length) {
+            this.EachProjectEntry = response.data.GetProjectEntries.data[0]
+          } else {
+            this.EachProjectEntry = undefined
+          }
+        })
+    } else {
+      return new Promise((resolve) => {
+        resolve('')
+      })
+    }
   }
 
   public GetProjectCategories = (page: number, first: number) => {
@@ -84,8 +107,8 @@ export default class Project extends Common {
     }`,
       )
       .then((response) => {
-        this.ManyProjectCategories = response.data?.ProjectCategories
-        return response.data?.ProjectCategories
+        this.ManyProjectCategories = response.data?.GetProjectCategories
+        return response.data?.GetProjectCategories
       })
   }
 
@@ -95,7 +118,11 @@ export default class Project extends Common {
     })
   }
 
-  public GetProjectEntries = (page: number, first: number) => {
+  public GetProjectEntries = (
+    page: number,
+    first: number,
+    whereQuery: string = '',
+  ) => {
     return $api.project
       .GetProjectEntries(
         page,
@@ -104,6 +131,7 @@ export default class Project extends Common {
       column: CREATED_AT,
       order: DESC
     }`,
+        whereQuery,
       )
       .then((response) => {
         this.ManyProjectEntries = response.data?.GetProjectEntries
@@ -119,7 +147,7 @@ export default class Project extends Common {
 
   // Mutation
   public UploadImage = (file: Blob) => {
-    $api.upload
+    return $api.upload
       .UploadImage({
         image: file,
       })
@@ -131,14 +159,19 @@ export default class Project extends Common {
   public CreateProject = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .CreateProject(this.CreateProjectPayload)
       .then((response) => {
         this.EachProject = response.data.CreateProject
-        Logic.Common.hideLoader()
+
+        Logic.Common.showLoader({
+          loading: false,
+          show: true,
+          message: `Project created successfully`,
+          type: 'success',
+        })
+        return response.data.CreateProject
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -148,14 +181,13 @@ export default class Project extends Common {
   public CreateProjectCategory = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .CreateProjectCategory(this.CreateProjectCategoryPayload)
       .then((response) => {
         this.EachProjectCategory = response.data.CreateProjectCategory
         Logic.Common.hideLoader()
+        return response.data.CreateProjectCategory
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -165,14 +197,13 @@ export default class Project extends Common {
   public CreateProjectMilestone = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .CreateProjectMilestone(this.CreateProjectMilestonePayload)
       .then((response) => {
         this.EachProject.milestones.push(response.data.CreateProjectMilestone)
         Logic.Common.hideLoader()
+        return response.data.CreateProjectMilestone
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -182,14 +213,13 @@ export default class Project extends Common {
   public UpdateProject = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .UpdateProject(this.UpdateProjectPayload)
       .then((response) => {
         this.EachProject = response.data.UpdateProject
         Logic.Common.hideLoader()
+        return response.data.UpdateProject
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -199,10 +229,8 @@ export default class Project extends Common {
   public UpdateProjectMilestone = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .UpdateProjectMilestone(this.UpdateProjectMilestonePayload)
       .then((response) => {
         Logic.Common.hideLoader()
@@ -216,10 +244,8 @@ export default class Project extends Common {
   public UpdateProjectCategory = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .UpdateProjectCategory(this.UpdateProjectCategoryPayload)
       .then((response) => {
         Logic.Common.hideLoader()
@@ -233,10 +259,8 @@ export default class Project extends Common {
   public DeleteProjectMilestone = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .DeleteProjectMilestone(this.DeleteProjectMilestonePayload)
       .then((response) => {
         Logic.Common.hideLoader()
@@ -250,14 +274,13 @@ export default class Project extends Common {
   public JoinProject = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .JoinProject(this.JoinProjectPayload)
       .then((response) => {
         this.EachProjectEntry = response.data.JoinProject
         Logic.Common.hideLoader()
+        return response.data.JoinProject
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -267,10 +290,8 @@ export default class Project extends Common {
   public SaveProjectEntryBookmark = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .SaveProjectEntryBookmark(this.SaveProjectEntryBookmarkPayload)
       .then((response) => {
         Logic.Common.hideLoader()
@@ -284,10 +305,8 @@ export default class Project extends Common {
   public SaveProjectEntryComment = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .SaveProjectEntryComment(this.SaveProjectEntryCommentPayload)
       .then((response) => {
         Logic.Common.hideLoader()
@@ -301,10 +320,8 @@ export default class Project extends Common {
   public SaveProjectEntryLike = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .SaveProjectEntryLike(this.SaveProjectEntryLikePayload)
       .then((response) => {
         Logic.Common.hideLoader()
@@ -318,10 +335,8 @@ export default class Project extends Common {
   public UpdateProjectEntry = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.project
+    return $api.project
       .UpdateProjectEntry(this.UpdateProjectEntryPayload)
       .then((response) => {
         Logic.Common.hideLoader()

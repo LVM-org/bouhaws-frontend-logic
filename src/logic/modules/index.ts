@@ -5,6 +5,7 @@ import Conversation from './Conversation'
 import Project from './Project'
 import Course from './Course'
 import BouhawsClass from './Class'
+import Profile from './Profile'
 
 export const Logic = {
   Auth: new Auth(),
@@ -14,4 +15,5 @@ export const Logic = {
   Project: new Project(),
   Course: new Course(),
   Class: new BouhawsClass(),
+  Profile: new Profile(),
 }

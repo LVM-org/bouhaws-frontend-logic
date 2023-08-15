@@ -9,6 +9,10 @@ import {
 } from 'vue-router'
 import { Logic } from '..'
 import { FetchRule, LoaderSetup } from '../types/common'
+import Echo from 'laravel-echo'
+// @ts-ignore
+window.Pusher = require('pusher-js')
+
 export default class Common {
   public router: Router | undefined = undefined
   public route: RouteLocationNormalized | undefined = undefined
@@ -47,10 +51,36 @@ export default class Common {
     this.router?.push(path)
   }
 
+  public connectToWebsocket = (
+    pusherKey: string,
+    websocketUrl: string,
+    websocketHost: string,
+  ) => {
+    // If using http connection use this
+    // @ts-ignore
+    window.Echo = new Echo({
+      broadcaster: 'pusher',
+      key: pusherKey,
+      cluster: 'mt1',
+      wsHost: `${websocketHost}`, // Your domain
+      encrypted: false,
+      wsPort: 6001, // Your http port
+      disableStats: true, // Change this to your liking this disables statistics
+      forceTLS: false,
+      enabledTransports: ['ws', 'wss'],
+      disabledTransports: ['sockjs', 'xhr_polling', 'xhr_streaming'], // Can be removed
+      auth: {
+        headers: {
+          authorization: `Bearer ${Logic.Auth.AccessToken}`,
+        },
+      },
+      authEndpoint: `${websocketUrl}/graphql/subscriptions/auth`,
+    })
+  }
+
   public showError = (
     error: CombinedError,
     title: string,
-    icon: 'error-alert' | 'error-kite' | 'success-kite' | 'success-thumb',
     fallbackMsg = '',
   ) => {
     const message = error.graphQLErrors[0].message
@@ -60,8 +90,8 @@ export default class Common {
       loading: false,
       hasError: true,
       message: message != 'null' ? message : fallbackMsg,
-      icon,
       title,
+      type: 'error',
     })
   }
 
@@ -77,14 +107,16 @@ export default class Common {
     this.loaderSetup = loaderSetup
   }
 
+  public showAlert = (loaderSetup: LoaderSetup) => {
+    this.loaderSetup = loaderSetup
+  }
+
   public goBack = () => {
     window.history.length > 1 ? this.router?.go(-1) : this.router?.push('/')
   }
 
   public hideLoader = () => {
     const Loader: LoaderSetup = {
-      show: false,
-      useModal: false,
       loading: false,
     }
     this.loaderSetup = Loader
@@ -220,49 +252,79 @@ export default class Common {
     return oldData
   }
 
+  public makeid = (length: number) => {
+    let result = ''
+    let characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let charactersLength = characters.length
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength))
+    }
+    return result
+  }
+
   public preFetchRouteData = (
-    routeTo: RouteLocationNormalized,
-    _routeFrom: RouteLocationNormalized,
+    routeTo: RouteLocationNormalized | any,
+    _routeFrom: RouteLocationNormalized | any,
     next: any,
   ) => {
-    const allActions: Promise<any>[] = []
-    if (this.loaderSetup.loading) {
-      return
-    }
+    return new Promise((resolve) => {
+      const allActions: Promise<any>[] = []
+      if (this.loaderSetup.loading) {
+        resolve('')
+      }
 
-    const routeMiddlewares: any = routeTo.meta.middlewares
+      const routeMiddlewares: any = routeTo.meta.middlewares
 
-    // handle fetchRules
+      // handle fetchRules
 
-    const fetchRules: FetchRule[] = routeMiddlewares.fetchRules
+      const fetchRules: FetchRule[] = routeMiddlewares.fetchRules
 
-    let BreakException = {}
+      let BreakException = {}
 
-    try {
-      fetchRules?.forEach((rule) => {
-        if (rule.requireAuth) {
-          if (!Logic.Auth.AuthUser) {
-            this.GoToRoute('/auth/login')
-            throw BreakException
+      try {
+        fetchRules?.forEach((rule) => {
+          if (rule.requireAuth) {
+            if (!Logic.Auth.AuthUser) {
+              this.GoToRoute('/auth/login')
+              throw BreakException
+            }
           }
-        }
-        // @ts-ignore
-        const domain = Logic[rule.domain]
+          // @ts-ignore
+          const domain = Logic[rule.domain]
 
-        if (rule.alignCurrency) {
-          if (rule.params[0] != this.globalParameters.currency) {
-            rule.params[0] = this.globalParameters.currency
-            rule.ignoreProperty = true
+          if (rule.alignCurrency) {
+            if (rule.params[0] != this.globalParameters.currency) {
+              rule.params[0] = this.globalParameters.currency
+              rule.ignoreProperty = true
+            }
           }
-        }
 
-        if (
-          domain[rule.property] == undefined ||
-          (typeof rule.ignoreProperty == 'function' && rule.ignoreProperty()) ||
-          rule.ignoreProperty
-        ) {
-          allActions.push(
-            new Promise((resolve) => {
+          if (
+            domain[rule.property] == undefined ||
+            (typeof rule.ignoreProperty == 'function' &&
+              rule.ignoreProperty()) ||
+            rule.ignoreProperty
+          ) {
+            allActions.push(
+              new Promise((resolve) => {
+                if (rule.useRouteId) {
+                  rule.params.unshift(routeTo.params.id.toString())
+                }
+                if (rule.useRouteQuery) {
+                  rule.queries?.forEach((item) => {
+                    rule.params.unshift(routeTo.query[item])
+                  })
+                }
+                const request = domain[rule.method](...rule.params)
+                request?.then((value: any) => {
+                  resolve(value)
+                })
+              }),
+            )
+          } else {
+            if (rule.silentUpdate) {
+              // run in silence
               if (rule.useRouteId) {
                 rule.params.unshift(routeTo.params.id.toString())
               }
@@ -271,37 +333,33 @@ export default class Common {
                   rule.params.unshift(routeTo.query[item])
                 })
               }
-              const request = domain[rule.method](...rule.params)
-              request?.then((value: any) => {
-                resolve(value)
-              })
-            }),
-          )
-        }
-      })
-    } catch (error) {
-      if (error !== BreakException) throw error
-    }
+              rule.params = [...new Set(rule.params)]
+              domain[rule.method](...rule.params)
+            }
+          }
+        })
+      } catch (error) {
+        if (error !== BreakException) throw error
+      }
 
-    // save user activities
-    if (routeMiddlewares.tracking_data) {
-      const trackingData: any = routeMiddlewares.tracking_data
-    }
+      // save user activities
+      if (routeMiddlewares.tracking_data) {
+        const trackingData: any = routeMiddlewares.tracking_data
+      }
 
-    if (allActions.length > 0) {
-      this.showLoader({
-        show: true,
-        useModal: true,
-        loading: true,
-      })
+      if (allActions.length > 0) {
+        this.showLoader({
+          loading: true,
+        })
 
-      Promise.all(allActions).then(() => {
+        Promise.all(allActions).then(() => {
+          this.hideLoader()
+          resolve('')
+        })
+      } else {
         this.hideLoader()
-        return next ? next() : true
-      })
-    } else {
-      this.hideLoader()
-      return next ? next() : true
-    }
+        resolve('')
+      }
+    })
   }
 }

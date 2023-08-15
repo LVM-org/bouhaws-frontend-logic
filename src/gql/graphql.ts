@@ -40,6 +40,8 @@ export type BouhawsClass = {
   id: Scalars['ID'];
   /** All projects attached to a class */
   projects?: Maybe<Array<Project>>;
+  /** All students attached to a class */
+  students?: Maybe<Array<User>>;
   /** The class title */
   title: Scalars['String'];
   /** When the class was last updated. */
@@ -68,6 +70,10 @@ export type Conversation = {
   created_at: Scalars['DateTime'];
   /** Unique primary key. */
   id: Scalars['ID'];
+  /** The last massage */
+  last_message?: Maybe<ConversationMessage>;
+  /** Other user data */
+  other_member?: Maybe<User>;
   /** When the conversation was last updated. */
   updated_at: Scalars['DateTime'];
   /** The user that started the conversation */
@@ -138,6 +144,17 @@ export type CoursePaginator = {
   data: Array<Course>;
   /** Pagination information about the list of items. */
   paginatorInfo: PaginatorInfo;
+};
+
+export type EntryImage = {
+  milestone: Scalars['String'];
+  url: Scalars['String'];
+};
+
+export type EntryImageType = {
+  __typename?: 'EntryImageType';
+  milestone: Scalars['String'];
+  url: Scalars['String'];
 };
 
 export type Mutation = {
@@ -216,6 +233,7 @@ export type MutationCreateCourseArgs = {
 
 
 export type MutationCreateProjectArgs = {
+  bouhaws_class_id?: InputMaybe<Scalars['Int']>;
   description: Scalars['String'];
   end_date: Scalars['String'];
   photo_url?: InputMaybe<Scalars['Upload']>;
@@ -254,6 +272,8 @@ export type MutationJoinConversationArgs = {
 
 export type MutationJoinProjectArgs = {
   description: Scalars['String'];
+  images?: InputMaybe<Array<EntryImage>>;
+  project_category_id?: InputMaybe<Scalars['String']>;
   project_id: Scalars['Int'];
   title: Scalars['String'];
 };
@@ -304,6 +324,7 @@ export type MutationSignInArgs = {
 export type MutationSignUpArgs = {
   email: Scalars['String'];
   password: Scalars['String'];
+  type: Scalars['String'];
   username: Scalars['String'];
 };
 
@@ -352,6 +373,7 @@ export type MutationUpdateProfileArgs = {
 
 
 export type MutationUpdateProjectArgs = {
+  bouhaws_class_id?: InputMaybe<Scalars['Int']>;
   description?: InputMaybe<Scalars['String']>;
   end_date?: InputMaybe<Scalars['String']>;
   photo_url?: InputMaybe<Scalars['Upload']>;
@@ -374,7 +396,7 @@ export type MutationUpdateProjectCategoryArgs = {
 
 export type MutationUpdateProjectEntryArgs = {
   description?: InputMaybe<Scalars['String']>;
-  images?: InputMaybe<Array<Scalars['String']>>;
+  images?: InputMaybe<Array<EntryImage>>;
   project_entry_uuid: Scalars['String'];
   status?: InputMaybe<Scalars['String']>;
   title?: InputMaybe<Scalars['String']>;
@@ -475,6 +497,8 @@ export type Profile = {
   type: Scalars['String'];
   /** When the profile was last updated. */
   updated_at: Scalars['DateTime'];
+  /** The attached user */
+  user: User;
   /** Unique UUID */
   uuid: Scalars['String'];
   /** The user year of enrollment */
@@ -484,6 +508,8 @@ export type Profile = {
 /** A new project */
 export type Project = {
   __typename?: 'Project';
+  /** The project class if it is not a challenge */
+  bouhawsclass?: Maybe<BouhawsClass>;
   /** The project category */
   category: ProjectCategory;
   /** When the project was created. */
@@ -516,6 +542,8 @@ export type Project = {
   updated_at: Scalars['DateTime'];
   /** The project owner */
   user: User;
+  /** The current user entry */
+  user_entry?: Maybe<ProjectEntry>;
   /** Unique UUID */
   uuid: Scalars['String'];
 };
@@ -549,6 +577,8 @@ export type ProjectEntry = {
   __typename?: 'ProjectEntry';
   /** The entry bookmarks */
   bookmarks?: Maybe<Array<ProjectEntryBookmark>>;
+  /** The project category */
+  category?: Maybe<ProjectCategory>;
   /** The entry comments */
   comments?: Maybe<Array<ProjectEntryComment>>;
   /** When the project entry was created. */
@@ -560,11 +590,13 @@ export type ProjectEntry = {
   /** Unique primary key. */
   id: Scalars['ID'];
   /** The entry images. This is an array of all the images_cdn_url */
-  images?: Maybe<Array<Scalars['String']>>;
+  images?: Maybe<Array<Maybe<EntryImageType>>>;
   /** The entry likes */
   likes?: Maybe<Array<ProjectEntryLike>>;
   /** The project itself */
-  project: Project;
+  project?: Maybe<Project>;
+  /** The project category id */
+  project_category_id?: Maybe<Scalars['Int']>;
   /** The status of the entry. Default is 'active' */
   status?: Maybe<Scalars['String']>;
   /** The entry title */
@@ -696,7 +728,7 @@ export type Query = {
   /** Get many projects */
   GetProjects: ProjectPaginator;
   /** Get the top 10 users */
-  LeaderBoard?: Maybe<Array<User>>;
+  LeaderBoard?: Maybe<Array<Profile>>;
   /** Get a single project */
   Project?: Maybe<Project>;
   /** Get a single project category */
@@ -757,6 +789,7 @@ export type QueryGetProjectEntriesArgs = {
   hasUser?: InputMaybe<QueryGetProjectEntriesHasUserWhereHasConditions>;
   orderBy?: InputMaybe<Array<QueryGetProjectEntriesOrderByOrderByClause>>;
   page?: InputMaybe<Scalars['Int']>;
+  where?: InputMaybe<QueryGetProjectEntriesWhereWhereConditions>;
 };
 
 
@@ -766,6 +799,7 @@ export type QueryGetProjectsArgs = {
   hasUser?: InputMaybe<QueryGetProjectsHasUserWhereHasConditions>;
   orderBy?: InputMaybe<Array<QueryGetProjectsOrderByOrderByClause>>;
   page?: InputMaybe<Scalars['Int']>;
+  where?: InputMaybe<QueryGetProjectsWhereWhereConditions>;
 };
 
 
@@ -902,6 +936,42 @@ export type QueryGetProjectEntriesOrderByOrderByClause = {
   order: SortOrder;
 };
 
+/** Allowed column names for Query.GetProjectEntries.where. */
+export enum QueryGetProjectEntriesWhereColumn {
+  Description = 'DESCRIPTION',
+  ProjectCategoryId = 'PROJECT_CATEGORY_ID',
+  Status = 'STATUS',
+  Title = 'TITLE'
+}
+
+/** Dynamic WHERE conditions for the `where` argument on the query `GetProjectEntries`. */
+export type QueryGetProjectEntriesWhereWhereConditions = {
+  /** A set of conditions that requires all conditions to match. */
+  AND?: InputMaybe<Array<QueryGetProjectEntriesWhereWhereConditions>>;
+  /** Check whether a relation exists. Extra conditions or a minimum amount can be applied. */
+  HAS?: InputMaybe<QueryGetProjectEntriesWhereWhereConditionsRelation>;
+  /** A set of conditions that requires at least one condition to match. */
+  OR?: InputMaybe<Array<QueryGetProjectEntriesWhereWhereConditions>>;
+  /** The column that is used for the condition. */
+  column?: InputMaybe<QueryGetProjectEntriesWhereColumn>;
+  /** The operator that is used for the condition. */
+  operator?: InputMaybe<SqlOperator>;
+  /** The value that is used for the condition. */
+  value?: InputMaybe<Scalars['Mixed']>;
+};
+
+/** Dynamic HAS conditions for WHERE conditions for the `where` argument on the query `GetProjectEntries`. */
+export type QueryGetProjectEntriesWhereWhereConditionsRelation = {
+  /** The amount to test. */
+  amount?: InputMaybe<Scalars['Int']>;
+  /** Additional condition logic. */
+  condition?: InputMaybe<QueryGetProjectEntriesWhereWhereConditions>;
+  /** The comparison operator to test against the amount. */
+  operator?: InputMaybe<SqlOperator>;
+  /** The relation that is checked. */
+  relation: Scalars['String'];
+};
+
 /** Allowed column names for Query.GetProjects.hasCategory. */
 export enum QueryGetProjectsHasCategoryColumn {
   Title = 'TITLE',
@@ -980,6 +1050,41 @@ export type QueryGetProjectsOrderByOrderByClause = {
   column: QueryGetProjectsOrderByColumn;
   /** The direction that is used for ordering. */
   order: SortOrder;
+};
+
+/** Allowed column names for Query.GetProjects.where. */
+export enum QueryGetProjectsWhereColumn {
+  Description = 'DESCRIPTION',
+  Title = 'TITLE',
+  Type = 'TYPE'
+}
+
+/** Dynamic WHERE conditions for the `where` argument on the query `GetProjects`. */
+export type QueryGetProjectsWhereWhereConditions = {
+  /** A set of conditions that requires all conditions to match. */
+  AND?: InputMaybe<Array<QueryGetProjectsWhereWhereConditions>>;
+  /** Check whether a relation exists. Extra conditions or a minimum amount can be applied. */
+  HAS?: InputMaybe<QueryGetProjectsWhereWhereConditionsRelation>;
+  /** A set of conditions that requires at least one condition to match. */
+  OR?: InputMaybe<Array<QueryGetProjectsWhereWhereConditions>>;
+  /** The column that is used for the condition. */
+  column?: InputMaybe<QueryGetProjectsWhereColumn>;
+  /** The operator that is used for the condition. */
+  operator?: InputMaybe<SqlOperator>;
+  /** The value that is used for the condition. */
+  value?: InputMaybe<Scalars['Mixed']>;
+};
+
+/** Dynamic HAS conditions for WHERE conditions for the `where` argument on the query `GetProjects`. */
+export type QueryGetProjectsWhereWhereConditionsRelation = {
+  /** The amount to test. */
+  amount?: InputMaybe<Scalars['Int']>;
+  /** Additional condition logic. */
+  condition?: InputMaybe<QueryGetProjectsWhereWhereConditions>;
+  /** The comparison operator to test against the amount. */
+  operator?: InputMaybe<SqlOperator>;
+  /** The relation that is checked. */
+  relation: Scalars['String'];
 };
 
 /** The available SQL operators that are used to filter query results. */
@@ -1078,12 +1183,16 @@ export type User = {
   email_verified_at?: Maybe<Scalars['DateTime']>;
   /** Unique primary key. */
   id: Scalars['ID'];
+  /** User classes */
+  my_classes?: Maybe<Array<BouhawsClass>>;
   /** Non-unique name. */
-  name: Scalars['String'];
+  name?: Maybe<Scalars['String']>;
   /** User profile */
   profile: Profile;
   /** User project entries */
   project_entries?: Maybe<Array<ProjectEntry>>;
+  /** User projects. Mainly for non-student user types */
+  projects?: Maybe<Array<Project>>;
   /** When the account was last updated. */
   updated_at: Scalars['DateTime'];
   /** Unique username */

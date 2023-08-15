@@ -25,8 +25,8 @@ export default class BouhawsClass extends Common {
   // Queries
   public GetClasses = (page: number, first: number) => {
     return $api.class.GetBouhawsClasses(page, first).then((response) => {
-      this.ManyBouhawsClass = response.data?.BouhawsClasses
-      return response.data?.BouhawsClasses
+      this.ManyBouhawsClass = response.data?.GetBouhawsClasses
+      return response.data?.GetBouhawsClasses
     })
   }
 
@@ -40,14 +40,19 @@ export default class BouhawsClass extends Common {
   public CreateClass = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.class
+    return $api.class
       .CreateClass(this.CreateClassPayload)
       .then((response) => {
-        this.EachBouhawsClass = response.data.CreateClass
-        Logic.Common.hideLoader()
+        this.EachBouhawsClass = response.data.CreateBouhawsClass
+
+        Logic.Common.showLoader({
+          loading: false,
+          show: true,
+          message: `Class was successfully created!`,
+          type: 'success',
+        })
+        return response.data.CreateBouhawsClass
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -57,14 +62,13 @@ export default class BouhawsClass extends Common {
   public UpdateClass = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.class
+    return $api.class
       .UpdateClass(this.UpdateClassPayload)
       .then((response) => {
-        this.EachBouhawsClass = response.data.UpdateClass
+        this.EachBouhawsClass = response.data.UpdateBouhawsClass
         Logic.Common.hideLoader()
+        return response.data.UpdateBouhawsClass
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')

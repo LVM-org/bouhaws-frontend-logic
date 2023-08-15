@@ -11,6 +11,9 @@ import typescript from "rollup-plugin-typescript2";
 import fs from "fs";
 import path from "path";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 const baseFolderPath = "./src/";
 const banner = text.replace("${version}", packageInfo.version);
 

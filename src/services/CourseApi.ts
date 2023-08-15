@@ -34,7 +34,7 @@ export default class CourseApi extends BaseApiService {
 		`
 
     const response: Promise<OperationResult<{
-      Courses: CoursePaginator
+      GetCourses: CoursePaginator
     }>> = this.query(requestData, {})
 
     return response

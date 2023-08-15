@@ -1,4 +1,4 @@
-/*! Squareroof Frontend Library v0.0.2 */
+/*! Squareroof Frontend Library v0.0.3 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('vue')) :
@@ -8,3451 +8,618 @@
 
   const API_URL = '';
 
-  function devAssert(condition, message) {
-    const booleanCondition = Boolean(condition);
-    if (!booleanCondition) {
-      throw new Error(message);
-    }
-  }
-
-  /**
-   * Return true if `value` is object-like. A value is object-like if it's not
-   * `null` and has a `typeof` result of "object".
-   */
-  function isObjectLike(value) {
-    return typeof value == 'object' && value !== null;
-  }
-
-  function invariant(condition, message) {
-    const booleanCondition = Boolean(condition);
-    if (!booleanCondition) {
-      throw new Error(message != null ? message : 'Unexpected invariant triggered.');
-    }
-  }
-
-  const LineRegExp = /\r\n|[\n\r]/g;
-  /**
-   * Represents a location in a Source.
-   */
-
-  /**
-   * Takes a Source and a UTF-8 character offset, and returns the corresponding
-   * line and column as a SourceLocation.
-   */
-  function getLocation(source, position) {
-    let lastLineStart = 0;
-    let line = 1;
-    for (const match of source.body.matchAll(LineRegExp)) {
-      typeof match.index === 'number' || invariant(false);
-      if (match.index >= position) {
-        break;
-      }
-      lastLineStart = match.index + match[0].length;
-      line += 1;
-    }
-    return {
-      line,
-      column: position + 1 - lastLineStart
-    };
-  }
-
-  /**
-   * Render a helpful description of the location in the GraphQL Source document.
-   */
-  function printLocation(location) {
-    return printSourceLocation(location.source, getLocation(location.source, location.start));
-  }
-  /**
-   * Render a helpful description of the location in the GraphQL Source document.
-   */
-
-  function printSourceLocation(source, sourceLocation) {
-    const firstLineColumnOffset = source.locationOffset.column - 1;
-    const body = ''.padStart(firstLineColumnOffset) + source.body;
-    const lineIndex = sourceLocation.line - 1;
-    const lineOffset = source.locationOffset.line - 1;
-    const lineNum = sourceLocation.line + lineOffset;
-    const columnOffset = sourceLocation.line === 1 ? firstLineColumnOffset : 0;
-    const columnNum = sourceLocation.column + columnOffset;
-    const locationStr = `${source.name}:${lineNum}:${columnNum}\n`;
-    const lines = body.split(/\r\n|[\n\r]/g);
-    const locationLine = lines[lineIndex]; // Special case for minified documents
-
-    if (locationLine.length > 120) {
-      const subLineIndex = Math.floor(columnNum / 80);
-      const subLineColumnNum = columnNum % 80;
-      const subLines = [];
-      for (let i = 0; i < locationLine.length; i += 80) {
-        subLines.push(locationLine.slice(i, i + 80));
-      }
-      return locationStr + printPrefixedLines([[`${lineNum} |`, subLines[0]], ...subLines.slice(1, subLineIndex + 1).map(subLine => ['|', subLine]), ['|', '^'.padStart(subLineColumnNum)], ['|', subLines[subLineIndex + 1]]]);
-    }
-    return locationStr + printPrefixedLines([
-    // Lines specified like this: ["prefix", "string"],
-    [`${lineNum - 1} |`, lines[lineIndex - 1]], [`${lineNum} |`, locationLine], ['|', '^'.padStart(columnNum)], [`${lineNum + 1} |`, lines[lineIndex + 1]]]);
-  }
-  function printPrefixedLines(lines) {
-    const existingLines = lines.filter(([_, line]) => line !== undefined);
-    const padLen = Math.max(...existingLines.map(([prefix]) => prefix.length));
-    return existingLines.map(([prefix, line]) => prefix.padStart(padLen) + (line ? ' ' + line : '')).join('\n');
-  }
-
-  function toNormalizedOptions(args) {
-    const firstArg = args[0];
-    if (firstArg == null || 'kind' in firstArg || 'length' in firstArg) {
-      return {
-        nodes: firstArg,
-        source: args[1],
-        positions: args[2],
-        path: args[3],
-        originalError: args[4],
-        extensions: args[5]
-      };
-    }
-    return firstArg;
-  }
-  /**
-   * A GraphQLError describes an Error found during the parse, validate, or
-   * execute phases of performing a GraphQL operation. In addition to a message
-   * and stack trace, it also includes information about the locations in a
-   * GraphQL document and/or execution result that correspond to the Error.
-   */
-
+  var e$1 = {
+    NAME: "Name",
+    DOCUMENT: "Document",
+    OPERATION_DEFINITION: "OperationDefinition",
+    VARIABLE_DEFINITION: "VariableDefinition",
+    SELECTION_SET: "SelectionSet",
+    FIELD: "Field",
+    ARGUMENT: "Argument",
+    FRAGMENT_SPREAD: "FragmentSpread",
+    INLINE_FRAGMENT: "InlineFragment",
+    FRAGMENT_DEFINITION: "FragmentDefinition",
+    VARIABLE: "Variable",
+    INT: "IntValue",
+    FLOAT: "FloatValue",
+    STRING: "StringValue",
+    BOOLEAN: "BooleanValue",
+    NULL: "NullValue",
+    ENUM: "EnumValue",
+    LIST: "ListValue",
+    OBJECT: "ObjectValue",
+    OBJECT_FIELD: "ObjectField",
+    DIRECTIVE: "Directive",
+    NAMED_TYPE: "NamedType",
+    LIST_TYPE: "ListType",
+    NON_NULL_TYPE: "NonNullType"
+  };
   class GraphQLError extends Error {
-    /**
-     * An array of `{ line, column }` locations within the source GraphQL document
-     * which correspond to this error.
-     *
-     * Errors during validation often contain multiple locations, for example to
-     * point out two things with the same name. Errors during execution include a
-     * single location, the field which produced the error.
-     *
-     * Enumerable, and appears in the result of JSON.stringify().
-     */
-
-    /**
-     * An array describing the JSON-path into the execution response which
-     * corresponds to this error. Only included for errors during execution.
-     *
-     * Enumerable, and appears in the result of JSON.stringify().
-     */
-
-    /**
-     * An array of GraphQL AST Nodes corresponding to this error.
-     */
-
-    /**
-     * The source GraphQL document for the first location of this error.
-     *
-     * Note that if this Error represents more than one node, the source may not
-     * represent nodes after the first node.
-     */
-
-    /**
-     * An array of character offsets within the source GraphQL document
-     * which correspond to this error.
-     */
-
-    /**
-     * The original error thrown from a field resolver during execution.
-     */
-
-    /**
-     * Extension fields to add to the formatted error.
-     */
-
-    /**
-     * @deprecated Please use the `GraphQLErrorOptions` constructor overload instead.
-     */
-    constructor(message, ...rawArgs) {
-      var _this$nodes, _nodeLocations$, _ref;
-      const {
-        nodes,
-        source,
-        positions,
-        path,
-        originalError,
-        extensions
-      } = toNormalizedOptions(rawArgs);
-      super(message);
-      this.name = 'GraphQLError';
-      this.path = path !== null && path !== void 0 ? path : undefined;
-      this.originalError = originalError !== null && originalError !== void 0 ? originalError : undefined; // Compute list of blame nodes.
-
-      this.nodes = undefinedIfEmpty(Array.isArray(nodes) ? nodes : nodes ? [nodes] : undefined);
-      const nodeLocations = undefinedIfEmpty((_this$nodes = this.nodes) === null || _this$nodes === void 0 ? void 0 : _this$nodes.map(node => node.loc).filter(loc => loc != null)); // Compute locations in the source for the given nodes/positions.
-
-      this.source = source !== null && source !== void 0 ? source : nodeLocations === null || nodeLocations === void 0 ? void 0 : (_nodeLocations$ = nodeLocations[0]) === null || _nodeLocations$ === void 0 ? void 0 : _nodeLocations$.source;
-      this.positions = positions !== null && positions !== void 0 ? positions : nodeLocations === null || nodeLocations === void 0 ? void 0 : nodeLocations.map(loc => loc.start);
-      this.locations = positions && source ? positions.map(pos => getLocation(source, pos)) : nodeLocations === null || nodeLocations === void 0 ? void 0 : nodeLocations.map(loc => getLocation(loc.source, loc.start));
-      const originalExtensions = isObjectLike(originalError === null || originalError === void 0 ? void 0 : originalError.extensions) ? originalError === null || originalError === void 0 ? void 0 : originalError.extensions : undefined;
-      this.extensions = (_ref = extensions !== null && extensions !== void 0 ? extensions : originalExtensions) !== null && _ref !== void 0 ? _ref : Object.create(null); // Only properties prescribed by the spec should be enumerable.
-      // Keep the rest as non-enumerable.
-
-      Object.defineProperties(this, {
-        message: {
-          writable: true,
-          enumerable: true
-        },
-        name: {
-          enumerable: false
-        },
-        nodes: {
-          enumerable: false
-        },
-        source: {
-          enumerable: false
-        },
-        positions: {
-          enumerable: false
-        },
-        originalError: {
-          enumerable: false
-        }
-      }); // Include (non-enumerable) stack trace.
-
-      /* c8 ignore start */
-      // FIXME: https://github.com/graphql/graphql-js/issues/2317
-
-      if (originalError !== null && originalError !== void 0 && originalError.stack) {
-        Object.defineProperty(this, 'stack', {
-          value: originalError.stack,
-          writable: true,
-          configurable: true
-        });
-      } else if (Error.captureStackTrace) {
-        Error.captureStackTrace(this, GraphQLError);
-      } else {
-        Object.defineProperty(this, 'stack', {
-          value: Error().stack,
-          writable: true,
-          configurable: true
-        });
+    constructor(e, r, i, n, a, t, o) {
+      super(e);
+      this.name = "GraphQLError";
+      this.message = e;
+      if (a) {
+        this.path = a;
       }
-      /* c8 ignore stop */
-    }
-
-    get [Symbol.toStringTag]() {
-      return 'GraphQLError';
-    }
-    toString() {
-      let output = this.message;
-      if (this.nodes) {
-        for (const node of this.nodes) {
-          if (node.loc) {
-            output += '\n\n' + printLocation(node.loc);
-          }
-        }
-      } else if (this.source && this.locations) {
-        for (const location of this.locations) {
-          output += '\n\n' + printSourceLocation(this.source, location);
+      if (r) {
+        this.nodes = Array.isArray(r) ? r : [r];
+      }
+      if (i) {
+        this.source = i;
+      }
+      if (n) {
+        this.positions = n;
+      }
+      if (t) {
+        this.originalError = t;
+      }
+      var l = o;
+      if (!l && t) {
+        var u = t.extensions;
+        if (u && "object" == typeof u) {
+          l = u;
         }
       }
-      return output;
+      this.extensions = l || {};
     }
     toJSON() {
-      const formattedError = {
+      return {
+        ...this,
         message: this.message
       };
-      if (this.locations != null) {
-        formattedError.locations = this.locations;
-      }
-      if (this.path != null) {
-        formattedError.path = this.path;
-      }
-      if (this.extensions != null && Object.keys(this.extensions).length > 0) {
-        formattedError.extensions = this.extensions;
-      }
-      return formattedError;
     }
-  }
-  function undefinedIfEmpty(array) {
-    return array === undefined || array.length === 0 ? undefined : array;
-  }
-
-  /**
-   * Produces a GraphQLError representing a syntax error, containing useful
-   * descriptive information about the syntax error's position in the source.
-   */
-
-  function syntaxError(source, position, description) {
-    return new GraphQLError(`Syntax Error: ${description}`, {
-      source,
-      positions: [position]
-    });
-  }
-
-  /**
-   * Contains a range of UTF-8 character offsets and token references that
-   * identify the region of the source from which the AST derived.
-   */
-  class Location {
-    /**
-     * The character offset at which this Node begins.
-     */
-
-    /**
-     * The character offset at which this Node ends.
-     */
-
-    /**
-     * The Token at which this Node begins.
-     */
-
-    /**
-     * The Token at which this Node ends.
-     */
-
-    /**
-     * The Source document the AST represents.
-     */
-    constructor(startToken, endToken, source) {
-      this.start = startToken.start;
-      this.end = endToken.end;
-      this.startToken = startToken;
-      this.endToken = endToken;
-      this.source = source;
+    toString() {
+      return this.message;
     }
     get [Symbol.toStringTag]() {
-      return 'Location';
-    }
-    toJSON() {
-      return {
-        start: this.start,
-        end: this.end
-      };
+      return "GraphQLError";
     }
   }
-  /**
-   * Represents a range of characters represented by a lexical token
-   * within a Source.
-   */
-
-  class Token {
-    /**
-     * The kind of Token.
-     */
-
-    /**
-     * The character offset at which this Node begins.
-     */
-
-    /**
-     * The character offset at which this Node ends.
-     */
-
-    /**
-     * The 1-indexed line number on which this Token appears.
-     */
-
-    /**
-     * The 1-indexed column number at which this Token begins.
-     */
-
-    /**
-     * For non-punctuation tokens, represents the interpreted value of the token.
-     *
-     * Note: is undefined for punctuation tokens, but typed as string for
-     * convenience in the parser.
-     */
-
-    /**
-     * Tokens exist as nodes in a double-linked-list amongst all tokens
-     * including ignored tokens. <SOF> is always the first node and <EOF>
-     * the last.
-     */
-    constructor(kind, start, end, line, column, value) {
-      this.kind = kind;
-      this.start = start;
-      this.end = end;
-      this.line = line;
-      this.column = column; // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-
-      this.value = value;
-      this.prev = null;
-      this.next = null;
-    }
-    get [Symbol.toStringTag]() {
-      return 'Token';
-    }
-    toJSON() {
-      return {
-        kind: this.kind,
-        value: this.value,
-        line: this.line,
-        column: this.column
-      };
+  var i$1;
+  var n;
+  function error(e) {
+    return new GraphQLError(`Syntax Error: Unexpected token at ${n} in ${e}`);
+  }
+  function advance(e) {
+    e.lastIndex = n;
+    if (e.test(i$1)) {
+      return i$1.slice(n, n = e.lastIndex);
     }
   }
-  /**
-   * The list of all possible AST node types.
-   */
-
-  /**
-   * @internal
-   */
-  const QueryDocumentKeys = {
-    Name: [],
-    Document: ['definitions'],
-    OperationDefinition: ['name', 'variableDefinitions', 'directives', 'selectionSet'],
-    VariableDefinition: ['variable', 'type', 'defaultValue', 'directives'],
-    Variable: ['name'],
-    SelectionSet: ['selections'],
-    Field: ['alias', 'name', 'arguments', 'directives', 'selectionSet'],
-    Argument: ['name', 'value'],
-    FragmentSpread: ['name', 'directives'],
-    InlineFragment: ['typeCondition', 'directives', 'selectionSet'],
-    FragmentDefinition: ['name',
-    // Note: fragment variable definitions are deprecated and will removed in v17.0.0
-    'variableDefinitions', 'typeCondition', 'directives', 'selectionSet'],
-    IntValue: [],
-    FloatValue: [],
-    StringValue: [],
-    BooleanValue: [],
-    NullValue: [],
-    EnumValue: [],
-    ListValue: ['values'],
-    ObjectValue: ['fields'],
-    ObjectField: ['name', 'value'],
-    Directive: ['name', 'arguments'],
-    NamedType: ['name'],
-    ListType: ['type'],
-    NonNullType: ['type'],
-    SchemaDefinition: ['description', 'directives', 'operationTypes'],
-    OperationTypeDefinition: ['type'],
-    ScalarTypeDefinition: ['description', 'name', 'directives'],
-    ObjectTypeDefinition: ['description', 'name', 'interfaces', 'directives', 'fields'],
-    FieldDefinition: ['description', 'name', 'arguments', 'type', 'directives'],
-    InputValueDefinition: ['description', 'name', 'type', 'defaultValue', 'directives'],
-    InterfaceTypeDefinition: ['description', 'name', 'interfaces', 'directives', 'fields'],
-    UnionTypeDefinition: ['description', 'name', 'directives', 'types'],
-    EnumTypeDefinition: ['description', 'name', 'directives', 'values'],
-    EnumValueDefinition: ['description', 'name', 'directives'],
-    InputObjectTypeDefinition: ['description', 'name', 'directives', 'fields'],
-    DirectiveDefinition: ['description', 'name', 'arguments', 'locations'],
-    SchemaExtension: ['directives', 'operationTypes'],
-    ScalarTypeExtension: ['name', 'directives'],
-    ObjectTypeExtension: ['name', 'interfaces', 'directives', 'fields'],
-    InterfaceTypeExtension: ['name', 'interfaces', 'directives', 'fields'],
-    UnionTypeExtension: ['name', 'directives', 'types'],
-    EnumTypeExtension: ['name', 'directives', 'values'],
-    InputObjectTypeExtension: ['name', 'directives', 'fields']
-  };
-  const kindValues = new Set(Object.keys(QueryDocumentKeys));
-  /**
-   * @internal
-   */
-
-  function isNode(maybeNode) {
-    const maybeKind = maybeNode === null || maybeNode === void 0 ? void 0 : maybeNode.kind;
-    return typeof maybeKind === 'string' && kindValues.has(maybeKind);
-  }
-  /** Name */
-
-  var OperationTypeNode;
-  (function (OperationTypeNode) {
-    OperationTypeNode['QUERY'] = 'query';
-    OperationTypeNode['MUTATION'] = 'mutation';
-    OperationTypeNode['SUBSCRIPTION'] = 'subscription';
-  })(OperationTypeNode || (OperationTypeNode = {}));
-
-  /**
-   * The set of allowed directive location values.
-   */
-  var DirectiveLocation;
-  (function (DirectiveLocation) {
-    DirectiveLocation['QUERY'] = 'QUERY';
-    DirectiveLocation['MUTATION'] = 'MUTATION';
-    DirectiveLocation['SUBSCRIPTION'] = 'SUBSCRIPTION';
-    DirectiveLocation['FIELD'] = 'FIELD';
-    DirectiveLocation['FRAGMENT_DEFINITION'] = 'FRAGMENT_DEFINITION';
-    DirectiveLocation['FRAGMENT_SPREAD'] = 'FRAGMENT_SPREAD';
-    DirectiveLocation['INLINE_FRAGMENT'] = 'INLINE_FRAGMENT';
-    DirectiveLocation['VARIABLE_DEFINITION'] = 'VARIABLE_DEFINITION';
-    DirectiveLocation['SCHEMA'] = 'SCHEMA';
-    DirectiveLocation['SCALAR'] = 'SCALAR';
-    DirectiveLocation['OBJECT'] = 'OBJECT';
-    DirectiveLocation['FIELD_DEFINITION'] = 'FIELD_DEFINITION';
-    DirectiveLocation['ARGUMENT_DEFINITION'] = 'ARGUMENT_DEFINITION';
-    DirectiveLocation['INTERFACE'] = 'INTERFACE';
-    DirectiveLocation['UNION'] = 'UNION';
-    DirectiveLocation['ENUM'] = 'ENUM';
-    DirectiveLocation['ENUM_VALUE'] = 'ENUM_VALUE';
-    DirectiveLocation['INPUT_OBJECT'] = 'INPUT_OBJECT';
-    DirectiveLocation['INPUT_FIELD_DEFINITION'] = 'INPUT_FIELD_DEFINITION';
-  })(DirectiveLocation || (DirectiveLocation = {}));
-  /**
-   * The enum type representing the directive location values.
-   *
-   * @deprecated Please use `DirectiveLocation`. Will be remove in v17.
-   */
-
-  /**
-   * The set of allowed kind values for AST nodes.
-   */
-  var Kind;
-  (function (Kind) {
-    Kind['NAME'] = 'Name';
-    Kind['DOCUMENT'] = 'Document';
-    Kind['OPERATION_DEFINITION'] = 'OperationDefinition';
-    Kind['VARIABLE_DEFINITION'] = 'VariableDefinition';
-    Kind['SELECTION_SET'] = 'SelectionSet';
-    Kind['FIELD'] = 'Field';
-    Kind['ARGUMENT'] = 'Argument';
-    Kind['FRAGMENT_SPREAD'] = 'FragmentSpread';
-    Kind['INLINE_FRAGMENT'] = 'InlineFragment';
-    Kind['FRAGMENT_DEFINITION'] = 'FragmentDefinition';
-    Kind['VARIABLE'] = 'Variable';
-    Kind['INT'] = 'IntValue';
-    Kind['FLOAT'] = 'FloatValue';
-    Kind['STRING'] = 'StringValue';
-    Kind['BOOLEAN'] = 'BooleanValue';
-    Kind['NULL'] = 'NullValue';
-    Kind['ENUM'] = 'EnumValue';
-    Kind['LIST'] = 'ListValue';
-    Kind['OBJECT'] = 'ObjectValue';
-    Kind['OBJECT_FIELD'] = 'ObjectField';
-    Kind['DIRECTIVE'] = 'Directive';
-    Kind['NAMED_TYPE'] = 'NamedType';
-    Kind['LIST_TYPE'] = 'ListType';
-    Kind['NON_NULL_TYPE'] = 'NonNullType';
-    Kind['SCHEMA_DEFINITION'] = 'SchemaDefinition';
-    Kind['OPERATION_TYPE_DEFINITION'] = 'OperationTypeDefinition';
-    Kind['SCALAR_TYPE_DEFINITION'] = 'ScalarTypeDefinition';
-    Kind['OBJECT_TYPE_DEFINITION'] = 'ObjectTypeDefinition';
-    Kind['FIELD_DEFINITION'] = 'FieldDefinition';
-    Kind['INPUT_VALUE_DEFINITION'] = 'InputValueDefinition';
-    Kind['INTERFACE_TYPE_DEFINITION'] = 'InterfaceTypeDefinition';
-    Kind['UNION_TYPE_DEFINITION'] = 'UnionTypeDefinition';
-    Kind['ENUM_TYPE_DEFINITION'] = 'EnumTypeDefinition';
-    Kind['ENUM_VALUE_DEFINITION'] = 'EnumValueDefinition';
-    Kind['INPUT_OBJECT_TYPE_DEFINITION'] = 'InputObjectTypeDefinition';
-    Kind['DIRECTIVE_DEFINITION'] = 'DirectiveDefinition';
-    Kind['SCHEMA_EXTENSION'] = 'SchemaExtension';
-    Kind['SCALAR_TYPE_EXTENSION'] = 'ScalarTypeExtension';
-    Kind['OBJECT_TYPE_EXTENSION'] = 'ObjectTypeExtension';
-    Kind['INTERFACE_TYPE_EXTENSION'] = 'InterfaceTypeExtension';
-    Kind['UNION_TYPE_EXTENSION'] = 'UnionTypeExtension';
-    Kind['ENUM_TYPE_EXTENSION'] = 'EnumTypeExtension';
-    Kind['INPUT_OBJECT_TYPE_EXTENSION'] = 'InputObjectTypeExtension';
-  })(Kind || (Kind = {}));
-  /**
-   * The enum type representing the possible kind values of AST nodes.
-   *
-   * @deprecated Please use `Kind`. Will be remove in v17.
-   */
-
-  /**
-   * ```
-   * WhiteSpace ::
-   *   - "Horizontal Tab (U+0009)"
-   *   - "Space (U+0020)"
-   * ```
-   * @internal
-   */
-  function isWhiteSpace(code) {
-    return code === 0x0009 || code === 0x0020;
-  }
-  /**
-   * ```
-   * Digit :: one of
-   *   - `0` `1` `2` `3` `4` `5` `6` `7` `8` `9`
-   * ```
-   * @internal
-   */
-
-  function isDigit(code) {
-    return code >= 0x0030 && code <= 0x0039;
-  }
-  /**
-   * ```
-   * Letter :: one of
-   *   - `A` `B` `C` `D` `E` `F` `G` `H` `I` `J` `K` `L` `M`
-   *   - `N` `O` `P` `Q` `R` `S` `T` `U` `V` `W` `X` `Y` `Z`
-   *   - `a` `b` `c` `d` `e` `f` `g` `h` `i` `j` `k` `l` `m`
-   *   - `n` `o` `p` `q` `r` `s` `t` `u` `v` `w` `x` `y` `z`
-   * ```
-   * @internal
-   */
-
-  function isLetter(code) {
-    return code >= 0x0061 && code <= 0x007a ||
-    // A-Z
-    code >= 0x0041 && code <= 0x005a // a-z
-    ;
-  }
-  /**
-   * ```
-   * NameStart ::
-   *   - Letter
-   *   - `_`
-   * ```
-   * @internal
-   */
-
-  function isNameStart(code) {
-    return isLetter(code) || code === 0x005f;
-  }
-  /**
-   * ```
-   * NameContinue ::
-   *   - Letter
-   *   - Digit
-   *   - `_`
-   * ```
-   * @internal
-   */
-
-  function isNameContinue(code) {
-    return isLetter(code) || isDigit(code) || code === 0x005f;
-  }
-
-  /**
-   * Produces the value of a block string from its parsed raw value, similar to
-   * CoffeeScript's block string, Python's docstring trim or Ruby's strip_heredoc.
-   *
-   * This implements the GraphQL spec's BlockStringValue() static algorithm.
-   *
-   * @internal
-   */
-
-  function dedentBlockStringLines(lines) {
-    var _firstNonEmptyLine2;
-    let commonIndent = Number.MAX_SAFE_INTEGER;
-    let firstNonEmptyLine = null;
-    let lastNonEmptyLine = -1;
-    for (let i = 0; i < lines.length; ++i) {
-      var _firstNonEmptyLine;
-      const line = lines[i];
-      const indent = leadingWhitespace(line);
-      if (indent === line.length) {
-        continue; // skip empty lines
-      }
-
-      firstNonEmptyLine = (_firstNonEmptyLine = firstNonEmptyLine) !== null && _firstNonEmptyLine !== void 0 ? _firstNonEmptyLine : i;
-      lastNonEmptyLine = i;
-      if (i !== 0 && indent < commonIndent) {
-        commonIndent = indent;
+  var a = / +(?=[^\s])/y;
+  function blockString(e) {
+    var r = e.split("\n");
+    var i = "";
+    var n = 0;
+    var t = 0;
+    var o = r.length - 1;
+    for (var l = 0; l < r.length; l++) {
+      a.lastIndex = 0;
+      if (a.test(r[l])) {
+        if (l && (!n || a.lastIndex < n)) {
+          n = a.lastIndex;
+        }
+        t = t || l;
+        o = l;
       }
     }
-    return lines // Remove common indentation from all lines but first.
-    .map((line, i) => i === 0 ? line : line.slice(commonIndent)) // Remove leading and trailing blank lines.
-    .slice((_firstNonEmptyLine2 = firstNonEmptyLine) !== null && _firstNonEmptyLine2 !== void 0 ? _firstNonEmptyLine2 : 0, lastNonEmptyLine + 1);
-  }
-  function leadingWhitespace(str) {
-    let i = 0;
-    while (i < str.length && isWhiteSpace(str.charCodeAt(i))) {
-      ++i;
+    for (var u = t; u <= o; u++) {
+      if (u !== t) {
+        i += "\n";
+      }
+      i += r[u].slice(n).replace(/\\"""/g, '"""');
     }
     return i;
   }
-  /**
-   * Print a block string in the indented block form by adding a leading and
-   * trailing blank line. However, if a block string starts with whitespace and is
-   * a single-line, adding a leading blank line would strip that whitespace.
-   *
-   * @internal
-   */
-
-  function printBlockString(value, options) {
-    const escapedValue = value.replace(/"""/g, '\\"""'); // Expand a block string's raw value into independent lines.
-
-    const lines = escapedValue.split(/\r\n|[\n\r]/g);
-    const isSingleLine = lines.length === 1; // If common indentation is found we can fix some of those cases by adding leading new line
-
-    const forceLeadingNewLine = lines.length > 1 && lines.slice(1).every(line => line.length === 0 || isWhiteSpace(line.charCodeAt(0))); // Trailing triple quotes just looks confusing but doesn't force trailing new line
-
-    const hasTrailingTripleQuotes = escapedValue.endsWith('\\"""'); // Trailing quote (single or double) or slash forces trailing new line
-
-    const hasTrailingQuote = value.endsWith('"') && !hasTrailingTripleQuotes;
-    const hasTrailingSlash = value.endsWith('\\');
-    const forceTrailingNewline = hasTrailingQuote || hasTrailingSlash;
-    const printAsMultipleLines = !(options !== null && options !== void 0 && options.minimize) && (
-    // add leading and trailing new lines only if it improves readability
-    !isSingleLine || value.length > 70 || forceTrailingNewline || forceLeadingNewLine || hasTrailingTripleQuotes);
-    let result = ''; // Format a multi-line block quote to account for leading space.
-
-    const skipLeadingNewLine = isSingleLine && isWhiteSpace(value.charCodeAt(0));
-    if (printAsMultipleLines && !skipLeadingNewLine || forceLeadingNewLine) {
-      result += '\n';
-    }
-    result += escapedValue;
-    if (printAsMultipleLines || forceTrailingNewline) {
-      result += '\n';
-    }
-    return '"""' + result + '"""';
-  }
-
-  /**
-   * An exported enum describing the different kinds of tokens that the
-   * lexer emits.
-   */
-  var TokenKind;
-  (function (TokenKind) {
-    TokenKind['SOF'] = '<SOF>';
-    TokenKind['EOF'] = '<EOF>';
-    TokenKind['BANG'] = '!';
-    TokenKind['DOLLAR'] = '$';
-    TokenKind['AMP'] = '&';
-    TokenKind['PAREN_L'] = '(';
-    TokenKind['PAREN_R'] = ')';
-    TokenKind['SPREAD'] = '...';
-    TokenKind['COLON'] = ':';
-    TokenKind['EQUALS'] = '=';
-    TokenKind['AT'] = '@';
-    TokenKind['BRACKET_L'] = '[';
-    TokenKind['BRACKET_R'] = ']';
-    TokenKind['BRACE_L'] = '{';
-    TokenKind['PIPE'] = '|';
-    TokenKind['BRACE_R'] = '}';
-    TokenKind['NAME'] = 'Name';
-    TokenKind['INT'] = 'Int';
-    TokenKind['FLOAT'] = 'Float';
-    TokenKind['STRING'] = 'String';
-    TokenKind['BLOCK_STRING'] = 'BlockString';
-    TokenKind['COMMENT'] = 'Comment';
-  })(TokenKind || (TokenKind = {}));
-  /**
-   * The enum type representing the token kinds values.
-   *
-   * @deprecated Please use `TokenKind`. Will be remove in v17.
-   */
-
-  /**
-   * Given a Source object, creates a Lexer for that source.
-   * A Lexer is a stateful stream generator in that every time
-   * it is advanced, it returns the next token in the Source. Assuming the
-   * source lexes, the final Token emitted by the lexer will be of kind
-   * EOF, after which the lexer will repeatedly return the same EOF token
-   * whenever called.
-   */
-
-  class Lexer {
-    /**
-     * The previously focused non-ignored token.
-     */
-
-    /**
-     * The currently focused non-ignored token.
-     */
-
-    /**
-     * The (1-indexed) line containing the current token.
-     */
-
-    /**
-     * The character offset at which the current line begins.
-     */
-    constructor(source) {
-      const startOfFileToken = new Token(TokenKind.SOF, 0, 0, 0, 0);
-      this.source = source;
-      this.lastToken = startOfFileToken;
-      this.token = startOfFileToken;
-      this.line = 1;
-      this.lineStart = 0;
-    }
-    get [Symbol.toStringTag]() {
-      return 'Lexer';
-    }
-    /**
-     * Advances the token stream to the next non-ignored token.
-     */
-
-    advance() {
-      this.lastToken = this.token;
-      const token = this.token = this.lookahead();
-      return token;
-    }
-    /**
-     * Looks ahead and returns the next non-ignored token, but does not change
-     * the state of Lexer.
-     */
-
-    lookahead() {
-      let token = this.token;
-      if (token.kind !== TokenKind.EOF) {
-        do {
-          if (token.next) {
-            token = token.next;
-          } else {
-            // Read the next token and form a link in the token linked-list.
-            const nextToken = readNextToken(this, token.end); // @ts-expect-error next is only mutable during parsing.
-
-            token.next = nextToken; // @ts-expect-error prev is only mutable during parsing.
-
-            nextToken.prev = token;
-            token = nextToken;
-          }
-        } while (token.kind === TokenKind.COMMENT);
-      }
-      return token;
-    }
-  }
-  /**
-   * @internal
-   */
-
-  function isPunctuatorTokenKind(kind) {
-    return kind === TokenKind.BANG || kind === TokenKind.DOLLAR || kind === TokenKind.AMP || kind === TokenKind.PAREN_L || kind === TokenKind.PAREN_R || kind === TokenKind.SPREAD || kind === TokenKind.COLON || kind === TokenKind.EQUALS || kind === TokenKind.AT || kind === TokenKind.BRACKET_L || kind === TokenKind.BRACKET_R || kind === TokenKind.BRACE_L || kind === TokenKind.PIPE || kind === TokenKind.BRACE_R;
-  }
-  /**
-   * A Unicode scalar value is any Unicode code point except surrogate code
-   * points. In other words, the inclusive ranges of values 0x0000 to 0xD7FF and
-   * 0xE000 to 0x10FFFF.
-   *
-   * SourceCharacter ::
-   *   - "Any Unicode scalar value"
-   */
-
-  function isUnicodeScalarValue(code) {
-    return code >= 0x0000 && code <= 0xd7ff || code >= 0xe000 && code <= 0x10ffff;
-  }
-  /**
-   * The GraphQL specification defines source text as a sequence of unicode scalar
-   * values (which Unicode defines to exclude surrogate code points). However
-   * JavaScript defines strings as a sequence of UTF-16 code units which may
-   * include surrogates. A surrogate pair is a valid source character as it
-   * encodes a supplementary code point (above U+FFFF), but unpaired surrogate
-   * code points are not valid source characters.
-   */
-
-  function isSupplementaryCodePoint(body, location) {
-    return isLeadingSurrogate(body.charCodeAt(location)) && isTrailingSurrogate(body.charCodeAt(location + 1));
-  }
-  function isLeadingSurrogate(code) {
-    return code >= 0xd800 && code <= 0xdbff;
-  }
-  function isTrailingSurrogate(code) {
-    return code >= 0xdc00 && code <= 0xdfff;
-  }
-  /**
-   * Prints the code point (or end of file reference) at a given location in a
-   * source for use in error messages.
-   *
-   * Printable ASCII is printed quoted, while other points are printed in Unicode
-   * code point form (ie. U+1234).
-   */
-
-  function printCodePointAt(lexer, location) {
-    const code = lexer.source.body.codePointAt(location);
-    if (code === undefined) {
-      return TokenKind.EOF;
-    } else if (code >= 0x0020 && code <= 0x007e) {
-      // Printable ASCII
-      const char = String.fromCodePoint(code);
-      return char === '"' ? "'\"'" : `"${char}"`;
-    } // Unicode code point
-
-    return 'U+' + code.toString(16).toUpperCase().padStart(4, '0');
-  }
-  /**
-   * Create a token with line and column location information.
-   */
-
-  function createToken(lexer, kind, start, end, value) {
-    const line = lexer.line;
-    const col = 1 + start - lexer.lineStart;
-    return new Token(kind, start, end, line, col, value);
-  }
-  /**
-   * Gets the next token from the source starting at the given position.
-   *
-   * This skips over whitespace until it finds the next lexable token, then lexes
-   * punctuators immediately or calls the appropriate helper function for more
-   * complicated tokens.
-   */
-
-  function readNextToken(lexer, start) {
-    const body = lexer.source.body;
-    const bodyLength = body.length;
-    let position = start;
-    while (position < bodyLength) {
-      const code = body.charCodeAt(position); // SourceCharacter
-
-      switch (code) {
-        // Ignored ::
-        //   - UnicodeBOM
-        //   - WhiteSpace
-        //   - LineTerminator
-        //   - Comment
-        //   - Comma
-        //
-        // UnicodeBOM :: "Byte Order Mark (U+FEFF)"
-        //
-        // WhiteSpace ::
-        //   - "Horizontal Tab (U+0009)"
-        //   - "Space (U+0020)"
-        //
-        // Comma :: ,
-        case 0xfeff: // <BOM>
-
-        case 0x0009: // \t
-
-        case 0x0020: // <space>
-
-        case 0x002c:
-          // ,
-          ++position;
-          continue;
-        // LineTerminator ::
-        //   - "New Line (U+000A)"
-        //   - "Carriage Return (U+000D)" [lookahead != "New Line (U+000A)"]
-        //   - "Carriage Return (U+000D)" "New Line (U+000A)"
-
-        case 0x000a:
-          // \n
-          ++position;
-          ++lexer.line;
-          lexer.lineStart = position;
-          continue;
-        case 0x000d:
-          // \r
-          if (body.charCodeAt(position + 1) === 0x000a) {
-            position += 2;
-          } else {
-            ++position;
-          }
-          ++lexer.line;
-          lexer.lineStart = position;
-          continue;
-        // Comment
-
-        case 0x0023:
-          // #
-          return readComment(lexer, position);
-        // Token ::
-        //   - Punctuator
-        //   - Name
-        //   - IntValue
-        //   - FloatValue
-        //   - StringValue
-        //
-        // Punctuator :: one of ! $ & ( ) ... : = @ [ ] { | }
-
-        case 0x0021:
-          // !
-          return createToken(lexer, TokenKind.BANG, position, position + 1);
-        case 0x0024:
-          // $
-          return createToken(lexer, TokenKind.DOLLAR, position, position + 1);
-        case 0x0026:
-          // &
-          return createToken(lexer, TokenKind.AMP, position, position + 1);
-        case 0x0028:
-          // (
-          return createToken(lexer, TokenKind.PAREN_L, position, position + 1);
-        case 0x0029:
-          // )
-          return createToken(lexer, TokenKind.PAREN_R, position, position + 1);
-        case 0x002e:
-          // .
-          if (body.charCodeAt(position + 1) === 0x002e && body.charCodeAt(position + 2) === 0x002e) {
-            return createToken(lexer, TokenKind.SPREAD, position, position + 3);
-          }
-          break;
-        case 0x003a:
-          // :
-          return createToken(lexer, TokenKind.COLON, position, position + 1);
-        case 0x003d:
-          // =
-          return createToken(lexer, TokenKind.EQUALS, position, position + 1);
-        case 0x0040:
-          // @
-          return createToken(lexer, TokenKind.AT, position, position + 1);
-        case 0x005b:
-          // [
-          return createToken(lexer, TokenKind.BRACKET_L, position, position + 1);
-        case 0x005d:
-          // ]
-          return createToken(lexer, TokenKind.BRACKET_R, position, position + 1);
-        case 0x007b:
-          // {
-          return createToken(lexer, TokenKind.BRACE_L, position, position + 1);
-        case 0x007c:
-          // |
-          return createToken(lexer, TokenKind.PIPE, position, position + 1);
-        case 0x007d:
-          // }
-          return createToken(lexer, TokenKind.BRACE_R, position, position + 1);
-        // StringValue
-
-        case 0x0022:
-          // "
-          if (body.charCodeAt(position + 1) === 0x0022 && body.charCodeAt(position + 2) === 0x0022) {
-            return readBlockString(lexer, position);
-          }
-          return readString(lexer, position);
-      } // IntValue | FloatValue (Digit | -)
-
-      if (isDigit(code) || code === 0x002d) {
-        return readNumber(lexer, position, code);
-      } // Name
-
-      if (isNameStart(code)) {
-        return readName(lexer, position);
-      }
-      throw syntaxError(lexer.source, position, code === 0x0027 ? 'Unexpected single quote character (\'), did you mean to use a double quote (")?' : isUnicodeScalarValue(code) || isSupplementaryCodePoint(body, position) ? `Unexpected character: ${printCodePointAt(lexer, position)}.` : `Invalid character: ${printCodePointAt(lexer, position)}.`);
-    }
-    return createToken(lexer, TokenKind.EOF, bodyLength, bodyLength);
-  }
-  /**
-   * Reads a comment token from the source file.
-   *
-   * ```
-   * Comment :: # CommentChar* [lookahead != CommentChar]
-   *
-   * CommentChar :: SourceCharacter but not LineTerminator
-   * ```
-   */
-
-  function readComment(lexer, start) {
-    const body = lexer.source.body;
-    const bodyLength = body.length;
-    let position = start + 1;
-    while (position < bodyLength) {
-      const code = body.charCodeAt(position); // LineTerminator (\n | \r)
-
-      if (code === 0x000a || code === 0x000d) {
-        break;
-      } // SourceCharacter
-
-      if (isUnicodeScalarValue(code)) {
-        ++position;
-      } else if (isSupplementaryCodePoint(body, position)) {
-        position += 2;
-      } else {
-        break;
+  function ignored() {
+    for (var e = 0 | i$1.charCodeAt(n++); 9 === e || 10 === e || 13 === e || 32 === e || 35 === e || 44 === e || 65279 === e; e = 0 | i$1.charCodeAt(n++)) {
+      if (35 === e) {
+        while (10 !== (e = i$1.charCodeAt(n++)) && 13 !== e) {}
       }
     }
-    return createToken(lexer, TokenKind.COMMENT, start, position, body.slice(start + 1, position));
+    n--;
   }
-  /**
-   * Reads a number token from the source file, either a FloatValue or an IntValue
-   * depending on whether a FractionalPart or ExponentPart is encountered.
-   *
-   * ```
-   * IntValue :: IntegerPart [lookahead != {Digit, `.`, NameStart}]
-   *
-   * IntegerPart ::
-   *   - NegativeSign? 0
-   *   - NegativeSign? NonZeroDigit Digit*
-   *
-   * NegativeSign :: -
-   *
-   * NonZeroDigit :: Digit but not `0`
-   *
-   * FloatValue ::
-   *   - IntegerPart FractionalPart ExponentPart [lookahead != {Digit, `.`, NameStart}]
-   *   - IntegerPart FractionalPart [lookahead != {Digit, `.`, NameStart}]
-   *   - IntegerPart ExponentPart [lookahead != {Digit, `.`, NameStart}]
-   *
-   * FractionalPart :: . Digit+
-   *
-   * ExponentPart :: ExponentIndicator Sign? Digit+
-   *
-   * ExponentIndicator :: one of `e` `E`
-   *
-   * Sign :: one of + -
-   * ```
-   */
-
-  function readNumber(lexer, start, firstCode) {
-    const body = lexer.source.body;
-    let position = start;
-    let code = firstCode;
-    let isFloat = false; // NegativeSign (-)
-
-    if (code === 0x002d) {
-      code = body.charCodeAt(++position);
-    } // Zero (0)
-
-    if (code === 0x0030) {
-      code = body.charCodeAt(++position);
-      if (isDigit(code)) {
-        throw syntaxError(lexer.source, position, `Invalid number, unexpected digit after 0: ${printCodePointAt(lexer, position)}.`);
-      }
-    } else {
-      position = readDigits(lexer, position, code);
-      code = body.charCodeAt(position);
-    } // Full stop (.)
-
-    if (code === 0x002e) {
-      isFloat = true;
-      code = body.charCodeAt(++position);
-      position = readDigits(lexer, position, code);
-      code = body.charCodeAt(position);
-    } // E e
-
-    if (code === 0x0045 || code === 0x0065) {
-      isFloat = true;
-      code = body.charCodeAt(++position); // + -
-
-      if (code === 0x002b || code === 0x002d) {
-        code = body.charCodeAt(++position);
-      }
-      position = readDigits(lexer, position, code);
-      code = body.charCodeAt(position);
-    } // Numbers cannot be followed by . or NameStart
-
-    if (code === 0x002e || isNameStart(code)) {
-      throw syntaxError(lexer.source, position, `Invalid number, expected digit but got: ${printCodePointAt(lexer, position)}.`);
-    }
-    return createToken(lexer, isFloat ? TokenKind.FLOAT : TokenKind.INT, start, position, body.slice(start, position));
-  }
-  /**
-   * Returns the new position in the source after reading one or more digits.
-   */
-
-  function readDigits(lexer, start, firstCode) {
-    if (!isDigit(firstCode)) {
-      throw syntaxError(lexer.source, start, `Invalid number, expected digit but got: ${printCodePointAt(lexer, start)}.`);
-    }
-    const body = lexer.source.body;
-    let position = start + 1; // +1 to skip first firstCode
-
-    while (isDigit(body.charCodeAt(position))) {
-      ++position;
-    }
-    return position;
-  }
-  /**
-   * Reads a single-quote string token from the source file.
-   *
-   * ```
-   * StringValue ::
-   *   - `""` [lookahead != `"`]
-   *   - `"` StringCharacter+ `"`
-   *
-   * StringCharacter ::
-   *   - SourceCharacter but not `"` or `\` or LineTerminator
-   *   - `\u` EscapedUnicode
-   *   - `\` EscapedCharacter
-   *
-   * EscapedUnicode ::
-   *   - `{` HexDigit+ `}`
-   *   - HexDigit HexDigit HexDigit HexDigit
-   *
-   * EscapedCharacter :: one of `"` `\` `/` `b` `f` `n` `r` `t`
-   * ```
-   */
-
-  function readString(lexer, start) {
-    const body = lexer.source.body;
-    const bodyLength = body.length;
-    let position = start + 1;
-    let chunkStart = position;
-    let value = '';
-    while (position < bodyLength) {
-      const code = body.charCodeAt(position); // Closing Quote (")
-
-      if (code === 0x0022) {
-        value += body.slice(chunkStart, position);
-        return createToken(lexer, TokenKind.STRING, start, position + 1, value);
-      } // Escape Sequence (\)
-
-      if (code === 0x005c) {
-        value += body.slice(chunkStart, position);
-        const escape = body.charCodeAt(position + 1) === 0x0075 // u
-        ? body.charCodeAt(position + 2) === 0x007b // {
-        ? readEscapedUnicodeVariableWidth(lexer, position) : readEscapedUnicodeFixedWidth(lexer, position) : readEscapedCharacter(lexer, position);
-        value += escape.value;
-        position += escape.size;
-        chunkStart = position;
-        continue;
-      } // LineTerminator (\n | \r)
-
-      if (code === 0x000a || code === 0x000d) {
-        break;
-      } // SourceCharacter
-
-      if (isUnicodeScalarValue(code)) {
-        ++position;
-      } else if (isSupplementaryCodePoint(body, position)) {
-        position += 2;
-      } else {
-        throw syntaxError(lexer.source, position, `Invalid character within String: ${printCodePointAt(lexer, position)}.`);
-      }
-    }
-    throw syntaxError(lexer.source, position, 'Unterminated string.');
-  } // The string value and lexed size of an escape sequence.
-
-  function readEscapedUnicodeVariableWidth(lexer, position) {
-    const body = lexer.source.body;
-    let point = 0;
-    let size = 3; // Cannot be larger than 12 chars (\u{00000000}).
-
-    while (size < 12) {
-      const code = body.charCodeAt(position + size++); // Closing Brace (})
-
-      if (code === 0x007d) {
-        // Must be at least 5 chars (\u{0}) and encode a Unicode scalar value.
-        if (size < 5 || !isUnicodeScalarValue(point)) {
-          break;
-        }
-        return {
-          value: String.fromCodePoint(point),
-          size
-        };
-      } // Append this hex digit to the code point.
-
-      point = point << 4 | readHexDigit(code);
-      if (point < 0) {
-        break;
-      }
-    }
-    throw syntaxError(lexer.source, position, `Invalid Unicode escape sequence: "${body.slice(position, position + size)}".`);
-  }
-  function readEscapedUnicodeFixedWidth(lexer, position) {
-    const body = lexer.source.body;
-    const code = read16BitHexCode(body, position + 2);
-    if (isUnicodeScalarValue(code)) {
+  var t = /[_\w][_\d\w]*/y;
+  function name() {
+    var e;
+    if (e = advance(t)) {
       return {
-        value: String.fromCodePoint(code),
-        size: 6
+        kind: "Name",
+        value: e
       };
-    } // GraphQL allows JSON-style surrogate pair escape sequences, but only when
-    // a valid pair is formed.
-
-    if (isLeadingSurrogate(code)) {
-      // \u
-      if (body.charCodeAt(position + 6) === 0x005c && body.charCodeAt(position + 7) === 0x0075) {
-        const trailingCode = read16BitHexCode(body, position + 8);
-        if (isTrailingSurrogate(trailingCode)) {
-          // JavaScript defines strings as a sequence of UTF-16 code units and
-          // encodes Unicode code points above U+FFFF using a surrogate pair of
-          // code units. Since this is a surrogate pair escape sequence, just
-          // include both codes into the JavaScript string value. Had JavaScript
-          // not been internally based on UTF-16, then this surrogate pair would
-          // be decoded to retrieve the supplementary code point.
-          return {
-            value: String.fromCodePoint(code, trailingCode),
-            size: 12
-          };
-        }
-      }
     }
-    throw syntaxError(lexer.source, position, `Invalid Unicode escape sequence: "${body.slice(position, position + 6)}".`);
   }
-  /**
-   * Reads four hexadecimal characters and returns the positive integer that 16bit
-   * hexadecimal string represents. For example, "000f" will return 15, and "dead"
-   * will return 57005.
-   *
-   * Returns a negative number if any char was not a valid hexadecimal digit.
-   */
-
-  function read16BitHexCode(body, position) {
-    // readHexDigit() returns -1 on error. ORing a negative value with any other
-    // value always produces a negative value.
-    return readHexDigit(body.charCodeAt(position)) << 12 | readHexDigit(body.charCodeAt(position + 1)) << 8 | readHexDigit(body.charCodeAt(position + 2)) << 4 | readHexDigit(body.charCodeAt(position + 3));
-  }
-  /**
-   * Reads a hexadecimal character and returns its positive integer value (0-15).
-   *
-   * '0' becomes 0, '9' becomes 9
-   * 'A' becomes 10, 'F' becomes 15
-   * 'a' becomes 10, 'f' becomes 15
-   *
-   * Returns -1 if the provided character code was not a valid hexadecimal digit.
-   *
-   * HexDigit :: one of
-   *   - `0` `1` `2` `3` `4` `5` `6` `7` `8` `9`
-   *   - `A` `B` `C` `D` `E` `F`
-   *   - `a` `b` `c` `d` `e` `f`
-   */
-
-  function readHexDigit(code) {
-    return code >= 0x0030 && code <= 0x0039 // 0-9
-    ? code - 0x0030 : code >= 0x0041 && code <= 0x0046 // A-F
-    ? code - 0x0037 : code >= 0x0061 && code <= 0x0066 // a-f
-    ? code - 0x0057 : -1;
-  }
-  /**
-   * | Escaped Character | Code Point | Character Name               |
-   * | ----------------- | ---------- | ---------------------------- |
-   * | `"`               | U+0022     | double quote                 |
-   * | `\`               | U+005C     | reverse solidus (back slash) |
-   * | `/`               | U+002F     | solidus (forward slash)      |
-   * | `b`               | U+0008     | backspace                    |
-   * | `f`               | U+000C     | form feed                    |
-   * | `n`               | U+000A     | line feed (new line)         |
-   * | `r`               | U+000D     | carriage return              |
-   * | `t`               | U+0009     | horizontal tab               |
-   */
-
-  function readEscapedCharacter(lexer, position) {
-    const body = lexer.source.body;
-    const code = body.charCodeAt(position + 1);
-    switch (code) {
-      case 0x0022:
-        // "
-        return {
-          value: '\u0022',
-          size: 2
-        };
-      case 0x005c:
-        // \
-        return {
-          value: '\u005c',
-          size: 2
-        };
-      case 0x002f:
-        // /
-        return {
-          value: '\u002f',
-          size: 2
-        };
-      case 0x0062:
-        // b
-        return {
-          value: '\u0008',
-          size: 2
-        };
-      case 0x0066:
-        // f
-        return {
-          value: '\u000c',
-          size: 2
-        };
-      case 0x006e:
-        // n
-        return {
-          value: '\u000a',
-          size: 2
-        };
-      case 0x0072:
-        // r
-        return {
-          value: '\u000d',
-          size: 2
-        };
-      case 0x0074:
-        // t
-        return {
-          value: '\u0009',
-          size: 2
-        };
-    }
-    throw syntaxError(lexer.source, position, `Invalid character escape sequence: "${body.slice(position, position + 2)}".`);
-  }
-  /**
-   * Reads a block string token from the source file.
-   *
-   * ```
-   * StringValue ::
-   *   - `"""` BlockStringCharacter* `"""`
-   *
-   * BlockStringCharacter ::
-   *   - SourceCharacter but not `"""` or `\"""`
-   *   - `\"""`
-   * ```
-   */
-
-  function readBlockString(lexer, start) {
-    const body = lexer.source.body;
-    const bodyLength = body.length;
-    let lineStart = lexer.lineStart;
-    let position = start + 3;
-    let chunkStart = position;
-    let currentLine = '';
-    const blockLines = [];
-    while (position < bodyLength) {
-      const code = body.charCodeAt(position); // Closing Triple-Quote (""")
-
-      if (code === 0x0022 && body.charCodeAt(position + 1) === 0x0022 && body.charCodeAt(position + 2) === 0x0022) {
-        currentLine += body.slice(chunkStart, position);
-        blockLines.push(currentLine);
-        const token = createToken(lexer, TokenKind.BLOCK_STRING, start, position + 3,
-        // Return a string of the lines joined with U+000A.
-        dedentBlockStringLines(blockLines).join('\n'));
-        lexer.line += blockLines.length - 1;
-        lexer.lineStart = lineStart;
-        return token;
-      } // Escaped Triple-Quote (\""")
-
-      if (code === 0x005c && body.charCodeAt(position + 1) === 0x0022 && body.charCodeAt(position + 2) === 0x0022 && body.charCodeAt(position + 3) === 0x0022) {
-        currentLine += body.slice(chunkStart, position);
-        chunkStart = position + 1; // skip only slash
-
-        position += 4;
-        continue;
-      } // LineTerminator
-
-      if (code === 0x000a || code === 0x000d) {
-        currentLine += body.slice(chunkStart, position);
-        blockLines.push(currentLine);
-        if (code === 0x000d && body.charCodeAt(position + 1) === 0x000a) {
-          position += 2;
-        } else {
-          ++position;
+  var o = /null|true|false/y;
+  var l$1 = /\$[_\w][_\d\w]*/y;
+  var u$1 = /-?\d+/y;
+  var v$2 = /(?:\.\d+)?(?:[eE][+-]?\d+)?/y;
+  var d$1 = /\\/g;
+  var s = /"""(?:[\s\S]+(?="""))?"""/y;
+  var c$2 = /"(?:[^"\r\n]+)?"/y;
+  function value(e) {
+    var r;
+    var a;
+    if (a = advance(o)) {
+      r = "null" === a ? {
+        kind: "NullValue"
+      } : {
+        kind: "BooleanValue",
+        value: "true" === a
+      };
+    } else if (!e && (a = advance(l$1))) {
+      r = {
+        kind: "Variable",
+        name: {
+          kind: "Name",
+          value: a.slice(1)
         }
-        currentLine = '';
-        chunkStart = position;
-        lineStart = position;
-        continue;
-      } // SourceCharacter
-
-      if (isUnicodeScalarValue(code)) {
-        ++position;
-      } else if (isSupplementaryCodePoint(body, position)) {
-        position += 2;
+      };
+    } else if (a = advance(u$1)) {
+      var f = a;
+      if (a = advance(v$2)) {
+        r = {
+          kind: "FloatValue",
+          value: f + a
+        };
       } else {
-        throw syntaxError(lexer.source, position, `Invalid character within String: ${printCodePointAt(lexer, position)}.`);
+        r = {
+          kind: "IntValue",
+          value: f
+        };
       }
-    }
-    throw syntaxError(lexer.source, position, 'Unterminated string.');
-  }
-  /**
-   * Reads an alphanumeric + underscore name from the source.
-   *
-   * ```
-   * Name ::
-   *   - NameStart NameContinue* [lookahead != NameContinue]
-   * ```
-   */
-
-  function readName(lexer, start) {
-    const body = lexer.source.body;
-    const bodyLength = body.length;
-    let position = start + 1;
-    while (position < bodyLength) {
-      const code = body.charCodeAt(position);
-      if (isNameContinue(code)) {
-        ++position;
-      } else {
-        break;
-      }
-    }
-    return createToken(lexer, TokenKind.NAME, start, position, body.slice(start, position));
-  }
-
-  const MAX_ARRAY_LENGTH = 10;
-  const MAX_RECURSIVE_DEPTH = 2;
-  /**
-   * Used to print values in error messages.
-   */
-
-  function inspect(value) {
-    return formatValue(value, []);
-  }
-  function formatValue(value, seenValues) {
-    switch (typeof value) {
-      case 'string':
-        return JSON.stringify(value);
-      case 'function':
-        return value.name ? `[function ${value.name}]` : '[function]';
-      case 'object':
-        return formatObjectValue(value, seenValues);
-      default:
-        return String(value);
-    }
-  }
-  function formatObjectValue(value, previouslySeenValues) {
-    if (value === null) {
-      return 'null';
-    }
-    if (previouslySeenValues.includes(value)) {
-      return '[Circular]';
-    }
-    const seenValues = [...previouslySeenValues, value];
-    if (isJSONable(value)) {
-      const jsonValue = value.toJSON(); // check for infinite recursion
-
-      if (jsonValue !== value) {
-        return typeof jsonValue === 'string' ? jsonValue : formatValue(jsonValue, seenValues);
-      }
-    } else if (Array.isArray(value)) {
-      return formatArray(value, seenValues);
-    }
-    return formatObject(value, seenValues);
-  }
-  function isJSONable(value) {
-    return typeof value.toJSON === 'function';
-  }
-  function formatObject(object, seenValues) {
-    const entries = Object.entries(object);
-    if (entries.length === 0) {
-      return '{}';
-    }
-    if (seenValues.length > MAX_RECURSIVE_DEPTH) {
-      return '[' + getObjectTag(object) + ']';
-    }
-    const properties = entries.map(([key, value]) => key + ': ' + formatValue(value, seenValues));
-    return '{ ' + properties.join(', ') + ' }';
-  }
-  function formatArray(array, seenValues) {
-    if (array.length === 0) {
-      return '[]';
-    }
-    if (seenValues.length > MAX_RECURSIVE_DEPTH) {
-      return '[Array]';
-    }
-    const len = Math.min(MAX_ARRAY_LENGTH, array.length);
-    const remaining = array.length - len;
-    const items = [];
-    for (let i = 0; i < len; ++i) {
-      items.push(formatValue(array[i], seenValues));
-    }
-    if (remaining === 1) {
-      items.push('... 1 more item');
-    } else if (remaining > 1) {
-      items.push(`... ${remaining} more items`);
-    }
-    return '[' + items.join(', ') + ']';
-  }
-  function getObjectTag(object) {
-    const tag = Object.prototype.toString.call(object).replace(/^\[object /, '').replace(/]$/, '');
-    if (tag === 'Object' && typeof object.constructor === 'function') {
-      const name = object.constructor.name;
-      if (typeof name === 'string' && name !== '') {
-        return name;
-      }
-    }
-    return tag;
-  }
-
-  /**
-   * A replacement for instanceof which includes an error warning when multi-realm
-   * constructors are detected.
-   * See: https://expressjs.com/en/advanced/best-practice-performance.html#set-node_env-to-production
-   * See: https://webpack.js.org/guides/production/
-   */
-
-  const instanceOf = /* c8 ignore next 6 */
-  // FIXME: https://github.com/graphql/graphql-js/issues/2317
-  // eslint-disable-next-line no-undef
-  process.env.NODE_ENV === 'production' ? function instanceOf(value, constructor) {
-    return value instanceof constructor;
-  } : function instanceOf(value, constructor) {
-    if (value instanceof constructor) {
-      return true;
-    }
-    if (typeof value === 'object' && value !== null) {
-      var _value$constructor;
-
-      // Prefer Symbol.toStringTag since it is immune to minification.
-      const className = constructor.prototype[Symbol.toStringTag];
-      const valueClassName =
-      // We still need to support constructor's name to detect conflicts with older versions of this library.
-      Symbol.toStringTag in value // @ts-expect-error TS bug see, https://github.com/microsoft/TypeScript/issues/38009
-      ? value[Symbol.toStringTag] : (_value$constructor = value.constructor) === null || _value$constructor === void 0 ? void 0 : _value$constructor.name;
-      if (className === valueClassName) {
-        const stringifiedValue = inspect(value);
-        throw new Error(`Cannot use ${className} "${stringifiedValue}" from another module or realm.
-
-Ensure that there is only one instance of "graphql" in the node_modules
-directory. If different versions of "graphql" are the dependencies of other
-relied on modules, use "resolutions" to ensure only one version is installed.
-
-https://yarnpkg.com/en/docs/selective-version-resolutions
-
-Duplicate "graphql" modules cannot be used at the same time since different
-versions may have different capabilities and behavior. The data from one
-version used in the function from another could produce confusing and
-spurious results.`);
-      }
-    }
-    return false;
-  };
-
-  /**
-   * A representation of source input to GraphQL. The `name` and `locationOffset` parameters are
-   * optional, but they are useful for clients who store GraphQL documents in source files.
-   * For example, if the GraphQL input starts at line 40 in a file named `Foo.graphql`, it might
-   * be useful for `name` to be `"Foo.graphql"` and location to be `{ line: 40, column: 1 }`.
-   * The `line` and `column` properties in `locationOffset` are 1-indexed.
-   */
-  class Source {
-    constructor(body, name = 'GraphQL request', locationOffset = {
-      line: 1,
-      column: 1
-    }) {
-      typeof body === 'string' || devAssert(false, `Body must be a string. Received: ${inspect(body)}.`);
-      this.body = body;
-      this.name = name;
-      this.locationOffset = locationOffset;
-      this.locationOffset.line > 0 || devAssert(false, 'line in locationOffset is 1-indexed and must be positive.');
-      this.locationOffset.column > 0 || devAssert(false, 'column in locationOffset is 1-indexed and must be positive.');
-    }
-    get [Symbol.toStringTag]() {
-      return 'Source';
-    }
-  }
-  /**
-   * Test if the given value is a Source object.
-   *
-   * @internal
-   */
-
-  function isSource(source) {
-    return instanceOf(source, Source);
-  }
-
-  /**
-   * Configuration options to control parser behavior
-   */
-
-  /**
-   * Given a GraphQL source, parses it into a Document.
-   * Throws GraphQLError if a syntax error is encountered.
-   */
-  function parse$1(source, options) {
-    const parser = new Parser(source, options);
-    return parser.parseDocument();
-  }
-  /**
-   * This class is exported only to assist people in implementing their own parsers
-   * without duplicating too much code and should be used only as last resort for cases
-   * such as experimental syntax or if certain features could not be contributed upstream.
-   *
-   * It is still part of the internal API and is versioned, so any changes to it are never
-   * considered breaking changes. If you still need to support multiple versions of the
-   * library, please use the `versionInfo` variable for version detection.
-   *
-   * @internal
-   */
-
-  class Parser {
-    constructor(source, options = {}) {
-      const sourceObj = isSource(source) ? source : new Source(source);
-      this._lexer = new Lexer(sourceObj);
-      this._options = options;
-      this._tokenCounter = 0;
-    }
-    /**
-     * Converts a name lex token into a name parse node.
-     */
-
-    parseName() {
-      const token = this.expectToken(TokenKind.NAME);
-      return this.node(token, {
-        kind: Kind.NAME,
-        value: token.value
-      });
-    } // Implements the parsing rules in the Document section.
-
-    /**
-     * Document : Definition+
-     */
-
-    parseDocument() {
-      return this.node(this._lexer.token, {
-        kind: Kind.DOCUMENT,
-        definitions: this.many(TokenKind.SOF, this.parseDefinition, TokenKind.EOF)
-      });
-    }
-    /**
-     * Definition :
-     *   - ExecutableDefinition
-     *   - TypeSystemDefinition
-     *   - TypeSystemExtension
-     *
-     * ExecutableDefinition :
-     *   - OperationDefinition
-     *   - FragmentDefinition
-     *
-     * TypeSystemDefinition :
-     *   - SchemaDefinition
-     *   - TypeDefinition
-     *   - DirectiveDefinition
-     *
-     * TypeDefinition :
-     *   - ScalarTypeDefinition
-     *   - ObjectTypeDefinition
-     *   - InterfaceTypeDefinition
-     *   - UnionTypeDefinition
-     *   - EnumTypeDefinition
-     *   - InputObjectTypeDefinition
-     */
-
-    parseDefinition() {
-      if (this.peek(TokenKind.BRACE_L)) {
-        return this.parseOperationDefinition();
-      } // Many definitions begin with a description and require a lookahead.
-
-      const hasDescription = this.peekDescription();
-      const keywordToken = hasDescription ? this._lexer.lookahead() : this._lexer.token;
-      if (keywordToken.kind === TokenKind.NAME) {
-        switch (keywordToken.value) {
-          case 'schema':
-            return this.parseSchemaDefinition();
-          case 'scalar':
-            return this.parseScalarTypeDefinition();
-          case 'type':
-            return this.parseObjectTypeDefinition();
-          case 'interface':
-            return this.parseInterfaceTypeDefinition();
-          case 'union':
-            return this.parseUnionTypeDefinition();
-          case 'enum':
-            return this.parseEnumTypeDefinition();
-          case 'input':
-            return this.parseInputObjectTypeDefinition();
-          case 'directive':
-            return this.parseDirectiveDefinition();
+    } else if (a = advance(t)) {
+      r = {
+        kind: "EnumValue",
+        value: a
+      };
+    } else if (a = advance(s)) {
+      r = {
+        kind: "StringValue",
+        value: blockString(a.slice(3, -3)),
+        block: !0
+      };
+    } else if (a = advance(c$2)) {
+      r = {
+        kind: "StringValue",
+        value: d$1.test(a) ? JSON.parse(a) : a.slice(1, -1),
+        block: !1
+      };
+    } else if (r = function list(e) {
+      var r;
+      if (91 === i$1.charCodeAt(n)) {
+        n++;
+        ignored();
+        var a = [];
+        while (r = value(e)) {
+          a.push(r);
         }
-        if (hasDescription) {
-          throw syntaxError(this._lexer.source, this._lexer.token.start, 'Unexpected description, descriptions are supported only on type definitions.');
+        if (93 !== i$1.charCodeAt(n++)) {
+          throw error("ListValue");
         }
-        switch (keywordToken.value) {
-          case 'query':
-          case 'mutation':
-          case 'subscription':
-            return this.parseOperationDefinition();
-          case 'fragment':
-            return this.parseFragmentDefinition();
-          case 'extend':
-            return this.parseTypeSystemExtension();
-        }
+        ignored();
+        return {
+          kind: "ListValue",
+          values: a
+        };
       }
-      throw this.unexpected(keywordToken);
-    } // Implements the parsing rules in the Operations section.
-
-    /**
-     * OperationDefinition :
-     *  - SelectionSet
-     *  - OperationType Name? VariableDefinitions? Directives? SelectionSet
-     */
-
-    parseOperationDefinition() {
-      const start = this._lexer.token;
-      if (this.peek(TokenKind.BRACE_L)) {
-        return this.node(start, {
-          kind: Kind.OPERATION_DEFINITION,
-          operation: OperationTypeNode.QUERY,
-          name: undefined,
-          variableDefinitions: [],
-          directives: [],
-          selectionSet: this.parseSelectionSet()
-        });
-      }
-      const operation = this.parseOperationType();
-      let name;
-      if (this.peek(TokenKind.NAME)) {
-        name = this.parseName();
-      }
-      return this.node(start, {
-        kind: Kind.OPERATION_DEFINITION,
-        operation,
-        name,
-        variableDefinitions: this.parseVariableDefinitions(),
-        directives: this.parseDirectives(false),
-        selectionSet: this.parseSelectionSet()
-      });
-    }
-    /**
-     * OperationType : one of query mutation subscription
-     */
-
-    parseOperationType() {
-      const operationToken = this.expectToken(TokenKind.NAME);
-      switch (operationToken.value) {
-        case 'query':
-          return OperationTypeNode.QUERY;
-        case 'mutation':
-          return OperationTypeNode.MUTATION;
-        case 'subscription':
-          return OperationTypeNode.SUBSCRIPTION;
-      }
-      throw this.unexpected(operationToken);
-    }
-    /**
-     * VariableDefinitions : ( VariableDefinition+ )
-     */
-
-    parseVariableDefinitions() {
-      return this.optionalMany(TokenKind.PAREN_L, this.parseVariableDefinition, TokenKind.PAREN_R);
-    }
-    /**
-     * VariableDefinition : Variable : Type DefaultValue? Directives[Const]?
-     */
-
-    parseVariableDefinition() {
-      return this.node(this._lexer.token, {
-        kind: Kind.VARIABLE_DEFINITION,
-        variable: this.parseVariable(),
-        type: (this.expectToken(TokenKind.COLON), this.parseTypeReference()),
-        defaultValue: this.expectOptionalToken(TokenKind.EQUALS) ? this.parseConstValueLiteral() : undefined,
-        directives: this.parseConstDirectives()
-      });
-    }
-    /**
-     * Variable : $ Name
-     */
-
-    parseVariable() {
-      const start = this._lexer.token;
-      this.expectToken(TokenKind.DOLLAR);
-      return this.node(start, {
-        kind: Kind.VARIABLE,
-        name: this.parseName()
-      });
-    }
-    /**
-     * ```
-     * SelectionSet : { Selection+ }
-     * ```
-     */
-
-    parseSelectionSet() {
-      return this.node(this._lexer.token, {
-        kind: Kind.SELECTION_SET,
-        selections: this.many(TokenKind.BRACE_L, this.parseSelection, TokenKind.BRACE_R)
-      });
-    }
-    /**
-     * Selection :
-     *   - Field
-     *   - FragmentSpread
-     *   - InlineFragment
-     */
-
-    parseSelection() {
-      return this.peek(TokenKind.SPREAD) ? this.parseFragment() : this.parseField();
-    }
-    /**
-     * Field : Alias? Name Arguments? Directives? SelectionSet?
-     *
-     * Alias : Name :
-     */
-
-    parseField() {
-      const start = this._lexer.token;
-      const nameOrAlias = this.parseName();
-      let alias;
-      let name;
-      if (this.expectOptionalToken(TokenKind.COLON)) {
-        alias = nameOrAlias;
-        name = this.parseName();
-      } else {
-        name = nameOrAlias;
-      }
-      return this.node(start, {
-        kind: Kind.FIELD,
-        alias,
-        name,
-        arguments: this.parseArguments(false),
-        directives: this.parseDirectives(false),
-        selectionSet: this.peek(TokenKind.BRACE_L) ? this.parseSelectionSet() : undefined
-      });
-    }
-    /**
-     * Arguments[Const] : ( Argument[?Const]+ )
-     */
-
-    parseArguments(isConst) {
-      const item = isConst ? this.parseConstArgument : this.parseArgument;
-      return this.optionalMany(TokenKind.PAREN_L, item, TokenKind.PAREN_R);
-    }
-    /**
-     * Argument[Const] : Name : Value[?Const]
-     */
-
-    parseArgument(isConst = false) {
-      const start = this._lexer.token;
-      const name = this.parseName();
-      this.expectToken(TokenKind.COLON);
-      return this.node(start, {
-        kind: Kind.ARGUMENT,
-        name,
-        value: this.parseValueLiteral(isConst)
-      });
-    }
-    parseConstArgument() {
-      return this.parseArgument(true);
-    } // Implements the parsing rules in the Fragments section.
-
-    /**
-     * Corresponds to both FragmentSpread and InlineFragment in the spec.
-     *
-     * FragmentSpread : ... FragmentName Directives?
-     *
-     * InlineFragment : ... TypeCondition? Directives? SelectionSet
-     */
-
-    parseFragment() {
-      const start = this._lexer.token;
-      this.expectToken(TokenKind.SPREAD);
-      const hasTypeCondition = this.expectOptionalKeyword('on');
-      if (!hasTypeCondition && this.peek(TokenKind.NAME)) {
-        return this.node(start, {
-          kind: Kind.FRAGMENT_SPREAD,
-          name: this.parseFragmentName(),
-          directives: this.parseDirectives(false)
-        });
-      }
-      return this.node(start, {
-        kind: Kind.INLINE_FRAGMENT,
-        typeCondition: hasTypeCondition ? this.parseNamedType() : undefined,
-        directives: this.parseDirectives(false),
-        selectionSet: this.parseSelectionSet()
-      });
-    }
-    /**
-     * FragmentDefinition :
-     *   - fragment FragmentName on TypeCondition Directives? SelectionSet
-     *
-     * TypeCondition : NamedType
-     */
-
-    parseFragmentDefinition() {
-      const start = this._lexer.token;
-      this.expectKeyword('fragment'); // Legacy support for defining variables within fragments changes
-      // the grammar of FragmentDefinition:
-      //   - fragment FragmentName VariableDefinitions? on TypeCondition Directives? SelectionSet
-
-      if (this._options.allowLegacyFragmentVariables === true) {
-        return this.node(start, {
-          kind: Kind.FRAGMENT_DEFINITION,
-          name: this.parseFragmentName(),
-          variableDefinitions: this.parseVariableDefinitions(),
-          typeCondition: (this.expectKeyword('on'), this.parseNamedType()),
-          directives: this.parseDirectives(false),
-          selectionSet: this.parseSelectionSet()
-        });
-      }
-      return this.node(start, {
-        kind: Kind.FRAGMENT_DEFINITION,
-        name: this.parseFragmentName(),
-        typeCondition: (this.expectKeyword('on'), this.parseNamedType()),
-        directives: this.parseDirectives(false),
-        selectionSet: this.parseSelectionSet()
-      });
-    }
-    /**
-     * FragmentName : Name but not `on`
-     */
-
-    parseFragmentName() {
-      if (this._lexer.token.value === 'on') {
-        throw this.unexpected();
-      }
-      return this.parseName();
-    } // Implements the parsing rules in the Values section.
-
-    /**
-     * Value[Const] :
-     *   - [~Const] Variable
-     *   - IntValue
-     *   - FloatValue
-     *   - StringValue
-     *   - BooleanValue
-     *   - NullValue
-     *   - EnumValue
-     *   - ListValue[?Const]
-     *   - ObjectValue[?Const]
-     *
-     * BooleanValue : one of `true` `false`
-     *
-     * NullValue : `null`
-     *
-     * EnumValue : Name but not `true`, `false` or `null`
-     */
-
-    parseValueLiteral(isConst) {
-      const token = this._lexer.token;
-      switch (token.kind) {
-        case TokenKind.BRACKET_L:
-          return this.parseList(isConst);
-        case TokenKind.BRACE_L:
-          return this.parseObject(isConst);
-        case TokenKind.INT:
-          this.advanceLexer();
-          return this.node(token, {
-            kind: Kind.INT,
-            value: token.value
-          });
-        case TokenKind.FLOAT:
-          this.advanceLexer();
-          return this.node(token, {
-            kind: Kind.FLOAT,
-            value: token.value
-          });
-        case TokenKind.STRING:
-        case TokenKind.BLOCK_STRING:
-          return this.parseStringLiteral();
-        case TokenKind.NAME:
-          this.advanceLexer();
-          switch (token.value) {
-            case 'true':
-              return this.node(token, {
-                kind: Kind.BOOLEAN,
-                value: true
-              });
-            case 'false':
-              return this.node(token, {
-                kind: Kind.BOOLEAN,
-                value: false
-              });
-            case 'null':
-              return this.node(token, {
-                kind: Kind.NULL
-              });
-            default:
-              return this.node(token, {
-                kind: Kind.ENUM,
-                value: token.value
-              });
+    }(e) || function object(e) {
+      if (123 === i$1.charCodeAt(n)) {
+        n++;
+        ignored();
+        var r = [];
+        var a;
+        while (a = name()) {
+          ignored();
+          if (58 !== i$1.charCodeAt(n++)) {
+            throw error("ObjectField");
           }
-        case TokenKind.DOLLAR:
-          if (isConst) {
-            this.expectToken(TokenKind.DOLLAR);
-            if (this._lexer.token.kind === TokenKind.NAME) {
-              const varName = this._lexer.token.value;
-              throw syntaxError(this._lexer.source, token.start, `Unexpected variable "$${varName}" in constant value.`);
-            } else {
-              throw this.unexpected(token);
+          ignored();
+          var t = value(e);
+          if (!t) {
+            throw error("ObjectField");
+          }
+          r.push({
+            kind: "ObjectField",
+            name: a,
+            value: t
+          });
+        }
+        if (125 !== i$1.charCodeAt(n++)) {
+          throw error("ObjectValue");
+        }
+        ignored();
+        return {
+          kind: "ObjectValue",
+          fields: r
+        };
+      }
+    }(e)) {
+      return r;
+    }
+    ignored();
+    return r;
+  }
+  function arguments_(e) {
+    var r = [];
+    ignored();
+    if (40 === i$1.charCodeAt(n)) {
+      n++;
+      ignored();
+      var a;
+      while (a = name()) {
+        ignored();
+        if (58 !== i$1.charCodeAt(n++)) {
+          throw error("Argument");
+        }
+        ignored();
+        var t = value(e);
+        if (!t) {
+          throw error("Argument");
+        }
+        r.push({
+          kind: "Argument",
+          name: a,
+          value: t
+        });
+      }
+      if (!r.length || 41 !== i$1.charCodeAt(n++)) {
+        throw error("Argument");
+      }
+      ignored();
+    }
+    return r;
+  }
+  function directives(e) {
+    var r = [];
+    ignored();
+    while (64 === i$1.charCodeAt(n)) {
+      n++;
+      var a = name();
+      if (!a) {
+        throw error("Directive");
+      }
+      ignored();
+      r.push({
+        kind: "Directive",
+        name: a,
+        arguments: arguments_(e)
+      });
+    }
+    return r;
+  }
+  function field() {
+    var e = name();
+    if (e) {
+      ignored();
+      var r;
+      if (58 === i$1.charCodeAt(n)) {
+        n++;
+        ignored();
+        r = e;
+        if (!(e = name())) {
+          throw error("Field");
+        }
+        ignored();
+      }
+      return {
+        kind: "Field",
+        alias: r,
+        name: e,
+        arguments: arguments_(!1),
+        directives: directives(!1),
+        selectionSet: selectionSet()
+      };
+    }
+  }
+  function type() {
+    var e;
+    ignored();
+    if (91 === i$1.charCodeAt(n)) {
+      n++;
+      ignored();
+      var r = type();
+      if (!r || 93 !== i$1.charCodeAt(n++)) {
+        throw error("ListType");
+      }
+      e = {
+        kind: "ListType",
+        type: r
+      };
+    } else if (e = name()) {
+      e = {
+        kind: "NamedType",
+        name: e
+      };
+    } else {
+      throw error("NamedType");
+    }
+    ignored();
+    if (33 === i$1.charCodeAt(n)) {
+      n++;
+      ignored();
+      return {
+        kind: "NonNullType",
+        type: e
+      };
+    } else {
+      return e;
+    }
+  }
+  var f$1 = /on/y;
+  function typeCondition() {
+    if (advance(f$1)) {
+      ignored();
+      var e = name();
+      if (!e) {
+        throw error("NamedType");
+      }
+      ignored();
+      return {
+        kind: "NamedType",
+        name: e
+      };
+    }
+  }
+  var p$1 = /\.\.\./y;
+  function fragmentSpread() {
+    if (advance(p$1)) {
+      ignored();
+      var e = n;
+      var r;
+      if ((r = name()) && "on" !== r.value) {
+        return {
+          kind: "FragmentSpread",
+          name: r,
+          directives: directives(!1)
+        };
+      } else {
+        n = e;
+        var i = typeCondition();
+        var a = directives(!1);
+        var t = selectionSet();
+        if (!t) {
+          throw error("InlineFragment");
+        }
+        return {
+          kind: "InlineFragment",
+          typeCondition: i,
+          directives: a,
+          selectionSet: t
+        };
+      }
+    }
+  }
+  function selectionSet() {
+    var e;
+    ignored();
+    if (123 === i$1.charCodeAt(n)) {
+      n++;
+      ignored();
+      var r = [];
+      while (e = fragmentSpread() || field()) {
+        r.push(e);
+      }
+      if (!r.length || 125 !== i$1.charCodeAt(n++)) {
+        throw error("SelectionSet");
+      }
+      ignored();
+      return {
+        kind: "SelectionSet",
+        selections: r
+      };
+    }
+  }
+  var m = /fragment/y;
+  function fragmentDefinition() {
+    if (advance(m)) {
+      ignored();
+      var e = name();
+      if (!e) {
+        throw error("FragmentDefinition");
+      }
+      ignored();
+      var r = typeCondition();
+      if (!r) {
+        throw error("FragmentDefinition");
+      }
+      var i = directives(!1);
+      var n = selectionSet();
+      if (!n) {
+        throw error("FragmentDefinition");
+      }
+      return {
+        kind: "FragmentDefinition",
+        name: e,
+        typeCondition: r,
+        directives: i,
+        selectionSet: n
+      };
+    }
+  }
+  var g = /query|mutation|subscription/y;
+  function operationDefinition() {
+    var e;
+    var r;
+    var a = [];
+    var t = [];
+    if (e = advance(g)) {
+      ignored();
+      r = name();
+      a = function variableDefinitions() {
+        var e;
+        var r = [];
+        ignored();
+        if (40 === i$1.charCodeAt(n)) {
+          n++;
+          ignored();
+          while (e = advance(l$1)) {
+            ignored();
+            if (58 !== i$1.charCodeAt(n++)) {
+              throw error("VariableDefinition");
             }
-          }
-          return this.parseVariable();
-        default:
-          throw this.unexpected();
-      }
-    }
-    parseConstValueLiteral() {
-      return this.parseValueLiteral(true);
-    }
-    parseStringLiteral() {
-      const token = this._lexer.token;
-      this.advanceLexer();
-      return this.node(token, {
-        kind: Kind.STRING,
-        value: token.value,
-        block: token.kind === TokenKind.BLOCK_STRING
-      });
-    }
-    /**
-     * ListValue[Const] :
-     *   - [ ]
-     *   - [ Value[?Const]+ ]
-     */
-
-    parseList(isConst) {
-      const item = () => this.parseValueLiteral(isConst);
-      return this.node(this._lexer.token, {
-        kind: Kind.LIST,
-        values: this.any(TokenKind.BRACKET_L, item, TokenKind.BRACKET_R)
-      });
-    }
-    /**
-     * ```
-     * ObjectValue[Const] :
-     *   - { }
-     *   - { ObjectField[?Const]+ }
-     * ```
-     */
-
-    parseObject(isConst) {
-      const item = () => this.parseObjectField(isConst);
-      return this.node(this._lexer.token, {
-        kind: Kind.OBJECT,
-        fields: this.any(TokenKind.BRACE_L, item, TokenKind.BRACE_R)
-      });
-    }
-    /**
-     * ObjectField[Const] : Name : Value[?Const]
-     */
-
-    parseObjectField(isConst) {
-      const start = this._lexer.token;
-      const name = this.parseName();
-      this.expectToken(TokenKind.COLON);
-      return this.node(start, {
-        kind: Kind.OBJECT_FIELD,
-        name,
-        value: this.parseValueLiteral(isConst)
-      });
-    } // Implements the parsing rules in the Directives section.
-
-    /**
-     * Directives[Const] : Directive[?Const]+
-     */
-
-    parseDirectives(isConst) {
-      const directives = [];
-      while (this.peek(TokenKind.AT)) {
-        directives.push(this.parseDirective(isConst));
-      }
-      return directives;
-    }
-    parseConstDirectives() {
-      return this.parseDirectives(true);
-    }
-    /**
-     * ```
-     * Directive[Const] : @ Name Arguments[?Const]?
-     * ```
-     */
-
-    parseDirective(isConst) {
-      const start = this._lexer.token;
-      this.expectToken(TokenKind.AT);
-      return this.node(start, {
-        kind: Kind.DIRECTIVE,
-        name: this.parseName(),
-        arguments: this.parseArguments(isConst)
-      });
-    } // Implements the parsing rules in the Types section.
-
-    /**
-     * Type :
-     *   - NamedType
-     *   - ListType
-     *   - NonNullType
-     */
-
-    parseTypeReference() {
-      const start = this._lexer.token;
-      let type;
-      if (this.expectOptionalToken(TokenKind.BRACKET_L)) {
-        const innerType = this.parseTypeReference();
-        this.expectToken(TokenKind.BRACKET_R);
-        type = this.node(start, {
-          kind: Kind.LIST_TYPE,
-          type: innerType
-        });
-      } else {
-        type = this.parseNamedType();
-      }
-      if (this.expectOptionalToken(TokenKind.BANG)) {
-        return this.node(start, {
-          kind: Kind.NON_NULL_TYPE,
-          type
-        });
-      }
-      return type;
-    }
-    /**
-     * NamedType : Name
-     */
-
-    parseNamedType() {
-      return this.node(this._lexer.token, {
-        kind: Kind.NAMED_TYPE,
-        name: this.parseName()
-      });
-    } // Implements the parsing rules in the Type Definition section.
-
-    peekDescription() {
-      return this.peek(TokenKind.STRING) || this.peek(TokenKind.BLOCK_STRING);
-    }
-    /**
-     * Description : StringValue
-     */
-
-    parseDescription() {
-      if (this.peekDescription()) {
-        return this.parseStringLiteral();
-      }
-    }
-    /**
-     * ```
-     * SchemaDefinition : Description? schema Directives[Const]? { OperationTypeDefinition+ }
-     * ```
-     */
-
-    parseSchemaDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      this.expectKeyword('schema');
-      const directives = this.parseConstDirectives();
-      const operationTypes = this.many(TokenKind.BRACE_L, this.parseOperationTypeDefinition, TokenKind.BRACE_R);
-      return this.node(start, {
-        kind: Kind.SCHEMA_DEFINITION,
-        description,
-        directives,
-        operationTypes
-      });
-    }
-    /**
-     * OperationTypeDefinition : OperationType : NamedType
-     */
-
-    parseOperationTypeDefinition() {
-      const start = this._lexer.token;
-      const operation = this.parseOperationType();
-      this.expectToken(TokenKind.COLON);
-      const type = this.parseNamedType();
-      return this.node(start, {
-        kind: Kind.OPERATION_TYPE_DEFINITION,
-        operation,
-        type
-      });
-    }
-    /**
-     * ScalarTypeDefinition : Description? scalar Name Directives[Const]?
-     */
-
-    parseScalarTypeDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      this.expectKeyword('scalar');
-      const name = this.parseName();
-      const directives = this.parseConstDirectives();
-      return this.node(start, {
-        kind: Kind.SCALAR_TYPE_DEFINITION,
-        description,
-        name,
-        directives
-      });
-    }
-    /**
-     * ObjectTypeDefinition :
-     *   Description?
-     *   type Name ImplementsInterfaces? Directives[Const]? FieldsDefinition?
-     */
-
-    parseObjectTypeDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      this.expectKeyword('type');
-      const name = this.parseName();
-      const interfaces = this.parseImplementsInterfaces();
-      const directives = this.parseConstDirectives();
-      const fields = this.parseFieldsDefinition();
-      return this.node(start, {
-        kind: Kind.OBJECT_TYPE_DEFINITION,
-        description,
-        name,
-        interfaces,
-        directives,
-        fields
-      });
-    }
-    /**
-     * ImplementsInterfaces :
-     *   - implements `&`? NamedType
-     *   - ImplementsInterfaces & NamedType
-     */
-
-    parseImplementsInterfaces() {
-      return this.expectOptionalKeyword('implements') ? this.delimitedMany(TokenKind.AMP, this.parseNamedType) : [];
-    }
-    /**
-     * ```
-     * FieldsDefinition : { FieldDefinition+ }
-     * ```
-     */
-
-    parseFieldsDefinition() {
-      return this.optionalMany(TokenKind.BRACE_L, this.parseFieldDefinition, TokenKind.BRACE_R);
-    }
-    /**
-     * FieldDefinition :
-     *   - Description? Name ArgumentsDefinition? : Type Directives[Const]?
-     */
-
-    parseFieldDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      const name = this.parseName();
-      const args = this.parseArgumentDefs();
-      this.expectToken(TokenKind.COLON);
-      const type = this.parseTypeReference();
-      const directives = this.parseConstDirectives();
-      return this.node(start, {
-        kind: Kind.FIELD_DEFINITION,
-        description,
-        name,
-        arguments: args,
-        type,
-        directives
-      });
-    }
-    /**
-     * ArgumentsDefinition : ( InputValueDefinition+ )
-     */
-
-    parseArgumentDefs() {
-      return this.optionalMany(TokenKind.PAREN_L, this.parseInputValueDef, TokenKind.PAREN_R);
-    }
-    /**
-     * InputValueDefinition :
-     *   - Description? Name : Type DefaultValue? Directives[Const]?
-     */
-
-    parseInputValueDef() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      const name = this.parseName();
-      this.expectToken(TokenKind.COLON);
-      const type = this.parseTypeReference();
-      let defaultValue;
-      if (this.expectOptionalToken(TokenKind.EQUALS)) {
-        defaultValue = this.parseConstValueLiteral();
-      }
-      const directives = this.parseConstDirectives();
-      return this.node(start, {
-        kind: Kind.INPUT_VALUE_DEFINITION,
-        description,
-        name,
-        type,
-        defaultValue,
-        directives
-      });
-    }
-    /**
-     * InterfaceTypeDefinition :
-     *   - Description? interface Name Directives[Const]? FieldsDefinition?
-     */
-
-    parseInterfaceTypeDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      this.expectKeyword('interface');
-      const name = this.parseName();
-      const interfaces = this.parseImplementsInterfaces();
-      const directives = this.parseConstDirectives();
-      const fields = this.parseFieldsDefinition();
-      return this.node(start, {
-        kind: Kind.INTERFACE_TYPE_DEFINITION,
-        description,
-        name,
-        interfaces,
-        directives,
-        fields
-      });
-    }
-    /**
-     * UnionTypeDefinition :
-     *   - Description? union Name Directives[Const]? UnionMemberTypes?
-     */
-
-    parseUnionTypeDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      this.expectKeyword('union');
-      const name = this.parseName();
-      const directives = this.parseConstDirectives();
-      const types = this.parseUnionMemberTypes();
-      return this.node(start, {
-        kind: Kind.UNION_TYPE_DEFINITION,
-        description,
-        name,
-        directives,
-        types
-      });
-    }
-    /**
-     * UnionMemberTypes :
-     *   - = `|`? NamedType
-     *   - UnionMemberTypes | NamedType
-     */
-
-    parseUnionMemberTypes() {
-      return this.expectOptionalToken(TokenKind.EQUALS) ? this.delimitedMany(TokenKind.PIPE, this.parseNamedType) : [];
-    }
-    /**
-     * EnumTypeDefinition :
-     *   - Description? enum Name Directives[Const]? EnumValuesDefinition?
-     */
-
-    parseEnumTypeDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      this.expectKeyword('enum');
-      const name = this.parseName();
-      const directives = this.parseConstDirectives();
-      const values = this.parseEnumValuesDefinition();
-      return this.node(start, {
-        kind: Kind.ENUM_TYPE_DEFINITION,
-        description,
-        name,
-        directives,
-        values
-      });
-    }
-    /**
-     * ```
-     * EnumValuesDefinition : { EnumValueDefinition+ }
-     * ```
-     */
-
-    parseEnumValuesDefinition() {
-      return this.optionalMany(TokenKind.BRACE_L, this.parseEnumValueDefinition, TokenKind.BRACE_R);
-    }
-    /**
-     * EnumValueDefinition : Description? EnumValue Directives[Const]?
-     */
-
-    parseEnumValueDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      const name = this.parseEnumValueName();
-      const directives = this.parseConstDirectives();
-      return this.node(start, {
-        kind: Kind.ENUM_VALUE_DEFINITION,
-        description,
-        name,
-        directives
-      });
-    }
-    /**
-     * EnumValue : Name but not `true`, `false` or `null`
-     */
-
-    parseEnumValueName() {
-      if (this._lexer.token.value === 'true' || this._lexer.token.value === 'false' || this._lexer.token.value === 'null') {
-        throw syntaxError(this._lexer.source, this._lexer.token.start, `${getTokenDesc(this._lexer.token)} is reserved and cannot be used for an enum value.`);
-      }
-      return this.parseName();
-    }
-    /**
-     * InputObjectTypeDefinition :
-     *   - Description? input Name Directives[Const]? InputFieldsDefinition?
-     */
-
-    parseInputObjectTypeDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      this.expectKeyword('input');
-      const name = this.parseName();
-      const directives = this.parseConstDirectives();
-      const fields = this.parseInputFieldsDefinition();
-      return this.node(start, {
-        kind: Kind.INPUT_OBJECT_TYPE_DEFINITION,
-        description,
-        name,
-        directives,
-        fields
-      });
-    }
-    /**
-     * ```
-     * InputFieldsDefinition : { InputValueDefinition+ }
-     * ```
-     */
-
-    parseInputFieldsDefinition() {
-      return this.optionalMany(TokenKind.BRACE_L, this.parseInputValueDef, TokenKind.BRACE_R);
-    }
-    /**
-     * TypeSystemExtension :
-     *   - SchemaExtension
-     *   - TypeExtension
-     *
-     * TypeExtension :
-     *   - ScalarTypeExtension
-     *   - ObjectTypeExtension
-     *   - InterfaceTypeExtension
-     *   - UnionTypeExtension
-     *   - EnumTypeExtension
-     *   - InputObjectTypeDefinition
-     */
-
-    parseTypeSystemExtension() {
-      const keywordToken = this._lexer.lookahead();
-      if (keywordToken.kind === TokenKind.NAME) {
-        switch (keywordToken.value) {
-          case 'schema':
-            return this.parseSchemaExtension();
-          case 'scalar':
-            return this.parseScalarTypeExtension();
-          case 'type':
-            return this.parseObjectTypeExtension();
-          case 'interface':
-            return this.parseInterfaceTypeExtension();
-          case 'union':
-            return this.parseUnionTypeExtension();
-          case 'enum':
-            return this.parseEnumTypeExtension();
-          case 'input':
-            return this.parseInputObjectTypeExtension();
-        }
-      }
-      throw this.unexpected(keywordToken);
-    }
-    /**
-     * ```
-     * SchemaExtension :
-     *  - extend schema Directives[Const]? { OperationTypeDefinition+ }
-     *  - extend schema Directives[Const]
-     * ```
-     */
-
-    parseSchemaExtension() {
-      const start = this._lexer.token;
-      this.expectKeyword('extend');
-      this.expectKeyword('schema');
-      const directives = this.parseConstDirectives();
-      const operationTypes = this.optionalMany(TokenKind.BRACE_L, this.parseOperationTypeDefinition, TokenKind.BRACE_R);
-      if (directives.length === 0 && operationTypes.length === 0) {
-        throw this.unexpected();
-      }
-      return this.node(start, {
-        kind: Kind.SCHEMA_EXTENSION,
-        directives,
-        operationTypes
-      });
-    }
-    /**
-     * ScalarTypeExtension :
-     *   - extend scalar Name Directives[Const]
-     */
-
-    parseScalarTypeExtension() {
-      const start = this._lexer.token;
-      this.expectKeyword('extend');
-      this.expectKeyword('scalar');
-      const name = this.parseName();
-      const directives = this.parseConstDirectives();
-      if (directives.length === 0) {
-        throw this.unexpected();
-      }
-      return this.node(start, {
-        kind: Kind.SCALAR_TYPE_EXTENSION,
-        name,
-        directives
-      });
-    }
-    /**
-     * ObjectTypeExtension :
-     *  - extend type Name ImplementsInterfaces? Directives[Const]? FieldsDefinition
-     *  - extend type Name ImplementsInterfaces? Directives[Const]
-     *  - extend type Name ImplementsInterfaces
-     */
-
-    parseObjectTypeExtension() {
-      const start = this._lexer.token;
-      this.expectKeyword('extend');
-      this.expectKeyword('type');
-      const name = this.parseName();
-      const interfaces = this.parseImplementsInterfaces();
-      const directives = this.parseConstDirectives();
-      const fields = this.parseFieldsDefinition();
-      if (interfaces.length === 0 && directives.length === 0 && fields.length === 0) {
-        throw this.unexpected();
-      }
-      return this.node(start, {
-        kind: Kind.OBJECT_TYPE_EXTENSION,
-        name,
-        interfaces,
-        directives,
-        fields
-      });
-    }
-    /**
-     * InterfaceTypeExtension :
-     *  - extend interface Name ImplementsInterfaces? Directives[Const]? FieldsDefinition
-     *  - extend interface Name ImplementsInterfaces? Directives[Const]
-     *  - extend interface Name ImplementsInterfaces
-     */
-
-    parseInterfaceTypeExtension() {
-      const start = this._lexer.token;
-      this.expectKeyword('extend');
-      this.expectKeyword('interface');
-      const name = this.parseName();
-      const interfaces = this.parseImplementsInterfaces();
-      const directives = this.parseConstDirectives();
-      const fields = this.parseFieldsDefinition();
-      if (interfaces.length === 0 && directives.length === 0 && fields.length === 0) {
-        throw this.unexpected();
-      }
-      return this.node(start, {
-        kind: Kind.INTERFACE_TYPE_EXTENSION,
-        name,
-        interfaces,
-        directives,
-        fields
-      });
-    }
-    /**
-     * UnionTypeExtension :
-     *   - extend union Name Directives[Const]? UnionMemberTypes
-     *   - extend union Name Directives[Const]
-     */
-
-    parseUnionTypeExtension() {
-      const start = this._lexer.token;
-      this.expectKeyword('extend');
-      this.expectKeyword('union');
-      const name = this.parseName();
-      const directives = this.parseConstDirectives();
-      const types = this.parseUnionMemberTypes();
-      if (directives.length === 0 && types.length === 0) {
-        throw this.unexpected();
-      }
-      return this.node(start, {
-        kind: Kind.UNION_TYPE_EXTENSION,
-        name,
-        directives,
-        types
-      });
-    }
-    /**
-     * EnumTypeExtension :
-     *   - extend enum Name Directives[Const]? EnumValuesDefinition
-     *   - extend enum Name Directives[Const]
-     */
-
-    parseEnumTypeExtension() {
-      const start = this._lexer.token;
-      this.expectKeyword('extend');
-      this.expectKeyword('enum');
-      const name = this.parseName();
-      const directives = this.parseConstDirectives();
-      const values = this.parseEnumValuesDefinition();
-      if (directives.length === 0 && values.length === 0) {
-        throw this.unexpected();
-      }
-      return this.node(start, {
-        kind: Kind.ENUM_TYPE_EXTENSION,
-        name,
-        directives,
-        values
-      });
-    }
-    /**
-     * InputObjectTypeExtension :
-     *   - extend input Name Directives[Const]? InputFieldsDefinition
-     *   - extend input Name Directives[Const]
-     */
-
-    parseInputObjectTypeExtension() {
-      const start = this._lexer.token;
-      this.expectKeyword('extend');
-      this.expectKeyword('input');
-      const name = this.parseName();
-      const directives = this.parseConstDirectives();
-      const fields = this.parseInputFieldsDefinition();
-      if (directives.length === 0 && fields.length === 0) {
-        throw this.unexpected();
-      }
-      return this.node(start, {
-        kind: Kind.INPUT_OBJECT_TYPE_EXTENSION,
-        name,
-        directives,
-        fields
-      });
-    }
-    /**
-     * ```
-     * DirectiveDefinition :
-     *   - Description? directive @ Name ArgumentsDefinition? `repeatable`? on DirectiveLocations
-     * ```
-     */
-
-    parseDirectiveDefinition() {
-      const start = this._lexer.token;
-      const description = this.parseDescription();
-      this.expectKeyword('directive');
-      this.expectToken(TokenKind.AT);
-      const name = this.parseName();
-      const args = this.parseArgumentDefs();
-      const repeatable = this.expectOptionalKeyword('repeatable');
-      this.expectKeyword('on');
-      const locations = this.parseDirectiveLocations();
-      return this.node(start, {
-        kind: Kind.DIRECTIVE_DEFINITION,
-        description,
-        name,
-        arguments: args,
-        repeatable,
-        locations
-      });
-    }
-    /**
-     * DirectiveLocations :
-     *   - `|`? DirectiveLocation
-     *   - DirectiveLocations | DirectiveLocation
-     */
-
-    parseDirectiveLocations() {
-      return this.delimitedMany(TokenKind.PIPE, this.parseDirectiveLocation);
-    }
-    /*
-     * DirectiveLocation :
-     *   - ExecutableDirectiveLocation
-     *   - TypeSystemDirectiveLocation
-     *
-     * ExecutableDirectiveLocation : one of
-     *   `QUERY`
-     *   `MUTATION`
-     *   `SUBSCRIPTION`
-     *   `FIELD`
-     *   `FRAGMENT_DEFINITION`
-     *   `FRAGMENT_SPREAD`
-     *   `INLINE_FRAGMENT`
-     *
-     * TypeSystemDirectiveLocation : one of
-     *   `SCHEMA`
-     *   `SCALAR`
-     *   `OBJECT`
-     *   `FIELD_DEFINITION`
-     *   `ARGUMENT_DEFINITION`
-     *   `INTERFACE`
-     *   `UNION`
-     *   `ENUM`
-     *   `ENUM_VALUE`
-     *   `INPUT_OBJECT`
-     *   `INPUT_FIELD_DEFINITION`
-     */
-
-    parseDirectiveLocation() {
-      const start = this._lexer.token;
-      const name = this.parseName();
-      if (Object.prototype.hasOwnProperty.call(DirectiveLocation, name.value)) {
-        return name;
-      }
-      throw this.unexpected(start);
-    } // Core parsing utility functions
-
-    /**
-     * Returns a node that, if configured to do so, sets a "loc" field as a
-     * location object, used to identify the place in the source that created a
-     * given parsed object.
-     */
-
-    node(startToken, node) {
-      if (this._options.noLocation !== true) {
-        node.loc = new Location(startToken, this._lexer.lastToken, this._lexer.source);
-      }
-      return node;
-    }
-    /**
-     * Determines if the next token is of a given kind
-     */
-
-    peek(kind) {
-      return this._lexer.token.kind === kind;
-    }
-    /**
-     * If the next token is of the given kind, return that token after advancing the lexer.
-     * Otherwise, do not change the parser state and throw an error.
-     */
-
-    expectToken(kind) {
-      const token = this._lexer.token;
-      if (token.kind === kind) {
-        this.advanceLexer();
-        return token;
-      }
-      throw syntaxError(this._lexer.source, token.start, `Expected ${getTokenKindDesc(kind)}, found ${getTokenDesc(token)}.`);
-    }
-    /**
-     * If the next token is of the given kind, return "true" after advancing the lexer.
-     * Otherwise, do not change the parser state and return "false".
-     */
-
-    expectOptionalToken(kind) {
-      const token = this._lexer.token;
-      if (token.kind === kind) {
-        this.advanceLexer();
-        return true;
-      }
-      return false;
-    }
-    /**
-     * If the next token is a given keyword, advance the lexer.
-     * Otherwise, do not change the parser state and throw an error.
-     */
-
-    expectKeyword(value) {
-      const token = this._lexer.token;
-      if (token.kind === TokenKind.NAME && token.value === value) {
-        this.advanceLexer();
-      } else {
-        throw syntaxError(this._lexer.source, token.start, `Expected "${value}", found ${getTokenDesc(token)}.`);
-      }
-    }
-    /**
-     * If the next token is a given keyword, return "true" after advancing the lexer.
-     * Otherwise, do not change the parser state and return "false".
-     */
-
-    expectOptionalKeyword(value) {
-      const token = this._lexer.token;
-      if (token.kind === TokenKind.NAME && token.value === value) {
-        this.advanceLexer();
-        return true;
-      }
-      return false;
-    }
-    /**
-     * Helper function for creating an error when an unexpected lexed token is encountered.
-     */
-
-    unexpected(atToken) {
-      const token = atToken !== null && atToken !== void 0 ? atToken : this._lexer.token;
-      return syntaxError(this._lexer.source, token.start, `Unexpected ${getTokenDesc(token)}.`);
-    }
-    /**
-     * Returns a possibly empty list of parse nodes, determined by the parseFn.
-     * This list begins with a lex token of openKind and ends with a lex token of closeKind.
-     * Advances the parser to the next lex token after the closing token.
-     */
-
-    any(openKind, parseFn, closeKind) {
-      this.expectToken(openKind);
-      const nodes = [];
-      while (!this.expectOptionalToken(closeKind)) {
-        nodes.push(parseFn.call(this));
-      }
-      return nodes;
-    }
-    /**
-     * Returns a list of parse nodes, determined by the parseFn.
-     * It can be empty only if open token is missing otherwise it will always return non-empty list
-     * that begins with a lex token of openKind and ends with a lex token of closeKind.
-     * Advances the parser to the next lex token after the closing token.
-     */
-
-    optionalMany(openKind, parseFn, closeKind) {
-      if (this.expectOptionalToken(openKind)) {
-        const nodes = [];
-        do {
-          nodes.push(parseFn.call(this));
-        } while (!this.expectOptionalToken(closeKind));
-        return nodes;
-      }
-      return [];
-    }
-    /**
-     * Returns a non-empty list of parse nodes, determined by the parseFn.
-     * This list begins with a lex token of openKind and ends with a lex token of closeKind.
-     * Advances the parser to the next lex token after the closing token.
-     */
-
-    many(openKind, parseFn, closeKind) {
-      this.expectToken(openKind);
-      const nodes = [];
-      do {
-        nodes.push(parseFn.call(this));
-      } while (!this.expectOptionalToken(closeKind));
-      return nodes;
-    }
-    /**
-     * Returns a non-empty list of parse nodes, determined by the parseFn.
-     * This list may begin with a lex token of delimiterKind followed by items separated by lex tokens of tokenKind.
-     * Advances the parser to the next lex token after last item in the list.
-     */
-
-    delimitedMany(delimiterKind, parseFn) {
-      this.expectOptionalToken(delimiterKind);
-      const nodes = [];
-      do {
-        nodes.push(parseFn.call(this));
-      } while (this.expectOptionalToken(delimiterKind));
-      return nodes;
-    }
-    advanceLexer() {
-      const {
-        maxTokens
-      } = this._options;
-      const token = this._lexer.advance();
-      if (maxTokens !== undefined && token.kind !== TokenKind.EOF) {
-        ++this._tokenCounter;
-        if (this._tokenCounter > maxTokens) {
-          throw syntaxError(this._lexer.source, token.start, `Document contains more that ${maxTokens} tokens. Parsing aborted.`);
-        }
-      }
-    }
-  }
-  /**
-   * A helper function to describe a token as a string for debugging.
-   */
-
-  function getTokenDesc(token) {
-    const value = token.value;
-    return getTokenKindDesc(token.kind) + (value != null ? ` "${value}"` : '');
-  }
-  /**
-   * A helper function to describe a token kind as a string for debugging.
-   */
-
-  function getTokenKindDesc(kind) {
-    return isPunctuatorTokenKind(kind) ? `"${kind}"` : kind;
-  }
-
-  /**
-   * Prints a string as a GraphQL StringValue literal. Replaces control characters
-   * and excluded characters (" U+0022 and \\ U+005C) with escape sequences.
-   */
-  function printString(str) {
-    return `"${str.replace(escapedRegExp, escapedReplacer)}"`;
-  } // eslint-disable-next-line no-control-regex
-
-  const escapedRegExp = /[\x00-\x1f\x22\x5c\x7f-\x9f]/g;
-  function escapedReplacer(str) {
-    return escapeSequences[str.charCodeAt(0)];
-  } // prettier-ignore
-
-  const escapeSequences = ['\\u0000', '\\u0001', '\\u0002', '\\u0003', '\\u0004', '\\u0005', '\\u0006', '\\u0007', '\\b', '\\t', '\\n', '\\u000B', '\\f', '\\r', '\\u000E', '\\u000F', '\\u0010', '\\u0011', '\\u0012', '\\u0013', '\\u0014', '\\u0015', '\\u0016', '\\u0017', '\\u0018', '\\u0019', '\\u001A', '\\u001B', '\\u001C', '\\u001D', '\\u001E', '\\u001F', '', '', '\\"', '', '', '', '', '', '', '', '', '', '', '', '', '',
-  // 2F
-  '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-  // 3F
-  '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-  // 4F
-  '', '', '', '', '', '', '', '', '', '', '', '', '\\\\', '', '', '',
-  // 5F
-  '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-  // 6F
-  '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '\\u007F', '\\u0080', '\\u0081', '\\u0082', '\\u0083', '\\u0084', '\\u0085', '\\u0086', '\\u0087', '\\u0088', '\\u0089', '\\u008A', '\\u008B', '\\u008C', '\\u008D', '\\u008E', '\\u008F', '\\u0090', '\\u0091', '\\u0092', '\\u0093', '\\u0094', '\\u0095', '\\u0096', '\\u0097', '\\u0098', '\\u0099', '\\u009A', '\\u009B', '\\u009C', '\\u009D', '\\u009E', '\\u009F'];
-
-  /**
-   * A visitor is provided to visit, it contains the collection of
-   * relevant functions to be called during the visitor's traversal.
-   */
-
-  const BREAK = Object.freeze({});
-  /**
-   * visit() will walk through an AST using a depth-first traversal, calling
-   * the visitor's enter function at each node in the traversal, and calling the
-   * leave function after visiting that node and all of its child nodes.
-   *
-   * By returning different values from the enter and leave functions, the
-   * behavior of the visitor can be altered, including skipping over a sub-tree of
-   * the AST (by returning false), editing the AST by returning a value or null
-   * to remove the value, or to stop the whole traversal by returning BREAK.
-   *
-   * When using visit() to edit an AST, the original AST will not be modified, and
-   * a new version of the AST with the changes applied will be returned from the
-   * visit function.
-   *
-   * ```ts
-   * const editedAST = visit(ast, {
-   *   enter(node, key, parent, path, ancestors) {
-   *     // @return
-   *     //   undefined: no action
-   *     //   false: skip visiting this node
-   *     //   visitor.BREAK: stop visiting altogether
-   *     //   null: delete this node
-   *     //   any value: replace this node with the returned value
-   *   },
-   *   leave(node, key, parent, path, ancestors) {
-   *     // @return
-   *     //   undefined: no action
-   *     //   false: no action
-   *     //   visitor.BREAK: stop visiting altogether
-   *     //   null: delete this node
-   *     //   any value: replace this node with the returned value
-   *   }
-   * });
-   * ```
-   *
-   * Alternatively to providing enter() and leave() functions, a visitor can
-   * instead provide functions named the same as the kinds of AST nodes, or
-   * enter/leave visitors at a named key, leading to three permutations of the
-   * visitor API:
-   *
-   * 1) Named visitors triggered when entering a node of a specific kind.
-   *
-   * ```ts
-   * visit(ast, {
-   *   Kind(node) {
-   *     // enter the "Kind" node
-   *   }
-   * })
-   * ```
-   *
-   * 2) Named visitors that trigger upon entering and leaving a node of a specific kind.
-   *
-   * ```ts
-   * visit(ast, {
-   *   Kind: {
-   *     enter(node) {
-   *       // enter the "Kind" node
-   *     }
-   *     leave(node) {
-   *       // leave the "Kind" node
-   *     }
-   *   }
-   * })
-   * ```
-   *
-   * 3) Generic visitors that trigger upon entering and leaving any node.
-   *
-   * ```ts
-   * visit(ast, {
-   *   enter(node) {
-   *     // enter any node
-   *   },
-   *   leave(node) {
-   *     // leave any node
-   *   }
-   * })
-   * ```
-   */
-
-  function visit(root, visitor, visitorKeys = QueryDocumentKeys) {
-    const enterLeaveMap = new Map();
-    for (const kind of Object.values(Kind)) {
-      enterLeaveMap.set(kind, getEnterLeaveForKind(visitor, kind));
-    }
-    /* eslint-disable no-undef-init */
-
-    let stack = undefined;
-    let inArray = Array.isArray(root);
-    let keys = [root];
-    let index = -1;
-    let edits = [];
-    let node = root;
-    let key = undefined;
-    let parent = undefined;
-    const path = [];
-    const ancestors = [];
-    /* eslint-enable no-undef-init */
-
-    do {
-      index++;
-      const isLeaving = index === keys.length;
-      const isEdited = isLeaving && edits.length !== 0;
-      if (isLeaving) {
-        key = ancestors.length === 0 ? undefined : path[path.length - 1];
-        node = parent;
-        parent = ancestors.pop();
-        if (isEdited) {
-          if (inArray) {
-            node = node.slice();
-            let editOffset = 0;
-            for (const [editKey, editValue] of edits) {
-              const arrayKey = editKey - editOffset;
-              if (editValue === null) {
-                node.splice(arrayKey, 1);
-                editOffset++;
-              } else {
-                node[arrayKey] = editValue;
+            var a = type();
+            var t = void 0;
+            if (61 === i$1.charCodeAt(n)) {
+              n++;
+              ignored();
+              if (!(t = value(!0))) {
+                throw error("VariableDefinition");
               }
             }
-          } else {
-            node = Object.defineProperties({}, Object.getOwnPropertyDescriptors(node));
-            for (const [editKey, editValue] of edits) {
-              node[editKey] = editValue;
-            }
+            ignored();
+            r.push({
+              kind: "VariableDefinition",
+              variable: {
+                kind: "Variable",
+                name: {
+                  kind: "Name",
+                  value: e.slice(1)
+                }
+              },
+              type: a,
+              defaultValue: t,
+              directives: directives(!0)
+            });
           }
-        }
-        index = stack.index;
-        keys = stack.keys;
-        edits = stack.edits;
-        inArray = stack.inArray;
-        stack = stack.prev;
-      } else if (parent) {
-        key = inArray ? index : keys[index];
-        node = parent[key];
-        if (node === null || node === undefined) {
-          continue;
-        }
-        path.push(key);
-      }
-      let result;
-      if (!Array.isArray(node)) {
-        var _enterLeaveMap$get, _enterLeaveMap$get2;
-        isNode(node) || devAssert(false, `Invalid AST Node: ${inspect(node)}.`);
-        const visitFn = isLeaving ? (_enterLeaveMap$get = enterLeaveMap.get(node.kind)) === null || _enterLeaveMap$get === void 0 ? void 0 : _enterLeaveMap$get.leave : (_enterLeaveMap$get2 = enterLeaveMap.get(node.kind)) === null || _enterLeaveMap$get2 === void 0 ? void 0 : _enterLeaveMap$get2.enter;
-        result = visitFn === null || visitFn === void 0 ? void 0 : visitFn.call(visitor, node, key, parent, path, ancestors);
-        if (result === BREAK) {
-          break;
-        }
-        if (result === false) {
-          if (!isLeaving) {
-            path.pop();
-            continue;
+          if (41 !== i$1.charCodeAt(n++)) {
+            throw error("VariableDefinition");
           }
-        } else if (result !== undefined) {
-          edits.push([key, result]);
-          if (!isLeaving) {
-            if (isNode(result)) {
-              node = result;
-            } else {
-              path.pop();
-              continue;
-            }
-          }
+          ignored();
         }
-      }
-      if (result === undefined && isEdited) {
-        edits.push([key, node]);
-      }
-      if (isLeaving) {
-        path.pop();
-      } else {
-        var _node$kind;
-        stack = {
-          inArray,
-          index,
-          keys,
-          edits,
-          prev: stack
-        };
-        inArray = Array.isArray(node);
-        keys = inArray ? node : (_node$kind = visitorKeys[node.kind]) !== null && _node$kind !== void 0 ? _node$kind : [];
-        index = -1;
-        edits = [];
-        if (parent) {
-          ancestors.push(parent);
-        }
-        parent = node;
-      }
-    } while (stack !== undefined);
-    if (edits.length !== 0) {
-      // New root
-      return edits[edits.length - 1][1];
+        return r;
+      }();
+      t = directives(!1);
     }
-    return root;
-  }
-  /**
-   * Given a visitor instance and a node kind, return EnterLeaveVisitor for that kind.
-   */
-
-  function getEnterLeaveForKind(visitor, kind) {
-    const kindVisitor = visitor[kind];
-    if (typeof kindVisitor === 'object') {
-      // { Kind: { enter() {}, leave() {} } }
-      return kindVisitor;
-    } else if (typeof kindVisitor === 'function') {
-      // { Kind() {} }
+    var o = selectionSet();
+    if (o) {
       return {
-        enter: kindVisitor,
-        leave: undefined
+        kind: "OperationDefinition",
+        operation: e || "query",
+        name: r,
+        variableDefinitions: a,
+        directives: t,
+        selectionSet: o
       };
-    } // { enter() {}, leave() {} }
-
-    return {
-      enter: visitor.enter,
-      leave: visitor.leave
-    };
-  }
-
-  /**
-   * Converts an AST into a string, using one set of reasonable
-   * formatting rules.
-   */
-
-  function print(ast) {
-    return visit(ast, printDocASTReducer);
-  }
-  const MAX_LINE_LENGTH = 80;
-  const printDocASTReducer = {
-    Name: {
-      leave: node => node.value
-    },
-    Variable: {
-      leave: node => '$' + node.name
-    },
-    // Document
-    Document: {
-      leave: node => join(node.definitions, '\n\n')
-    },
-    OperationDefinition: {
-      leave(node) {
-        const varDefs = wrap('(', join(node.variableDefinitions, ', '), ')');
-        const prefix = join([node.operation, join([node.name, varDefs]), join(node.directives, ' ')], ' '); // Anonymous queries with no directives or variable definitions can use
-        // the query short form.
-
-        return (prefix === 'query' ? '' : prefix + ' ') + node.selectionSet;
-      }
-    },
-    VariableDefinition: {
-      leave: ({
-        variable,
-        type,
-        defaultValue,
-        directives
-      }) => variable + ': ' + type + wrap(' = ', defaultValue) + wrap(' ', join(directives, ' '))
-    },
-    SelectionSet: {
-      leave: ({
-        selections
-      }) => block(selections)
-    },
-    Field: {
-      leave({
-        alias,
-        name,
-        arguments: args,
-        directives,
-        selectionSet
-      }) {
-        const prefix = wrap('', alias, ': ') + name;
-        let argsLine = prefix + wrap('(', join(args, ', '), ')');
-        if (argsLine.length > MAX_LINE_LENGTH) {
-          argsLine = prefix + wrap('(\n', indent(join(args, '\n')), '\n)');
-        }
-        return join([argsLine, join(directives, ' '), selectionSet], ' ');
-      }
-    },
-    Argument: {
-      leave: ({
-        name,
-        value
-      }) => name + ': ' + value
-    },
-    // Fragments
-    FragmentSpread: {
-      leave: ({
-        name,
-        directives
-      }) => '...' + name + wrap(' ', join(directives, ' '))
-    },
-    InlineFragment: {
-      leave: ({
-        typeCondition,
-        directives,
-        selectionSet
-      }) => join(['...', wrap('on ', typeCondition), join(directives, ' '), selectionSet], ' ')
-    },
-    FragmentDefinition: {
-      leave: ({
-        name,
-        typeCondition,
-        variableDefinitions,
-        directives,
-        selectionSet
-      } // Note: fragment variable definitions are experimental and may be changed
-      ) =>
-      // or removed in the future.
-      `fragment ${name}${wrap('(', join(variableDefinitions, ', '), ')')} ` + `on ${typeCondition} ${wrap('', join(directives, ' '), ' ')}` + selectionSet
-    },
-    // Value
-    IntValue: {
-      leave: ({
-        value
-      }) => value
-    },
-    FloatValue: {
-      leave: ({
-        value
-      }) => value
-    },
-    StringValue: {
-      leave: ({
-        value,
-        block: isBlockString
-      }) => isBlockString ? printBlockString(value) : printString(value)
-    },
-    BooleanValue: {
-      leave: ({
-        value
-      }) => value ? 'true' : 'false'
-    },
-    NullValue: {
-      leave: () => 'null'
-    },
-    EnumValue: {
-      leave: ({
-        value
-      }) => value
-    },
-    ListValue: {
-      leave: ({
-        values
-      }) => '[' + join(values, ', ') + ']'
-    },
-    ObjectValue: {
-      leave: ({
-        fields
-      }) => '{' + join(fields, ', ') + '}'
-    },
-    ObjectField: {
-      leave: ({
-        name,
-        value
-      }) => name + ': ' + value
-    },
-    // Directive
-    Directive: {
-      leave: ({
-        name,
-        arguments: args
-      }) => '@' + name + wrap('(', join(args, ', '), ')')
-    },
-    // Type
-    NamedType: {
-      leave: ({
-        name
-      }) => name
-    },
-    ListType: {
-      leave: ({
-        type
-      }) => '[' + type + ']'
-    },
-    NonNullType: {
-      leave: ({
-        type
-      }) => type + '!'
-    },
-    // Type System Definitions
-    SchemaDefinition: {
-      leave: ({
-        description,
-        directives,
-        operationTypes
-      }) => wrap('', description, '\n') + join(['schema', join(directives, ' '), block(operationTypes)], ' ')
-    },
-    OperationTypeDefinition: {
-      leave: ({
-        operation,
-        type
-      }) => operation + ': ' + type
-    },
-    ScalarTypeDefinition: {
-      leave: ({
-        description,
-        name,
-        directives
-      }) => wrap('', description, '\n') + join(['scalar', name, join(directives, ' ')], ' ')
-    },
-    ObjectTypeDefinition: {
-      leave: ({
-        description,
-        name,
-        interfaces,
-        directives,
-        fields
-      }) => wrap('', description, '\n') + join(['type', name, wrap('implements ', join(interfaces, ' & ')), join(directives, ' '), block(fields)], ' ')
-    },
-    FieldDefinition: {
-      leave: ({
-        description,
-        name,
-        arguments: args,
-        type,
-        directives
-      }) => wrap('', description, '\n') + name + (hasMultilineItems(args) ? wrap('(\n', indent(join(args, '\n')), '\n)') : wrap('(', join(args, ', '), ')')) + ': ' + type + wrap(' ', join(directives, ' '))
-    },
-    InputValueDefinition: {
-      leave: ({
-        description,
-        name,
-        type,
-        defaultValue,
-        directives
-      }) => wrap('', description, '\n') + join([name + ': ' + type, wrap('= ', defaultValue), join(directives, ' ')], ' ')
-    },
-    InterfaceTypeDefinition: {
-      leave: ({
-        description,
-        name,
-        interfaces,
-        directives,
-        fields
-      }) => wrap('', description, '\n') + join(['interface', name, wrap('implements ', join(interfaces, ' & ')), join(directives, ' '), block(fields)], ' ')
-    },
-    UnionTypeDefinition: {
-      leave: ({
-        description,
-        name,
-        directives,
-        types
-      }) => wrap('', description, '\n') + join(['union', name, join(directives, ' '), wrap('= ', join(types, ' | '))], ' ')
-    },
-    EnumTypeDefinition: {
-      leave: ({
-        description,
-        name,
-        directives,
-        values
-      }) => wrap('', description, '\n') + join(['enum', name, join(directives, ' '), block(values)], ' ')
-    },
-    EnumValueDefinition: {
-      leave: ({
-        description,
-        name,
-        directives
-      }) => wrap('', description, '\n') + join([name, join(directives, ' ')], ' ')
-    },
-    InputObjectTypeDefinition: {
-      leave: ({
-        description,
-        name,
-        directives,
-        fields
-      }) => wrap('', description, '\n') + join(['input', name, join(directives, ' '), block(fields)], ' ')
-    },
-    DirectiveDefinition: {
-      leave: ({
-        description,
-        name,
-        arguments: args,
-        repeatable,
-        locations
-      }) => wrap('', description, '\n') + 'directive @' + name + (hasMultilineItems(args) ? wrap('(\n', indent(join(args, '\n')), '\n)') : wrap('(', join(args, ', '), ')')) + (repeatable ? ' repeatable' : '') + ' on ' + join(locations, ' | ')
-    },
-    SchemaExtension: {
-      leave: ({
-        directives,
-        operationTypes
-      }) => join(['extend schema', join(directives, ' '), block(operationTypes)], ' ')
-    },
-    ScalarTypeExtension: {
-      leave: ({
-        name,
-        directives
-      }) => join(['extend scalar', name, join(directives, ' ')], ' ')
-    },
-    ObjectTypeExtension: {
-      leave: ({
-        name,
-        interfaces,
-        directives,
-        fields
-      }) => join(['extend type', name, wrap('implements ', join(interfaces, ' & ')), join(directives, ' '), block(fields)], ' ')
-    },
-    InterfaceTypeExtension: {
-      leave: ({
-        name,
-        interfaces,
-        directives,
-        fields
-      }) => join(['extend interface', name, wrap('implements ', join(interfaces, ' & ')), join(directives, ' '), block(fields)], ' ')
-    },
-    UnionTypeExtension: {
-      leave: ({
-        name,
-        directives,
-        types
-      }) => join(['extend union', name, join(directives, ' '), wrap('= ', join(types, ' | '))], ' ')
-    },
-    EnumTypeExtension: {
-      leave: ({
-        name,
-        directives,
-        values
-      }) => join(['extend enum', name, join(directives, ' '), block(values)], ' ')
-    },
-    InputObjectTypeExtension: {
-      leave: ({
-        name,
-        directives,
-        fields
-      }) => join(['extend input', name, join(directives, ' '), block(fields)], ' ')
     }
+  }
+  function parse$1(e, r) {
+    i$1 = "string" == typeof e.body ? e.body : e;
+    n = 0;
+    return function document() {
+      var e;
+      ignored();
+      var r = [];
+      while (e = fragmentDefinition() || operationDefinition()) {
+        r.push(e);
+      }
+      return {
+        kind: "Document",
+        definitions: r
+      };
+    }();
+  }
+  function printString(e) {
+    return JSON.stringify(e);
+  }
+  function printBlockString(e) {
+    return '"""\n' + e.replace(/"""/g, '\\"""') + '\n"""';
+  }
+  var hasItems = e => !(!e || !e.length);
+  var y$1 = {
+    OperationDefinition(e) {
+      if ("query" === e.operation && !e.name && !hasItems(e.variableDefinitions) && !hasItems(e.directives)) {
+        return y$1.SelectionSet(e.selectionSet);
+      }
+      var r = e.operation;
+      if (e.name) {
+        r += " " + e.name.value;
+      }
+      if (hasItems(e.variableDefinitions)) {
+        if (!e.name) {
+          r += " ";
+        }
+        r += "(" + e.variableDefinitions.map(y$1.VariableDefinition).join(", ") + ")";
+      }
+      if (hasItems(e.directives)) {
+        r += " " + e.directives.map(y$1.Directive).join(" ");
+      }
+      return r + " " + y$1.SelectionSet(e.selectionSet);
+    },
+    VariableDefinition(e) {
+      var r = y$1.Variable(e.variable) + ": " + print(e.type);
+      if (e.defaultValue) {
+        r += " = " + print(e.defaultValue);
+      }
+      if (hasItems(e.directives)) {
+        r += " " + e.directives.map(y$1.Directive).join(" ");
+      }
+      return r;
+    },
+    Field(e) {
+      var r = (e.alias ? e.alias.value + ": " : "") + e.name.value;
+      if (hasItems(e.arguments)) {
+        var i = e.arguments.map(y$1.Argument);
+        var n = r + "(" + i.join(", ") + ")";
+        r = n.length > 80 ? r + "(\n  " + i.join("\n").replace(/\n/g, "\n  ") + "\n)" : n;
+      }
+      if (hasItems(e.directives)) {
+        r += " " + e.directives.map(y$1.Directive).join(" ");
+      }
+      return e.selectionSet ? r + " " + y$1.SelectionSet(e.selectionSet) : r;
+    },
+    StringValue: e => e.block ? printBlockString(e.value) : printString(e.value),
+    BooleanValue: e => "" + e.value,
+    NullValue: e => "null",
+    IntValue: e => e.value,
+    FloatValue: e => e.value,
+    EnumValue: e => e.value,
+    Name: e => e.value,
+    Variable: e => "$" + e.name.value,
+    ListValue: e => "[" + e.values.map(print).join(", ") + "]",
+    ObjectValue: e => "{" + e.fields.map(y$1.ObjectField).join(", ") + "}",
+    ObjectField: e => e.name.value + ": " + print(e.value),
+    Document: e => hasItems(e.definitions) ? e.definitions.map(print).join("\n\n") : "",
+    SelectionSet: e => "{\n  " + e.selections.map(print).join("\n").replace(/\n/g, "\n  ") + "\n}",
+    Argument: e => e.name.value + ": " + print(e.value),
+    FragmentSpread(e) {
+      var r = "..." + e.name.value;
+      if (hasItems(e.directives)) {
+        r += " " + e.directives.map(y$1.Directive).join(" ");
+      }
+      return r;
+    },
+    InlineFragment(e) {
+      var r = "...";
+      if (e.typeCondition) {
+        r += " on " + e.typeCondition.name.value;
+      }
+      if (hasItems(e.directives)) {
+        r += " " + e.directives.map(y$1.Directive).join(" ");
+      }
+      return r + " " + print(e.selectionSet);
+    },
+    FragmentDefinition(e) {
+      var r = "fragment " + e.name.value;
+      r += " on " + e.typeCondition.name.value;
+      if (hasItems(e.directives)) {
+        r += " " + e.directives.map(y$1.Directive).join(" ");
+      }
+      return r + " " + print(e.selectionSet);
+    },
+    Directive(e) {
+      var r = "@" + e.name.value;
+      if (hasItems(e.arguments)) {
+        r += "(" + e.arguments.map(y$1.Argument).join(", ") + ")";
+      }
+      return r;
+    },
+    NamedType: e => e.name.value,
+    ListType: e => "[" + print(e.type) + "]",
+    NonNullType: e => print(e.type) + "!"
   };
-  /**
-   * Given maybeArray, print an empty string if it is null or empty, otherwise
-   * print all items together separated by separator if provided
-   */
-
-  function join(maybeArray, separator = '') {
-    var _maybeArray$filter$jo;
-    return (_maybeArray$filter$jo = maybeArray === null || maybeArray === void 0 ? void 0 : maybeArray.filter(x => x).join(separator)) !== null && _maybeArray$filter$jo !== void 0 ? _maybeArray$filter$jo : '';
-  }
-  /**
-   * Given array, print each item on its own line, wrapped in an indented `{ }` block.
-   */
-
-  function block(array) {
-    return wrap('{\n', indent(join(array, '\n')), '\n}');
-  }
-  /**
-   * If maybeString is not null or empty, then wrap with start and end, otherwise print an empty string.
-   */
-
-  function wrap(start, maybeString, end = '') {
-    return maybeString != null && maybeString !== '' ? start + maybeString + end : '';
-  }
-  function indent(str) {
-    return wrap('  ', str.replace(/\n/g, '\n  '));
-  }
-  function hasMultilineItems(maybeArray) {
-    var _maybeArray$some;
-
-    // FIXME: https://github.com/graphql/graphql-js/issues/2203
-
-    /* c8 ignore next */
-    return (_maybeArray$some = maybeArray === null || maybeArray === void 0 ? void 0 : maybeArray.some(str => str.includes('\n'))) !== null && _maybeArray$some !== void 0 ? _maybeArray$some : false;
+  function print(e) {
+    return y$1[e.kind] ? y$1[e.kind](e) : "";
   }
 
   var teardownPlaceholder = () => {};
@@ -3824,6 +991,33 @@ spurious results.`);
       }));
     };
   }
+  function takeWhile(r, t) {
+    return i => a => {
+      var f = e;
+      var n = !1;
+      i(e => {
+        if (n) ; else if (0 === e) {
+          n = !0;
+          a(0);
+        } else if (0 === e.tag) {
+          f = e[0];
+          a(e);
+        } else if (!r(e[0])) {
+          n = !0;
+          if (t) {
+            a(e);
+          }
+          a(0);
+          f(1);
+        } else {
+          a(e);
+        }
+      });
+    };
+  }
+  function lazy(e) {
+    return r => e()(r);
+  }
   function fromAsyncIterable(e) {
     return r => {
       var t = e[Symbol.asyncIterator]();
@@ -4000,9 +1194,25 @@ spurious results.`);
   function publish(e) {
     subscribe(e => {})(e);
   }
+  function toPromise(r) {
+    return new Promise(t => {
+      var i = e;
+      var a;
+      r(e => {
+        if (0 === e) {
+          Promise.resolve(a).then(t);
+        } else if (0 === e.tag) {
+          (i = e[0])(0);
+        } else {
+          a = e[0];
+          i(0);
+        }
+      });
+    });
+  }
 
   var rehydrateGraphQlError = e => {
-    if (e instanceof GraphQLError) {
+    if (e && e.message && (e.extensions || "GraphQLError" === e.name)) {
       return e;
     } else if ("object" == typeof e && e.message) {
       return new GraphQLError(e.message, e.nodes, e.source, e.positions, e.path, e, e.extensions || {});
@@ -4040,16 +1250,16 @@ spurious results.`);
     }
   }
   var phash = (r, e) => {
-    var t = "number" == typeof e ? 0 | e : 5381;
-    for (var a = 0, n = 0 | r.length; a < n; a++) {
+    var t = 0 | (e || 5381);
+    for (var a = 0, o = 0 | r.length; a < o; a++) {
       t = (t << 5) + t + r.charCodeAt(a);
     }
     return t;
   };
-  var o = new Set();
-  var i = new WeakMap();
+  var i = new Set();
+  var f = new WeakMap();
   var stringify = r => {
-    if (null === r || o.has(r)) {
+    if (null === r || i.has(r)) {
       return "null";
     } else if ("object" != typeof r) {
       return JSON.stringify(r) || "";
@@ -4058,59 +1268,80 @@ spurious results.`);
     } else if (Array.isArray(r)) {
       var e = "[";
       for (var t of r) {
-        if ("[" !== e) {
+        if (e.length > 1) {
           e += ",";
         }
-        e += (t = stringify(t)).length > 0 ? t : "null";
+        e += stringify(t) || "null";
       }
       return e += "]";
+    } else if (v$1 !== NoopConstructor && r instanceof v$1 || l !== NoopConstructor && r instanceof l) {
+      return "null";
     }
     var a = Object.keys(r).sort();
     if (!a.length && r.constructor && r.constructor !== Object) {
-      var n = i.get(r) || Math.random().toString(36).slice(2);
-      i.set(r, n);
-      return `{"__key":"${n}"}`;
+      var o = f.get(r) || Math.random().toString(36).slice(2);
+      f.set(r, o);
+      return stringify({
+        __key: o
+      });
     }
-    o.add(r);
-    var s = "{";
-    for (var v of a) {
-      var f = stringify(r[v]);
-      if (f) {
-        if (s.length > 1) {
-          s += ",";
+    i.add(r);
+    var n = "{";
+    for (var s of a) {
+      var c = stringify(r[s]);
+      if (c) {
+        if (n.length > 1) {
+          n += ",";
         }
-        s += stringify(v) + ":" + f;
+        n += stringify(s) + ":" + c;
       }
     }
-    o.delete(r);
-    return s += "}";
+    i.delete(r);
+    return n += "}";
+  };
+  var extract = (r, e, t) => {
+    if (null == t || "object" != typeof t || t.toJSON || i.has(t)) ; else if (Array.isArray(t)) {
+      for (var a = 0, o = t.length; a < o; a++) {
+        extract(r, `${e}.${a}`, t[a]);
+      }
+    } else if (t instanceof v$1 || t instanceof l) {
+      r.set(e, t);
+    } else {
+      i.add(t);
+      for (var n of Object.keys(t)) {
+        extract(r, `${e}.${n}`, t[n]);
+      }
+    }
   };
   var stringifyVariables = r => {
-    o.clear();
+    i.clear();
     return stringify(r);
   };
-  var s = /("{3}[\s\S]*"{3}|"(?:\\.|[^"])*")/g;
-  var v = /(#[^\n\r]+)?(?:\n|\r\n?|$)+/g;
-  var replaceOutsideStrings = (r, e) => e % 2 == 0 ? r.replace(v, "\n") : r;
-  var sanitizeDocument = r => r.split(s).map(replaceOutsideStrings).join("").trim();
-  var f = new Map();
-  var l = new Map();
+  class NoopConstructor {}
+  var v$1 = "undefined" != typeof File ? File : NoopConstructor;
+  var l = "undefined" != typeof Blob ? Blob : NoopConstructor;
+  var c$1 = /("{3}[\s\S]*"{3}|"(?:\\.|[^"])*")/g;
+  var d = /(?:#[^\n\r]+)?(?:[\r\n]+|$)/g;
+  var replaceOutsideStrings = (r, e) => e % 2 == 0 ? r.replace(d, "\n") : r;
+  var sanitizeDocument = r => r.split(c$1).map(replaceOutsideStrings).join("").trim();
+  var p = new Map();
+  var u = new Map();
   var stringifyDocument = r => {
-    var e;
+    var t;
     if ("string" == typeof r) {
-      e = sanitizeDocument(r);
-    } else if (r.loc && l.get(r.__key) === r) {
-      e = r.loc.source.body;
+      t = sanitizeDocument(r);
+    } else if (r.loc && u.get(r.__key) === r) {
+      t = r.loc.source.body;
     } else {
-      e = f.get(r) || sanitizeDocument(print(r));
-      f.set(r, e);
+      t = p.get(r) || sanitizeDocument(print(r));
+      p.set(r, t);
     }
     if ("string" != typeof r && !r.loc) {
       r.loc = {
         start: 0,
-        end: e.length,
+        end: t.length,
         source: {
-          body: e,
+          body: t,
           name: "gql",
           locationOffset: {
             line: 1,
@@ -4119,11 +1350,11 @@ spurious results.`);
         }
       };
     }
-    return e;
+    return t;
   };
   var hashDocument = r => {
     var e = phash(stringifyDocument(r));
-    if ("object" == typeof r && "definitions" in r) {
+    if (r.definitions) {
       var t = getOperationName(r);
       if (t) {
         e = phash(`\n# ${t}`, e);
@@ -4133,55 +1364,52 @@ spurious results.`);
   };
   var keyDocument = r => {
     var e;
-    var t;
+    var a;
     if ("string" == typeof r) {
       e = hashDocument(r);
-      t = l.get(e) || parse$1(r, {
-        noLocation: !0
-      });
+      a = u.get(e) || parse$1(r);
     } else {
       e = r.__key || hashDocument(r);
-      t = l.get(e) || r;
+      a = u.get(e) || r;
     }
-    if (!t.loc) {
-      stringifyDocument(t);
+    if (!a.loc) {
+      stringifyDocument(a);
     }
-    t.__key = e;
-    l.set(e, t);
-    return t;
+    a.__key = e;
+    u.set(e, a);
+    return a;
   };
-  var createRequest = (r, e) => {
-    if (!e) {
-      e = {};
-    }
-    var t = keyDocument(r);
-    var a = stringifyVariables(e);
-    var n = t.__key;
-    if ("{}" !== a) {
-      n = phash(a, n);
+  var createRequest = (r, e, t) => {
+    var a = e || {};
+    var o = keyDocument(r);
+    var n = stringifyVariables(a);
+    var s = o.__key;
+    if ("{}" !== n) {
+      s = phash(n, s);
     }
     return {
-      key: n,
-      query: t,
-      variables: e
+      key: s,
+      query: o,
+      variables: a,
+      extensions: t
     };
   };
   var getOperationName = r => {
-    for (var t of r.definitions) {
-      if (t.kind === Kind.OPERATION_DEFINITION && t.name) {
-        return t.name.value;
+    for (var e of r.definitions) {
+      if (e.kind === e$1.OPERATION_DEFINITION) {
+        return e.name ? e.name.value : void 0;
       }
     }
   };
   var getOperationType = r => {
-    for (var t of r.definitions) {
-      if (t.kind === Kind.OPERATION_DEFINITION) {
-        return t.operation;
+    for (var e of r.definitions) {
+      if (e.kind === e$1.OPERATION_DEFINITION) {
+        return e.operation;
       }
     }
   };
   var makeResult = (r, e, t) => {
-    if (!("data" in e) && !("errors" in e) || "incremental" in e) {
+    if (!("data" in e) && !("errors" in e)) {
       throw new Error("No Content");
     }
     var a = "subscription" === r.kind;
@@ -4192,68 +1420,80 @@ spurious results.`);
         graphQLErrors: e.errors,
         response: t
       }) : void 0,
-      extensions: "object" == typeof e.extensions && e.extensions || void 0,
-      hasNext: null == e.hasNext ? a : e.hasNext
+      extensions: e.extensions ? {
+        ...e.extensions
+      } : void 0,
+      hasNext: null == e.hasNext ? a : e.hasNext,
+      stale: !1
     };
   };
+  var deepMerge = (r, e) => {
+    if ("object" == typeof r && null != r) {
+      if (!r.constructor || r.constructor === Object || Array.isArray(r)) {
+        r = Array.isArray(r) ? [...r] : {
+          ...r
+        };
+        for (var t of Object.keys(e)) {
+          r[t] = deepMerge(r[t], e[t]);
+        }
+        return r;
+      }
+    }
+    return e;
+  };
   var mergeResultPatch = (r, e, t) => {
-    var a;
-    var n = !!r.extensions || !!e.extensions;
-    var o = {
+    var a = r.error ? r.error.graphQLErrors : [];
+    var o = !!r.extensions || !!e.extensions;
+    var n = {
       ...r.extensions,
       ...e.extensions
     };
-    var i = r.error ? r.error.graphQLErrors : [];
     var s = e.incremental;
     if ("path" in e) {
-      s = [{
-        data: e.data,
-        path: e.path
-      }];
+      s = [e];
     }
+    var i = {
+      data: r.data
+    };
     if (s) {
-      a = {
-        ...r.data
-      };
-      for (var v of s) {
-        if (Array.isArray(v.errors)) {
-          i.push(...v.errors);
+      for (var f of s) {
+        if (Array.isArray(f.errors)) {
+          a.push(...f.errors);
         }
-        if (v.extensions) {
-          Object.assign(o, v.extensions);
-          n = !0;
+        if (f.extensions) {
+          Object.assign(n, f.extensions);
+          o = !0;
         }
-        var f = v.path[0];
-        var l = a;
-        for (var u = 1, d = v.path.length; u < d; f = v.path[u++]) {
-          l = l[f] = Array.isArray(l[f]) ? [...l[f]] : {
-            ...l[f]
+        var v = "data";
+        var l = i;
+        for (var c = 0, d = f.path.length; c < d; v = f.path[c++]) {
+          l = l[v] = Array.isArray(l[v]) ? [...l[v]] : {
+            ...l[v]
           };
         }
-        if (Array.isArray(v.items)) {
-          var c = +f >= 0 ? f : 0;
-          for (var p = 0, h = v.items.length; p < h; p++) {
-            l[c + p] = v.items[p];
+        if (f.items) {
+          var p = +v >= 0 ? v : 0;
+          for (var u = 0, y = f.items.length; u < y; u++) {
+            l[p + u] = deepMerge(l[p + u], f.items[u]);
           }
-        } else if (void 0 !== v.data) {
-          l[f] = l[f] && v.data ? {
-            ...l[f],
-            ...v.data
-          } : v.data;
+        } else if (void 0 !== f.data) {
+          l[v] = deepMerge(l[v], f.data);
         }
       }
     } else {
-      a = e.data || r.data;
+      i.data = e.data || r.data;
+      a = e.errors || a;
     }
     return {
       operation: r.operation,
-      data: a,
-      error: i.length ? new CombinedError({
-        graphQLErrors: i,
+      data: i.data,
+      error: a.length ? new CombinedError({
+        graphQLErrors: a,
         response: t
       }) : void 0,
-      extensions: n ? o : void 0,
-      hasNext: !!e.hasNext
+      extensions: o ? n : void 0,
+      hasNext: null != e.hasNext ? e.hasNext : r.hasNext,
+      stale: !1
     };
   };
   var makeErrorResult = (r, e, t) => ({
@@ -4263,14 +1503,16 @@ spurious results.`);
       networkError: e,
       response: t
     }),
-    extensions: void 0
+    extensions: void 0,
+    hasNext: !1,
+    stale: !1
   });
   function makeFetchBody(r) {
     return {
-      query: stringifyDocument(r.query),
+      query: r.extensions && r.extensions.persistedQuery && !r.extensions.persistedQuery.miss ? void 0 : stringifyDocument(r.query),
       operationName: getOperationName(r.query),
       variables: r.variables || void 0,
-      extensions: void 0
+      extensions: r.extensions
     };
   }
   var makeFetchURL = (r, e) => {
@@ -4279,172 +1521,198 @@ spurious results.`);
       return r.context.url;
     }
     var a = new URL(r.context.url);
-    var n = a.searchParams;
-    if (e.operationName) {
-      n.set("operationName", e.operationName);
+    for (var o in e) {
+      var n = e[o];
+      if (n) {
+        a.searchParams.set(o, "object" == typeof n ? stringifyVariables(n) : n);
+      }
     }
-    if (e.query) {
-      n.set("query", e.query);
-    }
-    if (e.variables) {
-      n.set("variables", stringifyVariables(e.variables));
-    }
-    if (e.extensions) {
-      n.set("extensions", stringifyVariables(e.extensions));
-    }
-    var o = a.toString();
-    if (o.length > 2047 && "force" !== t) {
+    var s = a.toString();
+    if (s.length > 2047 && "force" !== t) {
       r.context.preferGetMethod = !1;
       return r.context.url;
     }
-    return o;
+    return s;
+  };
+  var serializeBody = (r, e) => {
+    if (e && !("query" === r.kind && !!r.context.preferGetMethod)) {
+      var t = stringifyVariables(e);
+      var a = (r => {
+        var e = new Map();
+        if (v$1 !== NoopConstructor || l !== NoopConstructor) {
+          i.clear();
+          extract(e, "variables", r);
+        }
+        return e;
+      })(e.variables);
+      if (a.size) {
+        var o = new FormData();
+        o.append("operations", t);
+        o.append("map", stringifyVariables({
+          ...[...a.keys()].map(r => [r])
+        }));
+        var n = 0;
+        for (var s of a.values()) {
+          o.append("" + n++, s);
+        }
+        return o;
+      }
+      return t;
+    }
   };
   var makeFetchOptions = (r, e) => {
-    var t = "query" === r.kind && !!r.context.preferGetMethod;
-    var a = {
-      accept: "multipart/mixed, application/graphql-response+json, application/graphql+json, application/json"
+    var t = {
+      accept: "subscription" === r.kind ? "text/event-stream, multipart/mixed" : "application/graphql-response+json, application/graphql+json, application/json, text/event-stream, multipart/mixed"
     };
-    if (!t) {
-      a["content-type"] = "application/json";
-    }
-    var n = ("function" == typeof r.context.fetchOptions ? r.context.fetchOptions() : r.context.fetchOptions) || {};
-    if (n.headers) {
-      for (var o in n.headers) {
-        a[o.toLowerCase()] = n.headers[o];
+    var a = ("function" == typeof r.context.fetchOptions ? r.context.fetchOptions() : r.context.fetchOptions) || {};
+    if (a.headers) {
+      for (var o in a.headers) {
+        t[o.toLowerCase()] = a.headers[o];
       }
+    }
+    var n = serializeBody(r, e);
+    if ("string" == typeof n && !t["content-type"]) {
+      t["content-type"] = "application/json";
     }
     return {
-      ...n,
-      body: !t && e ? JSON.stringify(e) : void 0,
-      method: t ? "GET" : "POST",
-      headers: a
+      ...a,
+      method: n ? "POST" : "GET",
+      body: n,
+      headers: t
     };
   };
-  var u = "undefined" != typeof TextDecoder ? new TextDecoder() : null;
-  var d = /content-type:[^\r\n]*application\/json/i;
-  var c = /boundary="?([^=";]+)"?/i;
-  var makeFetchSource = (r, e, t) => {
-    var a = "manual" === t.redirect ? 400 : 300;
-    var o = r.context.fetch;
-    return make(({
-      next: n,
-      complete: i
-    }) => {
-      var s = "undefined" != typeof AbortController ? new AbortController() : null;
-      if (s) {
-        t.signal = s.signal;
+  var y = "undefined" != typeof TextDecoder ? new TextDecoder() : null;
+  var h = /boundary="?([^=";]+)"?/i;
+  var x = /data: ?([^\n]+)/;
+  var toString = r => "Buffer" === r.constructor.name ? r.toString() : y.decode(r);
+  async function* streamBody(r) {
+    if (r.body[Symbol.asyncIterator]) {
+      for await (var e of r.body) {
+        yield toString(e);
       }
-      var v = !1;
-      var executeIncrementalFetch = (r, e, t) => {
-        var a = t.headers && t.headers.get("Content-Type") || "";
-        if (/text\//i.test(a)) {
-          return t.text().then(a => {
-            r(makeErrorResult(e, new Error(a), t));
-          });
-        } else if (!/multipart\/mixed/i.test(a)) {
-          return t.text().then(a => {
-            r(makeResult(e, JSON.parse(a), t));
-          });
+    } else {
+      var t = r.body.getReader();
+      var a;
+      try {
+        while (!(a = await t.read()).done) {
+          yield toString(a.value);
         }
-        var n = "---";
-        var o = a.match(c);
-        if (o) {
-          n = "--" + o[1];
-        }
-        var i;
-        var cancel = () => {};
-        if (t[Symbol.asyncIterator]) {
-          var s = t[Symbol.asyncIterator]();
-          i = s.next.bind(s);
-        } else if ("body" in t && t.body) {
-          var f = t.body.getReader();
-          cancel = () => f.cancel();
-          i = () => f.read();
-        } else {
-          throw new TypeError("Streaming requests unsupported");
-        }
-        var l = "";
-        var p = !0;
-        var h = null;
-        var y = null;
-        return i().then(function next(a) {
-          if (!a.done) {
-            var o = "Buffer" === (w = a.value).constructor.name ? w.toString() : u.decode(w);
-            var s = o.indexOf(n);
-            if (s > -1) {
-              s += l.length;
-            } else {
-              s = l.indexOf(n);
-            }
-            l += o;
-            while (s > -1) {
-              var f = l.slice(0, s);
-              var c = l.slice(s + n.length);
-              if (p) {
-                p = !1;
+      } finally {
+        t.cancel();
+      }
+    }
+  }
+  async function* split(r, e) {
+    var t = "";
+    var a;
+    for await (var o of r) {
+      t += o;
+      while ((a = t.indexOf(e)) > -1) {
+        yield t.slice(0, a);
+        t = t.slice(a + e.length);
+      }
+    }
+  }
+  async function* fetchOperation(r, e, t) {
+    var a = !0;
+    var o = null;
+    var n;
+    try {
+      yield await Promise.resolve();
+      var s = (n = await (r.context.fetch || fetch)(e, t)).headers.get("Content-Type") || "";
+      var i;
+      if (/multipart\/mixed/i.test(s)) {
+        i = async function* parseMultipartMixed(r, e) {
+          var t = r.match(h);
+          var a = "--" + (t ? t[1] : "-");
+          var o = !0;
+          var n;
+          for await (var s of split(streamBody(e), "\r\n" + a)) {
+            if (o) {
+              o = !1;
+              var i = s.indexOf(a);
+              if (i > -1) {
+                s = s.slice(i + a.length);
               } else {
-                var x = f.indexOf("\r\n\r\n") + 4;
-                var m = f.slice(0, x);
-                var g = f.slice(x, f.lastIndexOf("\r\n"));
-                var b = void 0;
-                if (d.test(m)) {
-                  try {
-                    b = JSON.parse(g);
-                    h = y = y ? mergeResultPatch(y, b, t) : makeResult(e, b, t);
-                  } catch (r) {}
-                }
-                if ("--" === c.slice(0, 2) || b && !b.hasNext) {
-                  if (!y) {
-                    return r(makeResult(e, {}, t));
-                  }
-                  break;
+                continue;
+              }
+            }
+            try {
+              yield n = JSON.parse(s.slice(s.indexOf("\r\n\r\n") + 4));
+            } catch (r) {
+              if (!n) {
+                throw r;
+              }
+            }
+            if (n && !1 === n.hasNext) {
+              break;
+            }
+          }
+          if (n && !1 !== n.hasNext) {
+            yield {
+              hasNext: !1
+            };
+          }
+        }(s, n);
+      } else if (/text\/event-stream/i.test(s)) {
+        i = async function* parseEventStream(r) {
+          var e;
+          for await (var t of split(streamBody(r), "\n\n")) {
+            var a = t.match(x);
+            if (a) {
+              var o = a[1];
+              try {
+                yield e = JSON.parse(o);
+              } catch (r) {
+                if (!e) {
+                  throw r;
                 }
               }
-              s = (l = c).indexOf(n);
+              if (e && !1 === e.hasNext) {
+                break;
+              }
             }
-          } else {
-            v = !0;
           }
-          var w;
-          if (h) {
-            r(h);
-            h = null;
+          if (e && !1 !== e.hasNext) {
+            yield {
+              hasNext: !1
+            };
           }
-          if (!a.done && (!y || y.hasNext)) {
-            return i().then(next);
-          }
-        }).finally(cancel);
-      };
-      var f = !1;
-      var l = !1;
-      var p;
-      Promise.resolve().then(() => {
-        if (f) {
-          return;
-        }
-        return (o || fetch)(e, t);
-      }).then(e => {
-        if (!e) {
-          return;
-        }
-        l = (p = e).status < 200 || p.status >= a;
-        return executeIncrementalFetch(n, r, p);
-      }).then(i).catch(e => {
-        if (v) {
-          throw e;
-        }
-        var t = makeErrorResult(r, l ? p.statusText ? new Error(p.statusText) : e : e, p);
-        n(t);
-        i();
-      });
-      return () => {
-        f = !0;
-        if (s) {
-          s.abort();
-        }
-      };
-    });
-  };
+        }(n);
+      } else if (!/text\//i.test(s)) {
+        i = async function* parseJSON(r) {
+          yield JSON.parse(await r.text());
+        }(n);
+      } else {
+        throw new Error(await n.text());
+      }
+      for await (var f of i) {
+        o = o ? mergeResultPatch(o, f, n) : makeResult(r, f, n);
+        a = !1;
+        yield o;
+        a = !0;
+      }
+      if (!o) {
+        yield o = makeResult(r, {}, n);
+      }
+    } catch (e) {
+      if (!a) {
+        throw e;
+      }
+      yield makeErrorResult(r, n && (n.status < 200 || n.status >= 300) && n.statusText ? new Error(n.statusText) : e, n);
+    }
+  }
+  function makeFetchSource(r, e, t) {
+    var a;
+    if ("undefined" != typeof AbortController) {
+      t.signal = (a = new AbortController()).signal;
+    }
+    return onEnd(() => {
+      if (a) {
+        a.abort();
+      }
+    })(filter(r => !!r)(fromAsyncIterable(fetchOperation(r, e, t))));
+  }
 
   var collectTypes = (e, r) => {
     if (Array.isArray(e)) {
@@ -4452,53 +1720,86 @@ spurious results.`);
         collectTypes(t, r);
       }
     } else if ("object" == typeof e && null !== e) {
-      for (var a in e) {
-        if ("__typename" === a && "string" == typeof e[a]) {
-          r.add(e[a]);
+      for (var n in e) {
+        if ("__typename" === n && "string" == typeof e[n]) {
+          r.add(e[n]);
         } else {
-          collectTypes(e[a], r);
+          collectTypes(e[n], r);
         }
       }
     }
     return r;
   };
-  var formatNode = e => {
-    if (!e.selectionSet) {
-      return e;
-    }
-    for (var t of e.selectionSet.selections) {
-      if (t.kind === Kind.FIELD && "__typename" === t.name.value && !t.alias) {
-        return e;
+  var formatNode = r => {
+    if ("definitions" in r) {
+      var t = [];
+      for (var n of r.definitions) {
+        var a = formatNode(n);
+        t.push(a);
       }
+      return {
+        ...r,
+        definitions: t
+      };
     }
-    return {
-      ...e,
-      selectionSet: {
-        ...e.selectionSet,
-        selections: [...e.selectionSet.selections, {
-          kind: Kind.FIELD,
-          name: {
-            kind: Kind.NAME,
-            value: "__typename"
+    if ("directives" in r && r.directives && r.directives.length) {
+      var o = [];
+      var i = {};
+      for (var s of r.directives) {
+        var c = s.name.value;
+        if ("_" !== c[0]) {
+          o.push(s);
+        } else {
+          c = c.slice(1);
+        }
+        i[c] = s;
+      }
+      r = {
+        ...r,
+        directives: o,
+        _directives: i
+      };
+    }
+    if ("selectionSet" in r) {
+      var u = [];
+      var p = r.kind === e$1.OPERATION_DEFINITION;
+      if (r.selectionSet) {
+        for (var d of r.selectionSet.selections || []) {
+          p = p || d.kind === e$1.FIELD && "__typename" === d.name.value && !d.alias;
+          var v = formatNode(d);
+          u.push(v);
+        }
+        if (!p) {
+          u.push({
+            kind: e$1.FIELD,
+            name: {
+              kind: e$1.NAME,
+              value: "__typename"
+            },
+            _generated: !0
+          });
+        }
+        return {
+          ...r,
+          selectionSet: {
+            ...r.selectionSet,
+            selections: u
           }
-        }]
+        };
       }
-    };
+    }
+    return r;
   };
   var I = new Map();
-  var formatDocument = r => {
-    var a = keyDocument(r);
-    var n = I.get(a.__key);
+  var formatDocument = e => {
+    var t = keyDocument(e);
+    var n = I.get(t.__key);
     if (!n) {
-      n = visit(a, {
-        Field: formatNode,
-        InlineFragment: formatNode
-      });
+      I.set(t.__key, n = formatNode(t));
       Object.defineProperty(n, "__key", {
-        value: a.__key,
+        value: t.__key,
         enumerable: !1
       });
-      I.set(a.__key, n);
     }
     return n;
   };
@@ -4509,14 +1810,14 @@ spurious results.`);
       return e.map(e => maskTypename(e));
     } else if (e && "object" == typeof e && (r || "__typename" in e)) {
       var t = {};
-      for (var a in e) {
-        if ("__typename" === a) {
+      for (var n in e) {
+        if ("__typename" === n) {
           Object.defineProperty(t, "__typename", {
             enumerable: !1,
             value: e.__typename
           });
         } else {
-          t[a] = maskTypename(e[a]);
+          t[n] = maskTypename(e[n]);
         }
       }
       return t;
@@ -4525,32 +1826,23 @@ spurious results.`);
     }
   };
   function withPromise(e) {
-    e.toPromise = () => new Promise(r => {
-      var t = subscribe(e => {
-        if (!e.stale && !e.hasNext) {
-          Promise.resolve().then(() => {
-            t.unsubscribe();
-            r(e);
-          });
-        }
-      })(e);
-    });
-    return e;
+    var source$ = r => e(r);
+    source$.toPromise = () => toPromise(take(1)(filter(e => !e.stale && !e.hasNext)(source$)));
+    source$.then = (e, r) => source$.toPromise().then(e, r);
+    source$.subscribe = e => subscribe(e)(source$);
+    return source$;
   }
   function makeOperation(e, r, t) {
-    if (!t) {
-      t = r.context;
-    }
     return {
-      key: r.key,
-      query: r.query,
-      variables: r.variables,
+      ...r,
       kind: e,
-      context: t
+      context: r.context ? {
+        ...r.context,
+        ...t
+      } : t || r.context
     };
   }
   var addMetadata = (e, r) => makeOperation(e.kind, e, {
-    ...e.context,
     meta: {
       ...e.context.meta,
       ...r
@@ -4560,35 +1852,30 @@ spurious results.`);
   var shouldSkip = ({
     kind: e
   }) => "mutation" !== e && "query" !== e;
+  var mapTypeNames = e => {
+    var r = formatDocument(e.query);
+    if (r !== e.query) {
+      var t = makeOperation(e.kind, e);
+      t.query = r;
+      return t;
+    } else {
+      return e;
+    }
+  };
   var cacheExchange = ({
     forward: e,
     client: r,
     dispatchDebug: t
   }) => {
-    var a = new Map();
     var n = new Map();
-    var mapTypeNames = e => {
-      var r = makeOperation(e.kind, e);
-      r.query = formatDocument(e.query);
-      return r;
-    };
-    var isOperationCached = e => {
-      var {
-        key: r,
-        kind: t,
-        context: {
-          requestPolicy: n
-        }
-      } = e;
-      return "query" === t && "network-only" !== n && ("cache-only" === n || a.has(r));
-    };
+    var a = new Map();
+    var isOperationCached = e => "query" === e.kind && "network-only" !== e.context.requestPolicy && ("cache-only" === e.context.requestPolicy || n.has(e.key));
     return o => {
-      var i = share(o);
-      var s = map(e => {
-        var n = a.get(e.key);
+      var i = map(e => {
+        var a = n.get(e.key);
         "production" !== process.env.NODE_ENV && t({
           operation: e,
-          ...(n ? {
+          ...(a ? {
             type: "cacheHit",
             message: "The result was successfully retried from the cache"
           } : {
@@ -4597,27 +1884,33 @@ spurious results.`);
           }),
           source: "cacheExchange"
         });
-        var o = {
-          ...n,
-          operation: addMetadata(e, {
-            cacheOutcome: n ? "hit" : "miss"
-          })
-        };
+        var o = a;
+        if ("production" !== process.env.NODE_ENV) {
+          o = {
+            ...o,
+            operation: "production" !== process.env.NODE_ENV ? addMetadata(e, {
+              cacheOutcome: a ? "hit" : "miss"
+            }) : e
+          };
+        }
         if ("cache-and-network" === e.context.requestPolicy) {
           o.stale = !0;
           reexecuteOperation(r, e);
         }
         return o;
-      })(filter(e => !shouldSkip(e) && isOperationCached(e))(i));
-      var u = onPush(e => {
+      })(filter(e => !shouldSkip(e) && isOperationCached(e))(o));
+      var s = onPush(e => {
         var {
           operation: o
         } = e;
         if (!o) {
           return;
         }
-        var i = (e => [...collectTypes(e, new Set())])(e.data).concat(o.context.additionalTypenames || []);
-        if ("mutation" === e.operation.kind) {
+        var i = o.context.additionalTypenames || [];
+        if ("subscription" !== e.operation.kind) {
+          i = (e => [...collectTypes(e, new Set())])(e.data).concat(i);
+        }
+        if ("mutation" === e.operation.kind || "subscription" === e.operation.kind) {
           var s = new Set();
           "production" !== process.env.NODE_ENV && t({
             type: "cacheInvalidation",
@@ -4629,93 +1922,49 @@ spurious results.`);
             },
             source: "cacheExchange"
           });
-          for (var u = 0; u < i.length; u++) {
-            var c = i[u];
-            var p = n.get(c);
+          for (var c = 0; c < i.length; c++) {
+            var u = i[c];
+            var p = a.get(u);
             if (!p) {
-              n.set(c, p = new Set());
+              a.set(u, p = new Set());
             }
-            for (var v of p.values()) {
-              s.add(v);
+            for (var d of p.values()) {
+              s.add(d);
             }
             p.clear();
           }
-          for (var l of s.values()) {
-            if (a.has(l)) {
-              o = a.get(l).operation;
-              a.delete(l);
+          for (var v of s.values()) {
+            if (n.has(v)) {
+              o = n.get(v).operation;
+              n.delete(v);
               reexecuteOperation(r, o);
             }
           }
         } else if ("query" === o.kind && e.data) {
-          a.set(o.key, e);
-          for (var d = 0; d < i.length; d++) {
-            var f = i[d];
-            var h = n.get(f);
+          n.set(o.key, e);
+          for (var f = 0; f < i.length; f++) {
+            var l = i[f];
+            var h = a.get(l);
             if (!h) {
-              n.set(f, h = new Set());
+              a.set(l, h = new Set());
             }
             h.add(o.key);
           }
         }
-      })(e(filter(e => "query" !== e.kind || "cache-only" !== e.context.requestPolicy)(map(e => addMetadata(e, {
+      })(e(filter(e => "query" !== e.kind || "cache-only" !== e.context.requestPolicy)(map(e => "production" !== process.env.NODE_ENV ? addMetadata(e, {
         cacheOutcome: "miss"
-      }))(merge([map(mapTypeNames)(filter(e => !shouldSkip(e) && !isOperationCached(e))(i)), filter(e => shouldSkip(e))(i)])))));
-      return merge([s, u]);
+      }) : e)(merge([map(mapTypeNames)(filter(e => !shouldSkip(e) && !isOperationCached(e))(o)), filter(e => shouldSkip(e))(o)])))));
+      return merge([i, s]);
     };
   };
   var reexecuteOperation = (e, r) => e.reexecuteOperation(makeOperation(r.kind, r, {
-    ...r.context,
     requestPolicy: "network-only"
   }));
-  var dedupExchange = ({
-    forward: e,
-    dispatchDebug: r
-  }) => {
-    var t = new Set();
-    var filterIncomingOperation = e => {
-      var {
-        key: a,
-        kind: n
-      } = e;
-      if ("teardown" === n || "mutation" === n) {
-        t.delete(a);
-        return !0;
-      }
-      var o = t.has(a);
-      t.add(a);
-      if (o) {
-        "production" !== process.env.NODE_ENV && r({
-          type: "dedup",
-          message: "An operation has been deduped.",
-          operation: e,
-          source: "dedupExchange"
-        });
-      }
-      return !o;
-    };
-    var afterOperationResult = ({
-      operation: e,
-      hasNext: r
-    }) => {
-      if (!r) {
-        t.delete(e.key);
-      }
-    };
-    return r => {
-      var t = filter(filterIncomingOperation)(r);
-      return onPush(afterOperationResult)(e(t));
-    };
-  };
   var fetchExchange = ({
     forward: e,
     dispatchDebug: r
   }) => t => {
-    var a = share(t);
     var n = mergeMap(e => {
-      var {
-        key: t
-      } = e;
       var n = makeFetchBody(e);
       var o = makeFetchURL(e, n);
       var i = makeFetchOptions(e, n);
@@ -4729,178 +1978,212 @@ spurious results.`);
         },
         source: "fetchExchange"
       });
-      var s = takeUntil(filter(e => "teardown" === e.kind && e.key === t)(a))(makeFetchSource(e, o, i));
+      var s = takeUntil(filter(r => "teardown" === r.kind && r.key === e.key)(t))(makeFetchSource(e, o, i));
       if ("production" !== process.env.NODE_ENV) {
         return onPush(t => {
-          var a = !t.data ? t.error : void 0;
+          var n = !t.data ? t.error : void 0;
           "production" !== process.env.NODE_ENV && r({
-            type: a ? "fetchError" : "fetchSuccess",
-            message: `A ${a ? "failed" : "successful"} fetch response has been returned.`,
+            type: n ? "fetchError" : "fetchSuccess",
+            message: `A ${n ? "failed" : "successful"} fetch response has been returned.`,
             operation: e,
             data: {
               url: o,
               fetchOptions: i,
-              value: a || t
+              value: n || t
             },
             source: "fetchExchange"
           });
         })(s);
       }
       return s;
-    })(filter(e => "query" === e.kind || "mutation" === e.kind)(a));
-    var o = e(filter(e => "query" !== e.kind && "mutation" !== e.kind)(a));
+    })(filter(e => "teardown" !== e.kind && ("subscription" !== e.kind || !!e.context.fetchSubscriptions))(t));
+    var o = e(filter(e => "teardown" === e.kind || "subscription" === e.kind && !e.context.fetchSubscriptions)(t));
     return merge([n, o]);
   };
   var composeExchanges = e => ({
     client: r,
     forward: t,
-    dispatchDebug: a
-  }) => e.reduceRight((e, t) => t({
-    client: r,
-    forward: e,
-    dispatchDebug(e) {
-      "production" !== process.env.NODE_ENV && a({
-        timestamp: Date.now(),
-        source: t.name,
-        ...e
-      });
-    }
-  }), t);
-  var Q = [dedupExchange, cacheExchange, fetchExchange];
+    dispatchDebug: n
+  }) => e.reduceRight((e, t) => {
+    var a = !1;
+    return t({
+      client: r,
+      forward(r) {
+        if ("production" !== process.env.NODE_ENV) {
+          if (a) {
+            throw new Error("forward() must only be called once in each Exchange.");
+          }
+          a = !0;
+        }
+        return share(e(share(r)));
+      },
+      dispatchDebug(e) {
+        "production" !== process.env.NODE_ENV && n({
+          timestamp: Date.now(),
+          source: t.name,
+          ...e
+        });
+      }
+    });
+  }, t);
   var fallbackExchange = ({
     dispatchDebug: e
-  }) => r => filter(() => !1)(onPush(r => {
-    if ("teardown" !== r.kind && "production" !== process.env.NODE_ENV) {
-      var t = `No exchange has handled operations of kind "${r.kind}". Check whether you've added an exchange responsible for these operations.`;
-      "production" !== process.env.NODE_ENV && e({
-        type: "fallbackCatch",
-        message: t,
-        operation: r,
-        source: "fallbackExchange"
-      });
-      console.warn(t);
+  }) => r => {
+    if ("production" !== process.env.NODE_ENV) {
+      r = onPush(r => {
+        if ("teardown" !== r.kind && "production" !== process.env.NODE_ENV) {
+          var t = `No exchange has handled operations of kind "${r.kind}". Check whether you've added an exchange responsible for these operations.`;
+          "production" !== process.env.NODE_ENV && e({
+            type: "fallbackCatch",
+            message: t,
+            operation: r,
+            source: "fallbackExchange"
+          });
+          console.warn(t);
+        }
+      })(r);
     }
-  })(r));
-  var L = function Client(e) {
+    return filter(e => !1)(r);
+  };
+  var C = function Client(e) {
     if ("production" !== process.env.NODE_ENV && !e.url) {
       throw new Error("You are creating an urql-client without a url.");
     }
     var r = 0;
     var t = new Map();
-    var a = new Map();
-    var n = [];
-    var o = {
+    var n = new Map();
+    var a = new Set();
+    var o = [];
+    var i = {
       url: e.url,
+      fetchSubscriptions: e.fetchSubscriptions,
       fetchOptions: e.fetchOptions,
       fetch: e.fetch,
       preferGetMethod: !!e.preferGetMethod,
       requestPolicy: e.requestPolicy || "cache-first"
     };
-    var {
-      source: i,
-      next: s
-    } = makeSubject();
-    var u = !1;
+    var s = makeSubject();
+    function nextOperation(e) {
+      if ("mutation" === e.kind || "teardown" === e.kind || !a.has(e.key)) {
+        if ("teardown" === e.kind) {
+          a.delete(e.key);
+        } else if ("mutation" !== e.kind) {
+          a.add(e.key);
+        }
+        s.next(e);
+      }
+    }
+    var c = !1;
     function dispatchOperation(e) {
       if (e) {
-        s(e);
+        nextOperation(e);
       }
-      if (!u) {
-        u = !0;
-        while (u && (e = n.shift())) {
-          s(e);
+      if (!c) {
+        c = !0;
+        while (c && (e = o.shift())) {
+          nextOperation(e);
         }
-        u = !1;
+        c = !1;
       }
     }
     var makeResultSource = r => {
-      var o = filter(e => e.operation.kind === r.kind && e.operation.key === r.key && (!e.operation.context._instance || e.operation.context._instance === r.context._instance))(m);
+      var i = takeUntil(filter(e => "teardown" === e.kind && e.key === r.key)(s.source))(filter(e => e.operation.kind === r.kind && e.operation.key === r.key && (!e.operation.context._instance || e.operation.context._instance === r.context._instance))(O));
       if (e.maskTypename) {
-        o = map(e => ({
+        i = map(e => ({
           ...e,
           data: maskTypename(e.data, !0)
-        }))(o);
+        }))(i);
       }
-      if ("mutation" === r.kind) {
-        return take(1)(onStart(() => s(r))(o));
+      if ("query" !== r.kind) {
+        i = takeWhile(e => !!e.hasNext, !0)(i);
+      } else {
+        i = switchMap(e => {
+          var t = fromValue(e);
+          return e.stale || e.hasNext ? t : merge([t, map(() => {
+            e.stale = !0;
+            return e;
+          })(take(1)(filter(e => e.key === r.key)(s.source)))]);
+        })(i);
       }
-      return share(onEnd(() => {
-        t.delete(r.key);
-        a.delete(r.key);
-        for (var e = n.length - 1; e >= 0; e--) {
-          if (n[e].key === r.key) {
-            n.splice(e, 1);
+      if ("mutation" !== r.kind) {
+        i = onEnd(() => {
+          a.delete(r.key);
+          t.delete(r.key);
+          n.delete(r.key);
+          c = !1;
+          for (var e = o.length - 1; e >= 0; e--) {
+            if (o[e].key === r.key) {
+              o.splice(e, 1);
+            }
           }
-        }
-        s(makeOperation("teardown", r, r.context));
-      })(onPush(e => {
-        t.set(r.key, e);
-      })(switchMap(e => {
-        if ("query" !== r.kind || e.stale) {
-          return fromValue(e);
-        }
-        return merge([fromValue(e), map(() => ({
-          ...e,
-          stale: !0
-        }))(take(1)(filter(e => "query" === e.kind && e.key === r.key && "cache-only" !== e.context.requestPolicy)(i)))]);
-      })(takeUntil(filter(e => "teardown" === e.kind && e.key === r.key)(i))(o)))));
+          nextOperation(makeOperation("teardown", r, r.context));
+        })(onPush(e => {
+          if (e.stale) {
+            for (var n of o) {
+              if (n.key === e.operation.key) {
+                a.delete(n.key);
+                break;
+              }
+            }
+          } else if (!e.hasNext) {
+            a.delete(r.key);
+          }
+          t.set(r.key, e);
+        })(i));
+      } else {
+        i = onStart(() => {
+          nextOperation(r);
+        })(i);
+      }
+      return share(i);
     };
-    var c = this instanceof Client ? this : Object.create(Client.prototype);
-    var p = Object.assign(c, {
+    var u = this instanceof Client ? this : Object.create(Client.prototype);
+    var p = Object.assign(u, {
       suspense: !!e.suspense,
-      operations$: i,
+      operations$: s.source,
       reexecuteOperation(e) {
-        if ("mutation" === e.kind || a.has(e.key)) {
-          n.push(e);
+        if ("teardown" === e.kind) {
+          dispatchOperation(e);
+        } else if ("mutation" === e.kind || n.has(e.key)) {
+          o.push(e);
           Promise.resolve().then(dispatchOperation);
         }
       },
-      createRequestOperation(e, t, a) {
-        if (!a) {
-          a = {};
+      createRequestOperation(e, t, n) {
+        if (!n) {
+          n = {};
         }
-        var n;
-        if ("production" !== process.env.NODE_ENV && "teardown" !== e && (n = getOperationType(t.query)) !== e) {
-          throw new Error(`Expected operation of type "${e}" but found "${n}"`);
+        var a;
+        if ("production" !== process.env.NODE_ENV && "teardown" !== e && (a = getOperationType(t.query)) !== e) {
+          throw new Error(`Expected operation of type "${e}" but found "${a}"`);
         }
         return makeOperation(e, t, {
           _instance: "mutation" === e ? r = r + 1 | 0 : void 0,
-          ...o,
-          ...a,
-          requestPolicy: a.requestPolicy || o.requestPolicy,
-          suspense: a.suspense || !1 !== a.suspense && p.suspense
+          ...i,
+          ...n,
+          requestPolicy: n.requestPolicy || i.requestPolicy,
+          suspense: n.suspense || !1 !== n.suspense && p.suspense
         });
       },
       executeRequestOperation(e) {
         if ("mutation" === e.kind) {
-          return makeResultSource(e);
+          return withPromise(makeResultSource(e));
         }
-        return make(r => {
-          var n = a.get(e.key);
-          if (!n) {
-            a.set(e.key, n = makeResultSource(e));
+        return withPromise(lazy(() => {
+          var r = n.get(e.key);
+          if (!r) {
+            n.set(e.key, r = makeResultSource(e));
           }
-          var o = "cache-and-network" === e.context.requestPolicy || "network-only" === e.context.requestPolicy;
-          return subscribe(r.next)(onEnd(() => {
-            u = !1;
-            r.complete();
-          })(onStart(() => {
-            var a = t.get(e.key);
-            if ("subscription" === e.kind) {
-              return dispatchOperation(e);
-            } else if (o) {
-              dispatchOperation(e);
-            }
-            if (null != a && a === t.get(e.key)) {
-              r.next(o ? {
-                ...a,
-                stale: !0
-              } : a);
-            } else if (!o) {
-              dispatchOperation(e);
-            }
-          })(n))).unsubscribe;
-        });
+          r = onStart(() => {
+            dispatchOperation(e);
+          })(r);
+          var a = t.get(e.key);
+          if ("query" === e.kind && a && (a.stale || a.hasNext)) {
+            return switchMap(fromValue)(merge([r, filter(r => r === t.get(e.key))(fromValue(a))]));
+          } else {
+            return r;
+          }
+        }));
       },
       executeQuery(e, r) {
         var t = p.createRequestOperation("query", e, r);
@@ -4914,46 +2197,38 @@ spurious results.`);
         var t = p.createRequestOperation("mutation", e, r);
         return p.executeRequestOperation(t);
       },
-      query(e, r, t) {
-        if (!t || "boolean" != typeof t.suspense) {
-          t = {
-            ...t,
-            suspense: !1
-          };
-        }
-        return withPromise(p.executeQuery(createRequest(e, r), t));
-      },
       readQuery(e, r, t) {
-        var a = null;
+        var n = null;
         subscribe(e => {
-          a = e;
+          n = e;
         })(p.query(e, r, t)).unsubscribe();
-        return a;
+        return n;
       },
+      query: (e, r, t) => p.executeQuery(createRequest(e, r), t),
       subscription: (e, r, t) => p.executeSubscription(createRequest(e, r), t),
-      mutation: (e, r, t) => withPromise(p.executeMutation(createRequest(e, r), t))
+      mutation: (e, r, t) => p.executeMutation(createRequest(e, r), t)
     });
-    var v = noop;
+    var d = noop;
     if ("production" !== process.env.NODE_ENV) {
       var {
         next: l,
-        source: f
+        source: x
       } = makeSubject();
-      p.subscribeToDebugTarget = e => subscribe(e)(f);
-      v = l;
+      p.subscribeToDebugTarget = e => subscribe(e)(x);
+      d = l;
     }
-    var h = composeExchanges(void 0 !== e.exchanges ? e.exchanges : Q);
-    var m = share(h({
+    var g = composeExchanges(e.exchanges);
+    var O = share(g({
       client: p,
-      dispatchDebug: v,
+      dispatchDebug: d,
       forward: fallbackExchange({
-        dispatchDebug: v
+        dispatchDebug: d
       })
-    })(i));
-    publish(m);
+    })(s.source));
+    publish(O);
     return p;
   };
-  var $ = L;
+  var j = C;
 
   var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -7739,23 +5014,28 @@ spurious results.`);
   	}
   } (react));
 
-  var p = $({
-    url: "/graphql"
-  });
-  var y = react.exports.createContext(p);
-  y.Provider;
-  y.Consumer;
-  y.displayName = "UrqlContext";
+  var c = {};
+  var v = react.exports.createContext(c);
+  v.Provider;
+  v.Consumer;
+  v.displayName = "UrqlContext";
 
   class BaseApiService {
       baseUrl = API_URL;
       graphqlInstance;
       constructor() { }
+      subscribeToEcho(echoClient, channelName, handleSubscription) {
+          if (channelName) {
+              const channel = echoClient.private(channelName.replace(/^private\-/, ''));
+              channel.listen('.lighthouse-subscription', (result) => handleSubscription(result.result.data));
+          }
+      }
       query = (query, variables) => {
           if (Logic.Common.apiUrl) {
               this.baseUrl = Logic.Common.apiUrl || '';
           }
-          this.graphqlInstance = $({
+          Logic.Auth.setDefaultAuth();
+          this.graphqlInstance = j({
               url: this.baseUrl,
               fetchOptions: () => {
                   return {
@@ -7766,7 +5046,7 @@ spurious results.`);
                       },
                   };
               },
-              exchanges: [dedupExchange, cacheExchange, fetchExchange],
+              exchanges: [cacheExchange, fetchExchange],
           });
           return this.graphqlInstance
               .query(query, variables)
@@ -7779,11 +5059,12 @@ spurious results.`);
               return response;
           });
       };
-      mutation = (query, variables) => {
+      subscription = (query, variables, handleSubscription) => {
           if (Logic.Common.apiUrl) {
               this.baseUrl = Logic.Common.apiUrl || '';
           }
-          this.graphqlInstance = $({
+          Logic.Auth.setDefaultAuth();
+          this.graphqlInstance = j({
               url: this.baseUrl,
               fetchOptions: () => {
                   return {
@@ -7794,7 +5075,34 @@ spurious results.`);
                       },
                   };
               },
-              exchanges: [dedupExchange, cacheExchange, fetchExchange],
+              fetchSubscriptions: true,
+              exchanges: [cacheExchange, fetchExchange],
+          });
+          return this.graphqlInstance
+              .subscription(query, variables)
+              .subscribe((result) => {
+              this.subscribeToEcho(
+              // @ts-ignore
+              window.Echo, result.extensions?.lighthouse_subscriptions.channel || null, handleSubscription);
+          });
+      };
+      mutation = (query, variables) => {
+          if (Logic.Common.apiUrl) {
+              this.baseUrl = Logic.Common.apiUrl || '';
+          }
+          Logic.Auth.setDefaultAuth();
+          this.graphqlInstance = j({
+              url: this.baseUrl,
+              fetchOptions: () => {
+                  return {
+                      headers: {
+                          authorization: Logic.Auth.AccessToken
+                              ? `Bearer ${Logic.Auth.AccessToken}`
+                              : '',
+                      },
+                  };
+              },
+              exchanges: [cacheExchange, fetchExchange],
           });
           return this.graphqlInstance
               .mutation(query, variables)
@@ -7843,6 +5151,7 @@ spurious results.`);
 		  profile {
 			photo_url
 			points
+			type
 		  }
 		}
 	  }
@@ -7852,8 +5161,8 @@ spurious results.`);
       };
       SignUp = (data) => {
           const requestData = `
-	mutation SignUp($email: String!, $password: String!, $username: String!) {
-		SignUp(email: $email, password: $password, username: $username) {
+	mutation SignUp($email: String!, $password: String!, $username: String!, $type: String!) {
+		SignUp(email: $email, password: $password, username: $username, type: $type) {
 		  uuid
 		  email
 		  username
@@ -7954,10 +5263,10 @@ spurious results.`);
   }
 
   class ProjectApi extends BaseApiService {
-      GetProjects = (page, first, orderBy, hasUser = '', hasCategory = '') => {
+      GetProjects = (page, first, orderBy, whereQuery = '', hasUser = '', hasCategory = '') => {
           const requestData = `
 		query Projects($page: Int!, $first: Int!) {
-			GetProjects(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser} ${hasCategory}) {
+			GetProjects(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser} ${hasCategory} ${whereQuery}) {
 			  paginatorInfo {
 				count
 				currentPage
@@ -7985,18 +5294,24 @@ spurious results.`);
 				description
 				requirements
 				photo_url
+				created_at
 				type
-				total_points
 				category{
 				  uuid
 				  title
+				}
+				user_entry{
+				    uuid
 				}
 				entries{
 				  uuid
 				  current_milestone_index
 				  title
 				  description
-				  images
+				  images {
+					url
+					milestone
+				  }
 				  likes{
 					id
 				  }
@@ -8008,6 +5323,17 @@ spurious results.`);
 				  }
 				  created_at
 				}
+				milestones{
+					uuid
+					title
+					points
+					index
+					project {
+						uuid
+					}
+					updated_at
+					created_at
+				}
 			  }
 			}
 		  }
@@ -8018,7 +5344,7 @@ spurious results.`);
           });
           return response;
       };
-      GetProject = (uuid) => {
+      GetProject = (uuid, userUuid) => {
           const requestData = `
 		query GetProject($uuid: String!) {
 			Project(uuid: $uuid) {
@@ -8041,7 +5367,12 @@ spurious results.`);
 				photo_url
 				type
 				total_points
+				bouhawsclass {
+					id
+				}
+				created_at
 				category{
+				  id
 				  uuid
 				  title
 				}
@@ -8050,7 +5381,17 @@ spurious results.`);
 				  current_milestone_index
 				  title
 				  description
-				  images
+				  images {
+					url
+					milestone
+				  }
+				  user {
+					name
+					username
+					profile {
+					  photo_url
+					}
+				  }
 				  likes{
 					id
 				  }
@@ -8062,7 +5403,56 @@ spurious results.`);
 				  }
 				  created_at
 				}
+				milestones{
+					uuid
+					title
+					points
+					index
+					project {
+						uuid
+					}
+					updated_at
+					created_at
+				}
 			}
+			GetProjectEntries(
+				first: 1
+				page: 1
+				orderBy: {column: CREATED_AT, order: DESC}
+				hasProject: {column: UUID, operator: EQ, value: "${uuid}"}
+				hasUser: {column: UUID, operator: EQ, value: "${userUuid}"}
+			  ) {
+				data {
+				  uuid
+				  description
+				  user {
+					name
+					uuid
+					profile {
+					  photo_url
+					}
+				  }
+				  project {
+					title
+					uuid
+				  }
+				  current_milestone_index
+				  title
+				  images {
+					url
+					milestone
+				  }
+				  likes {
+					id
+				  }
+				  bookmarks {
+					id
+				  }
+				  comments {
+					id
+				  }
+				}
+			  }
 		  }
 		`;
           const response = this.query(requestData, {
@@ -8114,10 +5504,10 @@ spurious results.`);
           });
           return response;
       };
-      GetProjectEntries = (page, first, orderBy, hasUser = '', hasProject = '') => {
+      GetProjectEntries = (page, first, orderBy, whereQuery = '', hasUser = '', hasProject = '') => {
           const requestData = `
 		query ProjectEntries($page: Int!, $first: Int!) {
-			GetProjectEntries(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser}  ${hasProject}) {
+			GetProjectEntries(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser}  ${hasProject} ${whereQuery}) {
 			  paginatorInfo {
 				count
 				currentPage
@@ -8129,8 +5519,10 @@ spurious results.`);
 			  }
 			  data {
 				uuid
+				description
 				user {
 				  name
+				  username
 				  uuid
 				  profile {
 					photo_url
@@ -8142,7 +5534,11 @@ spurious results.`);
 				}
 				current_milestone_index
 				title
-				images
+				updated_at
+				images {
+					url
+					milestone
+				  }
 				likes {
 				  id
 				}
@@ -8167,6 +5563,7 @@ spurious results.`);
 	query GetProjectEntry($uuid: String!) {
 		ProjectEntry(uuid: $uuid) {
 		  uuid
+		  id
 		  user {
 			name
 			username
@@ -8176,11 +5573,23 @@ spurious results.`);
 		  }
 		  project {
 			title
+			milestones {
+				uuid
+				title
+			}
 		  }
 		  current_milestone_index
 		  title
 		  description
-		  images
+		  category {
+			uuid
+			id
+			title
+		   }
+		  images {
+			url
+			milestone
+		  }
 		  likes {
 			id
 		  }
@@ -8189,6 +5598,7 @@ spurious results.`);
 		  }
 		  comments {
 			uuid
+			id
 			user {
 			  username
 			  name
@@ -8199,6 +5609,7 @@ spurious results.`);
 			content
 			is_reply
 			replied_comment_id
+			created_at
 		  }
 		  created_at
 		}
@@ -8221,6 +5632,7 @@ spurious results.`);
 				$requirements: String!, 
 				$total_points: String!, 
 				$type: String!
+				$bouhaws_class_id: Int
 			) {
 			CreateProject(
 				end_date: $end_date, 
@@ -8232,6 +5644,7 @@ spurious results.`);
 				requirements: $requirements, 
 				total_points: $total_points, 
 				type: $type,
+				bouhaws_class_id: $bouhaws_class_id
 			) {
 				id
 				uuid
@@ -8247,6 +5660,9 @@ spurious results.`);
 				end_date
 				prize
 				currency
+				bouhawsclass {
+					id
+				}
 				description
 				requirements
 				photo_url
@@ -8261,7 +5677,17 @@ spurious results.`);
 				  current_milestone_index
 				  title
 				  description
-				  images
+				  images {
+					url
+					milestone
+				  }
+				  user {
+					name
+					username
+					profile {
+					  photo_url
+					}
+				  }
 				  likes{
 					id
 				  }
@@ -8272,6 +5698,17 @@ spurious results.`);
 					id
 				  }
 				  created_at
+				}
+				milestones{
+					uuid
+					title
+					points
+					index
+					project {
+						uuid
+					}
+					updated_at
+					created_at
 				}
 			}
 		}
@@ -8331,6 +5768,7 @@ spurious results.`);
 				$type: String
 				$status: String
 				$project_uuid: String!
+				$bouhaws_class_id: Int
 			) {
 			UpdateProject(
 				end_date: $end_date, 
@@ -8344,10 +5782,14 @@ spurious results.`);
 				type: $type,
 				status: $status,
 				project_uuid: $project_uuid
+				bouhaws_class_id: $bouhaws_class_id
 			) {
 				id
 				uuid
 				title
+				bouhawsclass {
+					id
+				}
 				user{
 				  uuid
 				  name
@@ -8363,7 +5805,6 @@ spurious results.`);
 				requirements
 				photo_url
 				type
-				total_points
 				category{
 				  uuid
 				  title
@@ -8373,7 +5814,17 @@ spurious results.`);
 				  current_milestone_index
 				  title
 				  description
-				  images
+				  images {
+					url
+					milestone
+				  }
+				  user {
+				  name
+				  username
+				  profile {
+					photo_url
+				  }
+				}
 				  likes{
 					id
 				  }
@@ -8384,6 +5835,17 @@ spurious results.`);
 					id
 				  }
 				  created_at
+				}
+				milestones{
+					uuid
+					title
+					points
+					index
+					project {
+						uuid
+					}
+					updated_at
+					created_at
 				}
 			}
 		}
@@ -8445,7 +5907,7 @@ spurious results.`);
           const requestData = `
 		mutation UpdateProjectEntry( 
 				$description: String, 
-				$images: String, 
+				$images: [EntryImage!], 
 				$project_entry_uuid: String! 
 				$status: String,  
 				$title: String,  
@@ -8471,7 +5933,10 @@ spurious results.`);
 				current_milestone_index
 				title
 				description
-				images
+				images {
+					url
+					milestone
+				  }
 				likes {
 				  id
 				}
@@ -8479,6 +5944,7 @@ spurious results.`);
 				  id
 				}
 				comments {
+					id
 				  uuid
 				  user {
 					username
@@ -8517,11 +5983,15 @@ spurious results.`);
 				$project_id: Int!, 
 				$description: String!, 
 				$title: String!,  
+				$images: [EntryImage!]
+				$project_category_id: String
 			) {
 			JoinProject(
 				project_id: $project_id, 
 				description: $description, 
 				title: $title,  
+				images: $images,
+				project_category_id: $project_category_id
 			) {
 				uuid
 				user {
@@ -8536,8 +6006,16 @@ spurious results.`);
 				}
 				current_milestone_index
 				title
+				category{
+					uuid
+					id
+					title
+				}
 				description
-				images
+				images  {
+					url
+					milestone
+				  }
 				likes {
 				  id
 				}
@@ -8577,7 +6055,7 @@ spurious results.`);
       };
       SaveProjectEntryComment = (data) => {
           const requestData = `
-	mutation SaveProjectEntryComment($content: String!, $is_reply: Boolean!, $project_entry_id: Int!, $replied_comment_id: Int!) {
+	mutation SaveProjectEntryComment($content: String!, $is_reply: Boolean!, $project_entry_id: Int!, $replied_comment_id: Int) {
 		SaveProjectEntryComment(
 		  content: $content
 		  is_reply: $is_reply
@@ -8585,6 +6063,7 @@ spurious results.`);
 		  replied_comment_id: $replied_comment_id
 		) {
 		  uuid
+		  id
 		  user {
 			name
 			username
@@ -8637,12 +6116,23 @@ spurious results.`);
 				uuid
 				id
 				user {
-				  uuid
-				  name
+					name
+					username
+					uuid
+					profile {
+					  photo_url
+					}
 				}
 				title
 				description
 				created_at
+				projects {
+					id
+				}
+				students {
+					id
+					uuid
+				}
 			  }
 			}
 		  }
@@ -8659,8 +6149,10 @@ spurious results.`);
 			BouhawsClass(uuid: $uuid) {
 			  id
 			  uuid
+			  title
 			  user {
 				name
+				username
 				uuid
 				profile {
 				  photo_url
@@ -8678,6 +6170,14 @@ spurious results.`);
 				requirements
 				photo_url
 				type
+				user{
+					uuid
+					name
+					username
+					profile{
+					  photo_url
+					}
+				  }
 				total_points
 				category {
 				  uuid
@@ -8688,6 +6188,14 @@ spurious results.`);
 				  title
 				  points
 				  index
+				}
+			  }
+			  students {
+				name
+				username
+				uuid
+				profile {
+				  photo_url
 				}
 			  }
 			}
@@ -8705,7 +6213,11 @@ spurious results.`);
 		  uuid
 		  user {
 			name
+			username
 			uuid
+			profile {
+			  photo_url
+			}
 		  }
 		  title
 		  description
@@ -8728,7 +6240,11 @@ spurious results.`);
 		  uuid
 		  user {
 			name
+			username
 			uuid
+			profile {
+			  photo_url
+			}
 		  }
 		  title
 		  description
@@ -8856,6 +6372,135 @@ spurious results.`);
   }
 
   class ProfileApi extends BaseApiService {
+      GetDashboardOverview = () => {
+          const requestData = `
+	query GetDashboardOverview {
+		AuthUser {
+		  id
+		  name
+		  username
+		  uuid
+		  email_verified_at
+		  wallet {
+			credited_amount
+			debited_amount
+			total_balance
+			updated_at
+		  }
+		  profile {
+			photo_url
+			points
+			type
+		  }
+		  project_entries {
+			id
+			uuid
+			project {
+			  id
+			  uuid
+			  title
+			  photo_url
+			  end_date
+			  type
+			  milestones {
+				id
+				uuid
+				points
+				index
+				title
+			  }
+			}
+			title
+			status
+			images {
+			  milestone
+			  url
+			}
+			current_milestone_index
+			updated_at
+		  }
+		  my_classes {
+			id
+			uuid
+			title
+			description
+			created_at
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			projects {
+				id
+			}
+			students {
+				id
+				uuid
+			}
+		  }
+		  conversations {
+			uuid
+			id
+			user {
+			  name
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			other_member {
+			  uuid
+			  name
+			  username
+			  profile {
+				photo_url
+				bio
+			  }
+			}
+			last_message{
+				content
+			    media
+				type
+				created_at
+			}
+			updated_at
+		  }
+		  projects {
+			id
+			uuid
+			title
+			photo_url
+			end_date
+			type
+			milestones {
+			  id
+			  uuid
+			  points
+			  index
+			  title
+			}
+			entries {
+			  uuid
+			}
+		  }
+		}
+		LeaderBoard {
+		  id
+		  user {
+			uuid
+			name
+			username
+		  }
+		  points
+		  photo_url
+		}
+	  }
+		`;
+          const response = this.query(requestData, {});
+          return response;
+      };
       UpdateProfile = (data) => {
           const requestData = `
 	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String) {
@@ -8898,6 +6543,91 @@ spurious results.`);
 		}
 	  }`;
           const response = this.query(requestData, {});
+          return response;
+      };
+      GetSingleUser = (uuid) => {
+          const requestData = `
+	query GetSingleUser($uuid: String!) {
+		SingleUser(uuid: $uuid) {
+		  uuid
+		  name
+		  username
+		  profile {
+			points
+			photo_url
+			bio
+			school
+			student_number
+			year_of_enrollment
+		  }
+		  project_entries {
+			id
+			uuid
+			user {
+			uuid
+			username
+			profile {
+				photo_url
+			}
+			}
+			project {
+			  id
+			  uuid
+			  title
+			  photo_url
+			  end_date
+			  type
+			  milestones {
+				id
+				uuid
+				points
+				index
+				title
+			  }
+			}
+			title
+			status
+			images {
+			  milestone
+			  url
+			}
+			current_milestone_index
+			updated_at
+		  }
+		  my_classes {
+			id
+			uuid
+			title
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+		  }
+		  projects {
+			id
+			uuid
+			title
+			photo_url
+			end_date
+			type
+			milestones {
+			  id
+			  uuid
+			  points
+			  index
+			  title
+			}
+			entries {
+			  uuid
+			}
+		  }
+		}
+	  }
+	 `;
+          const response = this.query(requestData, { uuid });
           return response;
       };
   }
@@ -9086,6 +6816,61 @@ spurious results.`);
 	  }
 	`;
           const response = this.mutation(requestData, data);
+          return response;
+      };
+      SubscribeToConversationMessageCreated = (conversationList, handleSubscription) => {
+          const requestData = `
+	subscription SubscribeToConversationMessageCreated($conversationList: [String!]!) {
+		conversationMessageCreated(conversationList: $conversationList) {
+		  uuid
+		  type
+		  user {
+			name
+			uuid
+			username
+			profile {
+			  photo_url
+			}
+		  }
+		  content
+		  media
+		  created_at
+		}
+	  }`;
+          const response = this.subscription(requestData, {
+              conversationList,
+          }, handleSubscription);
+          return response;
+      };
+      SubscribeToConversationMembership = (userUuid, handleSubscription) => {
+          const requestData = `
+	subscription SubscribeToConversationMembership($userUuid: String!) {
+		conversationMembership(userUuid: $userUuid) {
+		  uuid
+		  id
+		  user {
+			name
+			uuid
+			username
+			profile {
+			  photo_url
+			}
+		  }
+		  associated_users {
+			uuid
+			name
+			username
+			profile {
+			  photo_url
+			}
+		  }
+		  created_at
+		  updated_at
+		}
+	  }`;
+          const response = this.subscription(requestData, {
+              userUuid,
+          }, handleSubscription);
           return response;
       };
   }
@@ -13866,6 +11651,1452 @@ spurious results.`);
 
   var moment = moment$1.exports;
 
+  function _typeof(obj) {
+    "@babel/helpers - typeof";
+
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
+      return typeof obj;
+    } : function (obj) {
+      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    }, _typeof(obj);
+  }
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+  function _defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+  function _createClass(Constructor, protoProps, staticProps) {
+    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) _defineProperties(Constructor, staticProps);
+    Object.defineProperty(Constructor, "prototype", {
+      writable: false
+    });
+    return Constructor;
+  }
+  function _extends() {
+    _extends = Object.assign || function (target) {
+      for (var i = 1; i < arguments.length; i++) {
+        var source = arguments[i];
+        for (var key in source) {
+          if (Object.prototype.hasOwnProperty.call(source, key)) {
+            target[key] = source[key];
+          }
+        }
+      }
+      return target;
+    };
+    return _extends.apply(this, arguments);
+  }
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function");
+    }
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        writable: true,
+        configurable: true
+      }
+    });
+    Object.defineProperty(subClass, "prototype", {
+      writable: false
+    });
+    if (superClass) _setPrototypeOf(subClass, superClass);
+  }
+  function _getPrototypeOf(o) {
+    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+      return o.__proto__ || Object.getPrototypeOf(o);
+    };
+    return _getPrototypeOf(o);
+  }
+  function _setPrototypeOf(o, p) {
+    _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+      o.__proto__ = p;
+      return o;
+    };
+    return _setPrototypeOf(o, p);
+  }
+  function _isNativeReflectConstruct() {
+    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+    if (Reflect.construct.sham) return false;
+    if (typeof Proxy === "function") return true;
+    try {
+      Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  function _assertThisInitialized(self) {
+    if (self === void 0) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+    return self;
+  }
+  function _possibleConstructorReturn(self, call) {
+    if (call && (typeof call === "object" || typeof call === "function")) {
+      return call;
+    } else if (call !== void 0) {
+      throw new TypeError("Derived constructors may only return object or undefined");
+    }
+    return _assertThisInitialized(self);
+  }
+  function _createSuper(Derived) {
+    var hasNativeReflectConstruct = _isNativeReflectConstruct();
+    return function _createSuperInternal() {
+      var Super = _getPrototypeOf(Derived),
+        result;
+      if (hasNativeReflectConstruct) {
+        var NewTarget = _getPrototypeOf(this).constructor;
+        result = Reflect.construct(Super, arguments, NewTarget);
+      } else {
+        result = Super.apply(this, arguments);
+      }
+      return _possibleConstructorReturn(this, result);
+    };
+  }
+
+  /**
+   * This class represents a basic channel.
+   */
+  var Channel = /*#__PURE__*/function () {
+    function Channel() {
+      _classCallCheck(this, Channel);
+    }
+    _createClass(Channel, [{
+      key: "listenForWhisper",
+      value:
+      /**
+       * Listen for a whisper event on the channel instance.
+       */
+      function listenForWhisper(event, callback) {
+        return this.listen('.client-' + event, callback);
+      }
+      /**
+       * Listen for an event on the channel instance.
+       */
+    }, {
+      key: "notification",
+      value: function notification(callback) {
+        return this.listen('.Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', callback);
+      }
+      /**
+       * Stop listening for a whisper event on the channel instance.
+       */
+    }, {
+      key: "stopListeningForWhisper",
+      value: function stopListeningForWhisper(event, callback) {
+        return this.stopListening('.client-' + event, callback);
+      }
+    }]);
+    return Channel;
+  }();
+
+  /**
+   * Event name formatter
+   */
+  var EventFormatter = /*#__PURE__*/function () {
+    /**
+     * Create a new class instance.
+     */
+    function EventFormatter(namespace) {
+      _classCallCheck(this, EventFormatter);
+      this.namespace = namespace; //
+    }
+    /**
+     * Format the given event name.
+     */
+
+    _createClass(EventFormatter, [{
+      key: "format",
+      value: function format(event) {
+        if (event.charAt(0) === '.' || event.charAt(0) === '\\') {
+          return event.substr(1);
+        } else if (this.namespace) {
+          event = this.namespace + '.' + event;
+        }
+        return event.replace(/\./g, '\\');
+      }
+      /**
+       * Set the event namespace.
+       */
+    }, {
+      key: "setNamespace",
+      value: function setNamespace(value) {
+        this.namespace = value;
+      }
+    }]);
+    return EventFormatter;
+  }();
+
+  /**
+   * This class represents a Pusher channel.
+   */
+
+  var PusherChannel = /*#__PURE__*/function (_Channel) {
+    _inherits(PusherChannel, _Channel);
+    var _super = _createSuper(PusherChannel);
+
+    /**
+     * Create a new class instance.
+     */
+    function PusherChannel(pusher, name, options) {
+      var _this;
+      _classCallCheck(this, PusherChannel);
+      _this = _super.call(this);
+      _this.name = name;
+      _this.pusher = pusher;
+      _this.options = options;
+      _this.eventFormatter = new EventFormatter(_this.options.namespace);
+      _this.subscribe();
+      return _this;
+    }
+    /**
+     * Subscribe to a Pusher channel.
+     */
+
+    _createClass(PusherChannel, [{
+      key: "subscribe",
+      value: function subscribe() {
+        this.subscription = this.pusher.subscribe(this.name);
+      }
+      /**
+       * Unsubscribe from a Pusher channel.
+       */
+    }, {
+      key: "unsubscribe",
+      value: function unsubscribe() {
+        this.pusher.unsubscribe(this.name);
+      }
+      /**
+       * Listen for an event on the channel instance.
+       */
+    }, {
+      key: "listen",
+      value: function listen(event, callback) {
+        this.on(this.eventFormatter.format(event), callback);
+        return this;
+      }
+      /**
+       * Listen for all events on the channel instance.
+       */
+    }, {
+      key: "listenToAll",
+      value: function listenToAll(callback) {
+        var _this2 = this;
+        this.subscription.bind_global(function (event, data) {
+          if (event.startsWith('pusher:')) {
+            return;
+          }
+          var namespace = _this2.options.namespace.replace(/\./g, '\\');
+          var formattedEvent = event.startsWith(namespace) ? event.substring(namespace.length + 1) : '.' + event;
+          callback(formattedEvent, data);
+        });
+        return this;
+      }
+      /**
+       * Stop listening for an event on the channel instance.
+       */
+    }, {
+      key: "stopListening",
+      value: function stopListening(event, callback) {
+        if (callback) {
+          this.subscription.unbind(this.eventFormatter.format(event), callback);
+        } else {
+          this.subscription.unbind(this.eventFormatter.format(event));
+        }
+        return this;
+      }
+      /**
+       * Stop listening for all events on the channel instance.
+       */
+    }, {
+      key: "stopListeningToAll",
+      value: function stopListeningToAll(callback) {
+        if (callback) {
+          this.subscription.unbind_global(callback);
+        } else {
+          this.subscription.unbind_global();
+        }
+        return this;
+      }
+      /**
+       * Register a callback to be called anytime a subscription succeeds.
+       */
+    }, {
+      key: "subscribed",
+      value: function subscribed(callback) {
+        this.on('pusher:subscription_succeeded', function () {
+          callback();
+        });
+        return this;
+      }
+      /**
+       * Register a callback to be called anytime a subscription error occurs.
+       */
+    }, {
+      key: "error",
+      value: function error(callback) {
+        this.on('pusher:subscription_error', function (status) {
+          callback(status);
+        });
+        return this;
+      }
+      /**
+       * Bind a channel to an event.
+       */
+    }, {
+      key: "on",
+      value: function on(event, callback) {
+        this.subscription.bind(event, callback);
+        return this;
+      }
+    }]);
+    return PusherChannel;
+  }(Channel);
+
+  /**
+   * This class represents a Pusher private channel.
+   */
+
+  var PusherPrivateChannel = /*#__PURE__*/function (_PusherChannel) {
+    _inherits(PusherPrivateChannel, _PusherChannel);
+    var _super = _createSuper(PusherPrivateChannel);
+    function PusherPrivateChannel() {
+      _classCallCheck(this, PusherPrivateChannel);
+      return _super.apply(this, arguments);
+    }
+    _createClass(PusherPrivateChannel, [{
+      key: "whisper",
+      value:
+      /**
+       * Send a whisper event to other clients in the channel.
+       */
+      function whisper(eventName, data) {
+        this.pusher.channels.channels[this.name].trigger("client-".concat(eventName), data);
+        return this;
+      }
+    }]);
+    return PusherPrivateChannel;
+  }(PusherChannel);
+
+  /**
+   * This class represents a Pusher private channel.
+   */
+
+  var PusherEncryptedPrivateChannel = /*#__PURE__*/function (_PusherChannel) {
+    _inherits(PusherEncryptedPrivateChannel, _PusherChannel);
+    var _super = _createSuper(PusherEncryptedPrivateChannel);
+    function PusherEncryptedPrivateChannel() {
+      _classCallCheck(this, PusherEncryptedPrivateChannel);
+      return _super.apply(this, arguments);
+    }
+    _createClass(PusherEncryptedPrivateChannel, [{
+      key: "whisper",
+      value:
+      /**
+       * Send a whisper event to other clients in the channel.
+       */
+      function whisper(eventName, data) {
+        this.pusher.channels.channels[this.name].trigger("client-".concat(eventName), data);
+        return this;
+      }
+    }]);
+    return PusherEncryptedPrivateChannel;
+  }(PusherChannel);
+
+  /**
+   * This class represents a Pusher presence channel.
+   */
+
+  var PusherPresenceChannel = /*#__PURE__*/function (_PusherChannel) {
+    _inherits(PusherPresenceChannel, _PusherChannel);
+    var _super = _createSuper(PusherPresenceChannel);
+    function PusherPresenceChannel() {
+      _classCallCheck(this, PusherPresenceChannel);
+      return _super.apply(this, arguments);
+    }
+    _createClass(PusherPresenceChannel, [{
+      key: "here",
+      value:
+      /**
+       * Register a callback to be called anytime the member list changes.
+       */
+      function here(callback) {
+        this.on('pusher:subscription_succeeded', function (data) {
+          callback(Object.keys(data.members).map(function (k) {
+            return data.members[k];
+          }));
+        });
+        return this;
+      }
+      /**
+       * Listen for someone joining the channel.
+       */
+    }, {
+      key: "joining",
+      value: function joining(callback) {
+        this.on('pusher:member_added', function (member) {
+          callback(member.info);
+        });
+        return this;
+      }
+      /**
+       * Send a whisper event to other clients in the channel.
+       */
+    }, {
+      key: "whisper",
+      value: function whisper(eventName, data) {
+        this.pusher.channels.channels[this.name].trigger("client-".concat(eventName), data);
+        return this;
+      }
+      /**
+       * Listen for someone leaving the channel.
+       */
+    }, {
+      key: "leaving",
+      value: function leaving(callback) {
+        this.on('pusher:member_removed', function (member) {
+          callback(member.info);
+        });
+        return this;
+      }
+    }]);
+    return PusherPresenceChannel;
+  }(PusherChannel);
+
+  /**
+   * This class represents a Socket.io channel.
+   */
+
+  var SocketIoChannel = /*#__PURE__*/function (_Channel) {
+    _inherits(SocketIoChannel, _Channel);
+    var _super = _createSuper(SocketIoChannel);
+
+    /**
+     * Create a new class instance.
+     */
+    function SocketIoChannel(socket, name, options) {
+      var _this;
+      _classCallCheck(this, SocketIoChannel);
+      _this = _super.call(this);
+      /**
+       * The event callbacks applied to the socket.
+       */
+
+      _this.events = {};
+      /**
+       * User supplied callbacks for events on this channel.
+       */
+
+      _this.listeners = {};
+      _this.name = name;
+      _this.socket = socket;
+      _this.options = options;
+      _this.eventFormatter = new EventFormatter(_this.options.namespace);
+      _this.subscribe();
+      return _this;
+    }
+    /**
+     * Subscribe to a Socket.io channel.
+     */
+
+    _createClass(SocketIoChannel, [{
+      key: "subscribe",
+      value: function subscribe() {
+        this.socket.emit('subscribe', {
+          channel: this.name,
+          auth: this.options.auth || {}
+        });
+      }
+      /**
+       * Unsubscribe from channel and ubind event callbacks.
+       */
+    }, {
+      key: "unsubscribe",
+      value: function unsubscribe() {
+        this.unbind();
+        this.socket.emit('unsubscribe', {
+          channel: this.name,
+          auth: this.options.auth || {}
+        });
+      }
+      /**
+       * Listen for an event on the channel instance.
+       */
+    }, {
+      key: "listen",
+      value: function listen(event, callback) {
+        this.on(this.eventFormatter.format(event), callback);
+        return this;
+      }
+      /**
+       * Stop listening for an event on the channel instance.
+       */
+    }, {
+      key: "stopListening",
+      value: function stopListening(event, callback) {
+        this.unbindEvent(this.eventFormatter.format(event), callback);
+        return this;
+      }
+      /**
+       * Register a callback to be called anytime a subscription succeeds.
+       */
+    }, {
+      key: "subscribed",
+      value: function subscribed(callback) {
+        this.on('connect', function (socket) {
+          callback(socket);
+        });
+        return this;
+      }
+      /**
+       * Register a callback to be called anytime an error occurs.
+       */
+    }, {
+      key: "error",
+      value: function error(callback) {
+        return this;
+      }
+      /**
+       * Bind the channel's socket to an event and store the callback.
+       */
+    }, {
+      key: "on",
+      value: function on(event, callback) {
+        var _this2 = this;
+        this.listeners[event] = this.listeners[event] || [];
+        if (!this.events[event]) {
+          this.events[event] = function (channel, data) {
+            if (_this2.name === channel && _this2.listeners[event]) {
+              _this2.listeners[event].forEach(function (cb) {
+                return cb(data);
+              });
+            }
+          };
+          this.socket.on(event, this.events[event]);
+        }
+        this.listeners[event].push(callback);
+        return this;
+      }
+      /**
+       * Unbind the channel's socket from all stored event callbacks.
+       */
+    }, {
+      key: "unbind",
+      value: function unbind() {
+        var _this3 = this;
+        Object.keys(this.events).forEach(function (event) {
+          _this3.unbindEvent(event);
+        });
+      }
+      /**
+       * Unbind the listeners for the given event.
+       */
+    }, {
+      key: "unbindEvent",
+      value: function unbindEvent(event, callback) {
+        this.listeners[event] = this.listeners[event] || [];
+        if (callback) {
+          this.listeners[event] = this.listeners[event].filter(function (cb) {
+            return cb !== callback;
+          });
+        }
+        if (!callback || this.listeners[event].length === 0) {
+          if (this.events[event]) {
+            this.socket.removeListener(event, this.events[event]);
+            delete this.events[event];
+          }
+          delete this.listeners[event];
+        }
+      }
+    }]);
+    return SocketIoChannel;
+  }(Channel);
+
+  /**
+   * This class represents a Socket.io private channel.
+   */
+
+  var SocketIoPrivateChannel = /*#__PURE__*/function (_SocketIoChannel) {
+    _inherits(SocketIoPrivateChannel, _SocketIoChannel);
+    var _super = _createSuper(SocketIoPrivateChannel);
+    function SocketIoPrivateChannel() {
+      _classCallCheck(this, SocketIoPrivateChannel);
+      return _super.apply(this, arguments);
+    }
+    _createClass(SocketIoPrivateChannel, [{
+      key: "whisper",
+      value:
+      /**
+       * Send a whisper event to other clients in the channel.
+       */
+      function whisper(eventName, data) {
+        this.socket.emit('client event', {
+          channel: this.name,
+          event: "client-".concat(eventName),
+          data: data
+        });
+        return this;
+      }
+    }]);
+    return SocketIoPrivateChannel;
+  }(SocketIoChannel);
+
+  /**
+   * This class represents a Socket.io presence channel.
+   */
+
+  var SocketIoPresenceChannel = /*#__PURE__*/function (_SocketIoPrivateChann) {
+    _inherits(SocketIoPresenceChannel, _SocketIoPrivateChann);
+    var _super = _createSuper(SocketIoPresenceChannel);
+    function SocketIoPresenceChannel() {
+      _classCallCheck(this, SocketIoPresenceChannel);
+      return _super.apply(this, arguments);
+    }
+    _createClass(SocketIoPresenceChannel, [{
+      key: "here",
+      value:
+      /**
+       * Register a callback to be called anytime the member list changes.
+       */
+      function here(callback) {
+        this.on('presence:subscribed', function (members) {
+          callback(members.map(function (m) {
+            return m.user_info;
+          }));
+        });
+        return this;
+      }
+      /**
+       * Listen for someone joining the channel.
+       */
+    }, {
+      key: "joining",
+      value: function joining(callback) {
+        this.on('presence:joining', function (member) {
+          return callback(member.user_info);
+        });
+        return this;
+      }
+      /**
+       * Send a whisper event to other clients in the channel.
+       */
+    }, {
+      key: "whisper",
+      value: function whisper(eventName, data) {
+        this.socket.emit('client event', {
+          channel: this.name,
+          event: "client-".concat(eventName),
+          data: data
+        });
+        return this;
+      }
+      /**
+       * Listen for someone leaving the channel.
+       */
+    }, {
+      key: "leaving",
+      value: function leaving(callback) {
+        this.on('presence:leaving', function (member) {
+          return callback(member.user_info);
+        });
+        return this;
+      }
+    }]);
+    return SocketIoPresenceChannel;
+  }(SocketIoPrivateChannel);
+
+  /**
+   * This class represents a null channel.
+   */
+
+  var NullChannel = /*#__PURE__*/function (_Channel) {
+    _inherits(NullChannel, _Channel);
+    var _super = _createSuper(NullChannel);
+    function NullChannel() {
+      _classCallCheck(this, NullChannel);
+      return _super.apply(this, arguments);
+    }
+    _createClass(NullChannel, [{
+      key: "subscribe",
+      value:
+      /**
+       * Subscribe to a channel.
+       */
+      function subscribe() {//
+      }
+      /**
+       * Unsubscribe from a channel.
+       */
+    }, {
+      key: "unsubscribe",
+      value: function unsubscribe() {//
+      }
+      /**
+       * Listen for an event on the channel instance.
+       */
+    }, {
+      key: "listen",
+      value: function listen(event, callback) {
+        return this;
+      }
+      /**
+       * Listen for all events on the channel instance.
+       */
+    }, {
+      key: "listenToAll",
+      value: function listenToAll(callback) {
+        return this;
+      }
+      /**
+       * Stop listening for an event on the channel instance.
+       */
+    }, {
+      key: "stopListening",
+      value: function stopListening(event, callback) {
+        return this;
+      }
+      /**
+       * Register a callback to be called anytime a subscription succeeds.
+       */
+    }, {
+      key: "subscribed",
+      value: function subscribed(callback) {
+        return this;
+      }
+      /**
+       * Register a callback to be called anytime an error occurs.
+       */
+    }, {
+      key: "error",
+      value: function error(callback) {
+        return this;
+      }
+      /**
+       * Bind a channel to an event.
+       */
+    }, {
+      key: "on",
+      value: function on(event, callback) {
+        return this;
+      }
+    }]);
+    return NullChannel;
+  }(Channel);
+
+  /**
+   * This class represents a null private channel.
+   */
+
+  var NullPrivateChannel = /*#__PURE__*/function (_NullChannel) {
+    _inherits(NullPrivateChannel, _NullChannel);
+    var _super = _createSuper(NullPrivateChannel);
+    function NullPrivateChannel() {
+      _classCallCheck(this, NullPrivateChannel);
+      return _super.apply(this, arguments);
+    }
+    _createClass(NullPrivateChannel, [{
+      key: "whisper",
+      value:
+      /**
+       * Send a whisper event to other clients in the channel.
+       */
+      function whisper(eventName, data) {
+        return this;
+      }
+    }]);
+    return NullPrivateChannel;
+  }(NullChannel);
+
+  /**
+   * This class represents a null presence channel.
+   */
+
+  var NullPresenceChannel = /*#__PURE__*/function (_NullChannel) {
+    _inherits(NullPresenceChannel, _NullChannel);
+    var _super = _createSuper(NullPresenceChannel);
+    function NullPresenceChannel() {
+      _classCallCheck(this, NullPresenceChannel);
+      return _super.apply(this, arguments);
+    }
+    _createClass(NullPresenceChannel, [{
+      key: "here",
+      value:
+      /**
+       * Register a callback to be called anytime the member list changes.
+       */
+      function here(callback) {
+        return this;
+      }
+      /**
+       * Listen for someone joining the channel.
+       */
+    }, {
+      key: "joining",
+      value: function joining(callback) {
+        return this;
+      }
+      /**
+       * Send a whisper event to other clients in the channel.
+       */
+    }, {
+      key: "whisper",
+      value: function whisper(eventName, data) {
+        return this;
+      }
+      /**
+       * Listen for someone leaving the channel.
+       */
+    }, {
+      key: "leaving",
+      value: function leaving(callback) {
+        return this;
+      }
+    }]);
+    return NullPresenceChannel;
+  }(NullChannel);
+  var Connector = /*#__PURE__*/function () {
+    /**
+     * Create a new class instance.
+     */
+    function Connector(options) {
+      _classCallCheck(this, Connector);
+
+      /**
+       * Default connector options.
+       */
+      this._defaultOptions = {
+        auth: {
+          headers: {}
+        },
+        authEndpoint: '/broadcasting/auth',
+        userAuthentication: {
+          endpoint: '/broadcasting/user-auth',
+          headers: {}
+        },
+        broadcaster: 'pusher',
+        csrfToken: null,
+        bearerToken: null,
+        host: null,
+        key: null,
+        namespace: 'App.Events'
+      };
+      this.setOptions(options);
+      this.connect();
+    }
+    /**
+     * Merge the custom options with the defaults.
+     */
+
+    _createClass(Connector, [{
+      key: "setOptions",
+      value: function setOptions(options) {
+        this.options = _extends(this._defaultOptions, options);
+        var token = this.csrfToken();
+        if (token) {
+          this.options.auth.headers['X-CSRF-TOKEN'] = token;
+          this.options.userAuthentication.headers['X-CSRF-TOKEN'] = token;
+        }
+        token = this.options.bearerToken;
+        if (token) {
+          this.options.auth.headers['Authorization'] = 'Bearer ' + token;
+          this.options.userAuthentication.headers['Authorization'] = 'Bearer ' + token;
+        }
+        return options;
+      }
+      /**
+       * Extract the CSRF token from the page.
+       */
+    }, {
+      key: "csrfToken",
+      value: function csrfToken() {
+        var selector;
+        if (typeof window !== 'undefined' && window['Laravel'] && window['Laravel'].csrfToken) {
+          return window['Laravel'].csrfToken;
+        } else if (this.options.csrfToken) {
+          return this.options.csrfToken;
+        } else if (typeof document !== 'undefined' && typeof document.querySelector === 'function' && (selector = document.querySelector('meta[name="csrf-token"]'))) {
+          return selector.getAttribute('content');
+        }
+        return null;
+      }
+    }]);
+    return Connector;
+  }();
+
+  /**
+   * This class creates a connector to Pusher.
+   */
+
+  var PusherConnector = /*#__PURE__*/function (_Connector) {
+    _inherits(PusherConnector, _Connector);
+    var _super = _createSuper(PusherConnector);
+    function PusherConnector() {
+      var _this;
+      _classCallCheck(this, PusherConnector);
+      _this = _super.apply(this, arguments);
+      /**
+       * All of the subscribed channel names.
+       */
+
+      _this.channels = {};
+      return _this;
+    }
+    /**
+     * Create a fresh Pusher connection.
+     */
+
+    _createClass(PusherConnector, [{
+      key: "connect",
+      value: function connect() {
+        if (typeof this.options.client !== 'undefined') {
+          this.pusher = this.options.client;
+        } else if (this.options.Pusher) {
+          this.pusher = new this.options.Pusher(this.options.key, this.options);
+        } else {
+          this.pusher = new Pusher(this.options.key, this.options);
+        }
+      }
+      /**
+       * Sign in the user via Pusher user authentication (https://pusher.com/docs/channels/using_channels/user-authentication/).
+       */
+    }, {
+      key: "signin",
+      value: function signin() {
+        this.pusher.signin();
+      }
+      /**
+       * Listen for an event on a channel instance.
+       */
+    }, {
+      key: "listen",
+      value: function listen(name, event, callback) {
+        return this.channel(name).listen(event, callback);
+      }
+      /**
+       * Get a channel instance by name.
+       */
+    }, {
+      key: "channel",
+      value: function channel(name) {
+        if (!this.channels[name]) {
+          this.channels[name] = new PusherChannel(this.pusher, name, this.options);
+        }
+        return this.channels[name];
+      }
+      /**
+       * Get a private channel instance by name.
+       */
+    }, {
+      key: "privateChannel",
+      value: function privateChannel(name) {
+        if (!this.channels['private-' + name]) {
+          this.channels['private-' + name] = new PusherPrivateChannel(this.pusher, 'private-' + name, this.options);
+        }
+        return this.channels['private-' + name];
+      }
+      /**
+       * Get a private encrypted channel instance by name.
+       */
+    }, {
+      key: "encryptedPrivateChannel",
+      value: function encryptedPrivateChannel(name) {
+        if (!this.channels['private-encrypted-' + name]) {
+          this.channels['private-encrypted-' + name] = new PusherEncryptedPrivateChannel(this.pusher, 'private-encrypted-' + name, this.options);
+        }
+        return this.channels['private-encrypted-' + name];
+      }
+      /**
+       * Get a presence channel instance by name.
+       */
+    }, {
+      key: "presenceChannel",
+      value: function presenceChannel(name) {
+        if (!this.channels['presence-' + name]) {
+          this.channels['presence-' + name] = new PusherPresenceChannel(this.pusher, 'presence-' + name, this.options);
+        }
+        return this.channels['presence-' + name];
+      }
+      /**
+       * Leave the given channel, as well as its private and presence variants.
+       */
+    }, {
+      key: "leave",
+      value: function leave(name) {
+        var _this2 = this;
+        var channels = [name, 'private-' + name, 'private-encrypted-' + name, 'presence-' + name];
+        channels.forEach(function (name, index) {
+          _this2.leaveChannel(name);
+        });
+      }
+      /**
+       * Leave the given channel.
+       */
+    }, {
+      key: "leaveChannel",
+      value: function leaveChannel(name) {
+        if (this.channels[name]) {
+          this.channels[name].unsubscribe();
+          delete this.channels[name];
+        }
+      }
+      /**
+       * Get the socket ID for the connection.
+       */
+    }, {
+      key: "socketId",
+      value: function socketId() {
+        return this.pusher.connection.socket_id;
+      }
+      /**
+       * Disconnect Pusher connection.
+       */
+    }, {
+      key: "disconnect",
+      value: function disconnect() {
+        this.pusher.disconnect();
+      }
+    }]);
+    return PusherConnector;
+  }(Connector);
+
+  /**
+   * This class creates a connnector to a Socket.io server.
+   */
+
+  var SocketIoConnector = /*#__PURE__*/function (_Connector) {
+    _inherits(SocketIoConnector, _Connector);
+    var _super = _createSuper(SocketIoConnector);
+    function SocketIoConnector() {
+      var _this;
+      _classCallCheck(this, SocketIoConnector);
+      _this = _super.apply(this, arguments);
+      /**
+       * All of the subscribed channel names.
+       */
+
+      _this.channels = {};
+      return _this;
+    }
+    /**
+     * Create a fresh Socket.io connection.
+     */
+
+    _createClass(SocketIoConnector, [{
+      key: "connect",
+      value: function connect() {
+        var _this2 = this;
+        var io = this.getSocketIO();
+        this.socket = io(this.options.host, this.options);
+        this.socket.on('reconnect', function () {
+          Object.values(_this2.channels).forEach(function (channel) {
+            channel.subscribe();
+          });
+        });
+        return this.socket;
+      }
+      /**
+       * Get socket.io module from global scope or options.
+       */
+    }, {
+      key: "getSocketIO",
+      value: function getSocketIO() {
+        if (typeof this.options.client !== 'undefined') {
+          return this.options.client;
+        }
+        if (typeof io !== 'undefined') {
+          return io;
+        }
+        throw new Error('Socket.io client not found. Should be globally available or passed via options.client');
+      }
+      /**
+       * Listen for an event on a channel instance.
+       */
+    }, {
+      key: "listen",
+      value: function listen(name, event, callback) {
+        return this.channel(name).listen(event, callback);
+      }
+      /**
+       * Get a channel instance by name.
+       */
+    }, {
+      key: "channel",
+      value: function channel(name) {
+        if (!this.channels[name]) {
+          this.channels[name] = new SocketIoChannel(this.socket, name, this.options);
+        }
+        return this.channels[name];
+      }
+      /**
+       * Get a private channel instance by name.
+       */
+    }, {
+      key: "privateChannel",
+      value: function privateChannel(name) {
+        if (!this.channels['private-' + name]) {
+          this.channels['private-' + name] = new SocketIoPrivateChannel(this.socket, 'private-' + name, this.options);
+        }
+        return this.channels['private-' + name];
+      }
+      /**
+       * Get a presence channel instance by name.
+       */
+    }, {
+      key: "presenceChannel",
+      value: function presenceChannel(name) {
+        if (!this.channels['presence-' + name]) {
+          this.channels['presence-' + name] = new SocketIoPresenceChannel(this.socket, 'presence-' + name, this.options);
+        }
+        return this.channels['presence-' + name];
+      }
+      /**
+       * Leave the given channel, as well as its private and presence variants.
+       */
+    }, {
+      key: "leave",
+      value: function leave(name) {
+        var _this3 = this;
+        var channels = [name, 'private-' + name, 'presence-' + name];
+        channels.forEach(function (name) {
+          _this3.leaveChannel(name);
+        });
+      }
+      /**
+       * Leave the given channel.
+       */
+    }, {
+      key: "leaveChannel",
+      value: function leaveChannel(name) {
+        if (this.channels[name]) {
+          this.channels[name].unsubscribe();
+          delete this.channels[name];
+        }
+      }
+      /**
+       * Get the socket ID for the connection.
+       */
+    }, {
+      key: "socketId",
+      value: function socketId() {
+        return this.socket.id;
+      }
+      /**
+       * Disconnect Socketio connection.
+       */
+    }, {
+      key: "disconnect",
+      value: function disconnect() {
+        this.socket.disconnect();
+      }
+    }]);
+    return SocketIoConnector;
+  }(Connector);
+
+  /**
+   * This class creates a null connector.
+   */
+
+  var NullConnector = /*#__PURE__*/function (_Connector) {
+    _inherits(NullConnector, _Connector);
+    var _super = _createSuper(NullConnector);
+    function NullConnector() {
+      var _this;
+      _classCallCheck(this, NullConnector);
+      _this = _super.apply(this, arguments);
+      /**
+       * All of the subscribed channel names.
+       */
+
+      _this.channels = {};
+      return _this;
+    }
+    /**
+     * Create a fresh connection.
+     */
+
+    _createClass(NullConnector, [{
+      key: "connect",
+      value: function connect() {//
+      }
+      /**
+       * Listen for an event on a channel instance.
+       */
+    }, {
+      key: "listen",
+      value: function listen(name, event, callback) {
+        return new NullChannel();
+      }
+      /**
+       * Get a channel instance by name.
+       */
+    }, {
+      key: "channel",
+      value: function channel(name) {
+        return new NullChannel();
+      }
+      /**
+       * Get a private channel instance by name.
+       */
+    }, {
+      key: "privateChannel",
+      value: function privateChannel(name) {
+        return new NullPrivateChannel();
+      }
+      /**
+       * Get a private encrypted channel instance by name.
+       */
+    }, {
+      key: "encryptedPrivateChannel",
+      value: function encryptedPrivateChannel(name) {
+        return new NullPrivateChannel();
+      }
+      /**
+       * Get a presence channel instance by name.
+       */
+    }, {
+      key: "presenceChannel",
+      value: function presenceChannel(name) {
+        return new NullPresenceChannel();
+      }
+      /**
+       * Leave the given channel, as well as its private and presence variants.
+       */
+    }, {
+      key: "leave",
+      value: function leave(name) {//
+      }
+      /**
+       * Leave the given channel.
+       */
+    }, {
+      key: "leaveChannel",
+      value: function leaveChannel(name) {//
+      }
+      /**
+       * Get the socket ID for the connection.
+       */
+    }, {
+      key: "socketId",
+      value: function socketId() {
+        return 'fake-socket-id';
+      }
+      /**
+       * Disconnect the connection.
+       */
+    }, {
+      key: "disconnect",
+      value: function disconnect() {//
+      }
+    }]);
+    return NullConnector;
+  }(Connector);
+
+  /**
+   * This class is the primary API for interacting with broadcasting.
+   */
+
+  var Echo = /*#__PURE__*/function () {
+    /**
+     * Create a new class instance.
+     */
+    function Echo(options) {
+      _classCallCheck(this, Echo);
+      this.options = options;
+      this.connect();
+      if (!this.options.withoutInterceptors) {
+        this.registerInterceptors();
+      }
+    }
+    /**
+     * Get a channel instance by name.
+     */
+
+    _createClass(Echo, [{
+      key: "channel",
+      value: function channel(_channel) {
+        return this.connector.channel(_channel);
+      }
+      /**
+       * Create a new connection.
+       */
+    }, {
+      key: "connect",
+      value: function connect() {
+        if (this.options.broadcaster == 'pusher') {
+          this.connector = new PusherConnector(this.options);
+        } else if (this.options.broadcaster == 'socket.io') {
+          this.connector = new SocketIoConnector(this.options);
+        } else if (this.options.broadcaster == 'null') {
+          this.connector = new NullConnector(this.options);
+        } else if (typeof this.options.broadcaster == 'function') {
+          this.connector = new this.options.broadcaster(this.options);
+        }
+      }
+      /**
+       * Disconnect from the Echo server.
+       */
+    }, {
+      key: "disconnect",
+      value: function disconnect() {
+        this.connector.disconnect();
+      }
+      /**
+       * Get a presence channel instance by name.
+       */
+    }, {
+      key: "join",
+      value: function join(channel) {
+        return this.connector.presenceChannel(channel);
+      }
+      /**
+       * Leave the given channel, as well as its private and presence variants.
+       */
+    }, {
+      key: "leave",
+      value: function leave(channel) {
+        this.connector.leave(channel);
+      }
+      /**
+       * Leave the given channel.
+       */
+    }, {
+      key: "leaveChannel",
+      value: function leaveChannel(channel) {
+        this.connector.leaveChannel(channel);
+      }
+      /**
+       * Leave all channels.
+       */
+    }, {
+      key: "leaveAllChannels",
+      value: function leaveAllChannels() {
+        for (var channel in this.connector.channels) {
+          this.leaveChannel(channel);
+        }
+      }
+      /**
+       * Listen for an event on a channel instance.
+       */
+    }, {
+      key: "listen",
+      value: function listen(channel, event, callback) {
+        return this.connector.listen(channel, event, callback);
+      }
+      /**
+       * Get a private channel instance by name.
+       */
+    }, {
+      key: "private",
+      value: function _private(channel) {
+        return this.connector.privateChannel(channel);
+      }
+      /**
+       * Get a private encrypted channel instance by name.
+       */
+    }, {
+      key: "encryptedPrivate",
+      value: function encryptedPrivate(channel) {
+        return this.connector.encryptedPrivateChannel(channel);
+      }
+      /**
+       * Get the Socket ID for the connection.
+       */
+    }, {
+      key: "socketId",
+      value: function socketId() {
+        return this.connector.socketId();
+      }
+      /**
+       * Register 3rd party request interceptiors. These are used to automatically
+       * send a connections socket id to a Laravel app with a X-Socket-Id header.
+       */
+    }, {
+      key: "registerInterceptors",
+      value: function registerInterceptors() {
+        if (typeof Vue === 'function' && Vue.http) {
+          this.registerVueRequestInterceptor();
+        }
+        if (typeof axios === 'function') {
+          this.registerAxiosRequestInterceptor();
+        }
+        if (typeof jQuery === 'function') {
+          this.registerjQueryAjaxSetup();
+        }
+        if ((typeof Turbo === "undefined" ? "undefined" : _typeof(Turbo)) === 'object') {
+          this.registerTurboRequestInterceptor();
+        }
+      }
+      /**
+       * Register a Vue HTTP interceptor to add the X-Socket-ID header.
+       */
+    }, {
+      key: "registerVueRequestInterceptor",
+      value: function registerVueRequestInterceptor() {
+        var _this = this;
+        Vue.http.interceptors.push(function (request, next) {
+          if (_this.socketId()) {
+            request.headers.set('X-Socket-ID', _this.socketId());
+          }
+          next();
+        });
+      }
+      /**
+       * Register an Axios HTTP interceptor to add the X-Socket-ID header.
+       */
+    }, {
+      key: "registerAxiosRequestInterceptor",
+      value: function registerAxiosRequestInterceptor() {
+        var _this2 = this;
+        axios.interceptors.request.use(function (config) {
+          if (_this2.socketId()) {
+            config.headers['X-Socket-Id'] = _this2.socketId();
+          }
+          return config;
+        });
+      }
+      /**
+       * Register jQuery AjaxPrefilter to add the X-Socket-ID header.
+       */
+    }, {
+      key: "registerjQueryAjaxSetup",
+      value: function registerjQueryAjaxSetup() {
+        var _this3 = this;
+        if (typeof jQuery.ajax != 'undefined') {
+          jQuery.ajaxPrefilter(function (options, originalOptions, xhr) {
+            if (_this3.socketId()) {
+              xhr.setRequestHeader('X-Socket-Id', _this3.socketId());
+            }
+          });
+        }
+      }
+      /**
+       * Register the Turbo Request interceptor to add the X-Socket-ID header.
+       */
+    }, {
+      key: "registerTurboRequestInterceptor",
+      value: function registerTurboRequestInterceptor() {
+        var _this4 = this;
+        document.addEventListener('turbo:before-fetch-request', function (event) {
+          event.detail.fetchOptions.headers['X-Socket-Id'] = _this4.socketId();
+        });
+      }
+    }]);
+    return Echo;
+  }();
+
+  // @ts-ignore
+  window.Pusher = require('pusher-js');
   class Common {
       router = undefined;
       route = undefined;
@@ -13895,7 +13126,29 @@ spurious results.`);
       GoToRoute = (path) => {
           this.router?.push(path);
       };
-      showError = (error, title, icon, fallbackMsg = '') => {
+      connectToWebsocket = (pusherKey, websocketUrl, websocketHost) => {
+          // If using http connection use this
+          // @ts-ignore
+          window.Echo = new Echo({
+              broadcaster: 'pusher',
+              key: pusherKey,
+              cluster: 'mt1',
+              wsHost: `${websocketHost}`,
+              encrypted: false,
+              wsPort: 6001,
+              disableStats: true,
+              forceTLS: false,
+              enabledTransports: ['ws', 'wss'],
+              disabledTransports: ['sockjs', 'xhr_polling', 'xhr_streaming'],
+              auth: {
+                  headers: {
+                      authorization: `Bearer ${Logic.Auth.AccessToken}`,
+                  },
+              },
+              authEndpoint: `${websocketUrl}/graphql/subscriptions/auth`,
+          });
+      };
+      showError = (error, title, fallbackMsg = '') => {
           const message = error.graphQLErrors[0].message;
           this.showLoader({
               show: true,
@@ -13903,8 +13156,8 @@ spurious results.`);
               loading: false,
               hasError: true,
               message: message != 'null' ? message : fallbackMsg,
-              icon,
               title,
+              type: 'error',
           });
       };
       getLabel = (data, key) => {
@@ -13916,13 +13169,14 @@ spurious results.`);
       showLoader = (loaderSetup) => {
           this.loaderSetup = loaderSetup;
       };
+      showAlert = (loaderSetup) => {
+          this.loaderSetup = loaderSetup;
+      };
       goBack = () => {
           window.history.length > 1 ? this.router?.go(-1) : this.router?.push('/');
       };
       hideLoader = () => {
           const Loader = {
-              show: false,
-              useModal: false,
               loading: false,
           };
           this.loaderSetup = Loader;
@@ -14034,80 +13288,109 @@ spurious results.`);
           }
           return oldData;
       };
+      makeid = (length) => {
+          let result = '';
+          let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+          let charactersLength = characters.length;
+          for (let i = 0; i < length; i++) {
+              result += characters.charAt(Math.floor(Math.random() * charactersLength));
+          }
+          return result;
+      };
       preFetchRouteData = (routeTo, _routeFrom, next) => {
-          const allActions = [];
-          if (this.loaderSetup.loading) {
-              return;
-          }
-          const routeMiddlewares = routeTo.meta.middlewares;
-          // handle fetchRules
-          const fetchRules = routeMiddlewares.fetchRules;
-          let BreakException = {};
-          try {
-              fetchRules?.forEach((rule) => {
-                  if (rule.requireAuth) {
-                      if (!Logic.Auth.AuthUser) {
-                          this.GoToRoute('/auth/login');
-                          throw BreakException;
-                      }
-                  }
-                  // @ts-ignore
-                  const domain = Logic[rule.domain];
-                  if (rule.alignCurrency) {
-                      if (rule.params[0] != this.globalParameters.currency) {
-                          rule.params[0] = this.globalParameters.currency;
-                          rule.ignoreProperty = true;
-                      }
-                  }
-                  if (domain[rule.property] == undefined ||
-                      (typeof rule.ignoreProperty == 'function' && rule.ignoreProperty()) ||
-                      rule.ignoreProperty) {
-                      allActions.push(new Promise((resolve) => {
-                          if (rule.useRouteId) {
-                              rule.params.unshift(routeTo.params.id.toString());
+          return new Promise((resolve) => {
+              const allActions = [];
+              if (this.loaderSetup.loading) {
+                  resolve('');
+              }
+              const routeMiddlewares = routeTo.meta.middlewares;
+              // handle fetchRules
+              const fetchRules = routeMiddlewares.fetchRules;
+              let BreakException = {};
+              try {
+                  fetchRules?.forEach((rule) => {
+                      if (rule.requireAuth) {
+                          if (!Logic.Auth.AuthUser) {
+                              this.GoToRoute('/auth/login');
+                              throw BreakException;
                           }
-                          if (rule.useRouteQuery) {
-                              rule.queries?.forEach((item) => {
-                                  rule.params.unshift(routeTo.query[item]);
+                      }
+                      // @ts-ignore
+                      const domain = Logic[rule.domain];
+                      if (rule.alignCurrency) {
+                          if (rule.params[0] != this.globalParameters.currency) {
+                              rule.params[0] = this.globalParameters.currency;
+                              rule.ignoreProperty = true;
+                          }
+                      }
+                      if (domain[rule.property] == undefined ||
+                          (typeof rule.ignoreProperty == 'function' &&
+                              rule.ignoreProperty()) ||
+                          rule.ignoreProperty) {
+                          allActions.push(new Promise((resolve) => {
+                              if (rule.useRouteId) {
+                                  rule.params.unshift(routeTo.params.id.toString());
+                              }
+                              if (rule.useRouteQuery) {
+                                  rule.queries?.forEach((item) => {
+                                      rule.params.unshift(routeTo.query[item]);
+                                  });
+                              }
+                              const request = domain[rule.method](...rule.params);
+                              request?.then((value) => {
+                                  resolve(value);
                               });
+                          }));
+                      }
+                      else {
+                          if (rule.silentUpdate) {
+                              // run in silence
+                              if (rule.useRouteId) {
+                                  rule.params.unshift(routeTo.params.id.toString());
+                              }
+                              if (rule.useRouteQuery) {
+                                  rule.queries?.forEach((item) => {
+                                      rule.params.unshift(routeTo.query[item]);
+                                  });
+                              }
+                              rule.params = [...new Set(rule.params)];
+                              domain[rule.method](...rule.params);
                           }
-                          const request = domain[rule.method](...rule.params);
-                          request?.then((value) => {
-                              resolve(value);
-                          });
-                      }));
-                  }
-              });
-          }
-          catch (error) {
-              if (error !== BreakException)
-                  throw error;
-          }
-          // save user activities
-          if (routeMiddlewares.tracking_data) {
-              routeMiddlewares.tracking_data;
-          }
-          if (allActions.length > 0) {
-              this.showLoader({
-                  show: true,
-                  useModal: true,
-                  loading: true,
-              });
-              Promise.all(allActions).then(() => {
+                      }
+                  });
+              }
+              catch (error) {
+                  if (error !== BreakException)
+                      throw error;
+              }
+              // save user activities
+              if (routeMiddlewares.tracking_data) {
+                  routeMiddlewares.tracking_data;
+              }
+              if (allActions.length > 0) {
+                  this.showLoader({
+                      loading: true,
+                  });
+                  Promise.all(allActions).then(() => {
+                      this.hideLoader();
+                      resolve('');
+                  });
+              }
+              else {
                   this.hideLoader();
-                  return next ? next() : true;
-              });
-          }
-          else {
-              this.hideLoader();
-              return next ? next() : true;
-          }
+                  resolve('');
+              }
+          });
       };
   }
 
   class Auth extends Common {
       constructor() {
           super();
+          this.AccessToken = localStorage.getItem('access_token');
+          this.AuthUser = localStorage.getItem('auth_user')
+              ? JSON.parse(localStorage.getItem('auth_user') || '{}')
+              : undefined;
       }
       // Base variables
       AccessToken = null;
@@ -14122,8 +13405,8 @@ spurious results.`);
       // Queries
       GetAuthUser = () => {
           $api.auth.GetAuthUser().then((response) => {
-              if (response.data?.GetAuthUser) {
-                  this.AuthUser = response.data?.GetAuthUser;
+              if (response.data?.AuthUser) {
+                  this.AuthUser = response.data?.AuthUser;
                   localStorage.setItem('auth_user', JSON.stringify(this.AuthUser));
               }
               else {
@@ -14131,6 +13414,12 @@ spurious results.`);
                   Logic.Common.GoToRoute('/auth/login');
               }
           });
+      };
+      setDefaultAuth = () => {
+          this.AccessToken = localStorage.getItem('access_token');
+          this.AuthUser = localStorage.getItem('auth_user')
+              ? JSON.parse(localStorage.getItem('auth_user') || '{}')
+              : undefined;
       };
       // Mutations
       SetUpAuth = (AuthResponse) => {
@@ -14146,15 +13435,14 @@ spurious results.`);
           if (formIsValid) {
               Logic.Common.showLoader({
                   loading: true,
-                  show: true,
-                  useModal: true,
               });
-              $api.auth
+              return $api.auth
                   .SignUp(this.SignUpPayload)
                   .then((response) => {
-                  this.SetUpAuth(response.data);
-                  this.AuthUser = response.data?.SignUp.user;
+                  this.AuthUser = response.data?.SignUp;
+                  localStorage.setItem('auth_email', this.SignUpPayload.email);
                   Logic.Common.hideLoader();
+                  return response.data.SignUp;
               })
                   .catch((error) => {
                   Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14165,16 +13453,15 @@ spurious results.`);
           if (formIsValid) {
               Logic.Common.showLoader({
                   loading: true,
-                  show: true,
-                  useModal: true,
               });
-              $api.auth
+              return $api.auth
                   .SignIn(this.SignInPayload)
                   .then((response) => {
-                  this.SetUpAuth(response.data);
+                  this.SetUpAuth(response.data.SignIn);
                   this.AuthUser = response.data?.SignIn.user;
                   Logic.Common.hideLoader();
                   Logic.Common.GoToRoute('/');
+                  return response.data.SignIn;
               })
                   .catch((error) => {
                   Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14184,13 +13471,12 @@ spurious results.`);
       ResendVerifyEmail = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.auth
+          return $api.auth
               .ResendVerifyEmail(this.ResendVerifyEmailPayload)
               .then((response) => {
               Logic.Common.hideLoader();
+              response.data.ResendVerifyEmail;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14200,13 +13486,12 @@ spurious results.`);
           if (formIsValid) {
               Logic.Common.showLoader({
                   loading: true,
-                  show: true,
-                  useModal: true,
               });
-              $api.auth
+              return $api.auth
                   .SendResetPasswordEmail(this.ResetPasswordEmailPayload)
                   .then((response) => {
                   Logic.Common.hideLoader();
+                  return response.data.SendResetPasswordEmail;
               })
                   .catch((error) => {
                   Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14217,13 +13502,12 @@ spurious results.`);
           if (formIsValid) {
               Logic.Common.showLoader({
                   loading: true,
-                  show: true,
-                  useModal: true,
               });
-              $api.auth
+              return $api.auth
                   .UpdatePassword(this.UpdatePasswordPayload)
                   .then((response) => {
                   Logic.Common.hideLoader();
+                  return response.data.UpdatePassword;
               })
                   .catch((error) => {
                   Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14234,14 +13518,13 @@ spurious results.`);
           if (formIsValid) {
               Logic.Common.showLoader({
                   loading: true,
-                  show: true,
-                  useModal: true,
               });
-              $api.auth
+              return $api.auth
                   .VerifyEmailOtp(this.VerifyEmailOtpPayload)
                   .then((response) => {
                   this.AuthUser = response.data?.VerifyEmailOtp;
                   Logic.Common.hideLoader();
+                  response.data.VerifyEmailOtp;
               })
                   .catch((error) => {
                   Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14323,6 +13606,7 @@ spurious results.`);
       ManyConversations;
       EachConversation;
       ConversationMessages;
+      NewConversationMessage;
       // Mutation payloads
       JoinConversationPayload;
       SaveConversationMessagePayload;
@@ -14352,14 +13636,13 @@ spurious results.`);
       JoinConversation = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.conversation
+          return $api.conversation
               .JoinConversation(this.JoinConversationPayload)
               .then((response) => {
               this.EachConversation = response.data.JoinConversation;
               Logic.Common.hideLoader();
+              return response.data.JoinConversation;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14368,29 +13651,44 @@ spurious results.`);
       SaveConversationMessage = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.conversation
+          return $api.conversation
               .SaveConversationMessage(this.SaveConversationMessagePayload)
               .then((response) => {
               this.ConversationMessages.data.push(response.data.SaveConversationMessage);
               Logic.Common.hideLoader();
+              return response.data.SaveConversationMessage;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
           });
       };
       StartConversation = () => {
-          Logic.Common.showLoader({ loading: true, show: true, useModal: true });
-          $api.conversation
+          Logic.Common.showLoader({
+              loading: true,
+          });
+          return $api.conversation
               .StartConversation(this.StartConversationPayload)
               .then((response) => {
-              console.log('StartConversation response:::', response);
+              this.EachConversation = response.data.StartConversation;
               Logic.Common.hideLoader();
+              return response.data.StartConversation;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
+          });
+      };
+      SubscribeToConversationMessageCreated = (conversationList) => {
+          $api.conversation.SubscribeToConversationMessageCreated(conversationList, (result) => {
+              if (result.conversationMessageCreated.user.uuid !=
+                  Logic.Auth.AuthUser.uuid) {
+                  this.NewConversationMessage = result.conversationMessageCreated;
+              }
+          });
+      };
+      SubscribeToConversationMembership = () => {
+          $api.conversation.SubscribeToConversationMembership(Logic.Auth.AuthUser.uuid, (result) => {
+              console.log(result);
           });
       };
   }
@@ -14420,21 +13718,36 @@ spurious results.`);
       SaveProjectEntryLikePayload;
       UpdateProjectEntryPayload;
       // Queries
-      GetProjects = (page, first) => {
+      GetProjects = (page, first, whereQuery = '', hasUser = '', hasCategory = '') => {
           return $api.project
               .GetProjects(page, first, `{
       column: CREATED_AT,
       order: DESC
-    }`)
+    }`, whereQuery, hasUser, hasCategory)
               .then((response) => {
-              this.ManyProjects = response.data?.Projects;
-              return response.data?.Projects;
+              this.ManyProjects = response.data?.GetProjects;
+              return response.data?.GetProjects;
           });
       };
       GetProject = (uuid) => {
-          return $api.project.GetProject(uuid).then((response) => {
-              this.EachProject = response.data?.Project;
-          });
+          if (uuid) {
+              return $api.project
+                  .GetProject(uuid, Logic.Auth.AuthUser.uuid)
+                  .then((response) => {
+                  this.EachProject = response.data?.Project;
+                  if (response.data.GetProjectEntries.data.length) {
+                      this.EachProjectEntry = response.data.GetProjectEntries.data[0];
+                  }
+                  else {
+                      this.EachProjectEntry = undefined;
+                  }
+              });
+          }
+          else {
+              return new Promise((resolve) => {
+                  resolve('');
+              });
+          }
       };
       GetProjectCategories = (page, first) => {
           return $api.project
@@ -14443,8 +13756,8 @@ spurious results.`);
       order: DESC
     }`)
               .then((response) => {
-              this.ManyProjectCategories = response.data?.ProjectCategories;
-              return response.data?.ProjectCategories;
+              this.ManyProjectCategories = response.data?.GetProjectCategories;
+              return response.data?.GetProjectCategories;
           });
       };
       GetProjectCategory = (uuid) => {
@@ -14452,12 +13765,12 @@ spurious results.`);
               this.EachProjectCategory = response.data?.ProjectCategory;
           });
       };
-      GetProjectEntries = (page, first) => {
+      GetProjectEntries = (page, first, whereQuery = '') => {
           return $api.project
               .GetProjectEntries(page, first, `{
       column: CREATED_AT,
       order: DESC
-    }`)
+    }`, whereQuery)
               .then((response) => {
               this.ManyProjectEntries = response.data?.GetProjectEntries;
               return response.data?.GetProjectEntries;
@@ -14470,7 +13783,7 @@ spurious results.`);
       };
       // Mutation
       UploadImage = (file) => {
-          $api.upload
+          return $api.upload
               .UploadImage({
               image: file,
           })
@@ -14481,14 +13794,18 @@ spurious results.`);
       CreateProject = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .CreateProject(this.CreateProjectPayload)
               .then((response) => {
               this.EachProject = response.data.CreateProject;
-              Logic.Common.hideLoader();
+              Logic.Common.showLoader({
+                  loading: false,
+                  show: true,
+                  message: `Project created successfully`,
+                  type: 'success',
+              });
+              return response.data.CreateProject;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14497,14 +13814,13 @@ spurious results.`);
       CreateProjectCategory = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .CreateProjectCategory(this.CreateProjectCategoryPayload)
               .then((response) => {
               this.EachProjectCategory = response.data.CreateProjectCategory;
               Logic.Common.hideLoader();
+              return response.data.CreateProjectCategory;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14513,14 +13829,13 @@ spurious results.`);
       CreateProjectMilestone = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .CreateProjectMilestone(this.CreateProjectMilestonePayload)
               .then((response) => {
               this.EachProject.milestones.push(response.data.CreateProjectMilestone);
               Logic.Common.hideLoader();
+              return response.data.CreateProjectMilestone;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14529,14 +13844,13 @@ spurious results.`);
       UpdateProject = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .UpdateProject(this.UpdateProjectPayload)
               .then((response) => {
               this.EachProject = response.data.UpdateProject;
               Logic.Common.hideLoader();
+              return response.data.UpdateProject;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14545,10 +13859,8 @@ spurious results.`);
       UpdateProjectMilestone = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .UpdateProjectMilestone(this.UpdateProjectMilestonePayload)
               .then((response) => {
               Logic.Common.hideLoader();
@@ -14561,10 +13873,8 @@ spurious results.`);
       UpdateProjectCategory = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .UpdateProjectCategory(this.UpdateProjectCategoryPayload)
               .then((response) => {
               Logic.Common.hideLoader();
@@ -14577,10 +13887,8 @@ spurious results.`);
       DeleteProjectMilestone = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .DeleteProjectMilestone(this.DeleteProjectMilestonePayload)
               .then((response) => {
               Logic.Common.hideLoader();
@@ -14593,14 +13901,13 @@ spurious results.`);
       JoinProject = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .JoinProject(this.JoinProjectPayload)
               .then((response) => {
               this.EachProjectEntry = response.data.JoinProject;
               Logic.Common.hideLoader();
+              return response.data.JoinProject;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14609,10 +13916,8 @@ spurious results.`);
       SaveProjectEntryBookmark = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .SaveProjectEntryBookmark(this.SaveProjectEntryBookmarkPayload)
               .then((response) => {
               Logic.Common.hideLoader();
@@ -14625,10 +13930,8 @@ spurious results.`);
       SaveProjectEntryComment = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .SaveProjectEntryComment(this.SaveProjectEntryCommentPayload)
               .then((response) => {
               Logic.Common.hideLoader();
@@ -14641,10 +13944,8 @@ spurious results.`);
       SaveProjectEntryLike = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .SaveProjectEntryLike(this.SaveProjectEntryLikePayload)
               .then((response) => {
               Logic.Common.hideLoader();
@@ -14657,10 +13958,8 @@ spurious results.`);
       UpdateProjectEntry = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.project
+          return $api.project
               .UpdateProjectEntry(this.UpdateProjectEntryPayload)
               .then((response) => {
               Logic.Common.hideLoader();
@@ -14685,8 +13984,8 @@ spurious results.`);
       // Queries
       GetCourses = (page, first) => {
           return $api.course.GetCourses(page, first).then((response) => {
-              this.ManyCourses = response.data?.Courses;
-              return response.data?.Courses;
+              this.ManyCourses = response.data?.GetCourses;
+              return response.data?.GetCourses;
           });
       };
       GetCourse = (uuid) => {
@@ -14698,14 +13997,13 @@ spurious results.`);
       CreateCourse = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.course
+          return $api.course
               .CreateCourse(this.CreateCoursePayload)
               .then((response) => {
               this.EachCourse = response.data.CreateCourse;
               Logic.Common.hideLoader();
+              return response.data.CreateCourse;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14714,14 +14012,13 @@ spurious results.`);
       UpdateCourse = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.course
+          return $api.course
               .UpdateCourse(this.UpdateCoursePayload)
               .then((response) => {
               this.EachCourse = response.data.UpdateCourse;
               Logic.Common.hideLoader();
+              return response.data.UpdateCourse;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14742,8 +14039,8 @@ spurious results.`);
       // Queries
       GetClasses = (page, first) => {
           return $api.class.GetBouhawsClasses(page, first).then((response) => {
-              this.ManyBouhawsClass = response.data?.BouhawsClasses;
-              return response.data?.BouhawsClasses;
+              this.ManyBouhawsClass = response.data?.GetBouhawsClasses;
+              return response.data?.GetBouhawsClasses;
           });
       };
       GetClass = (uuid) => {
@@ -14755,14 +14052,18 @@ spurious results.`);
       CreateClass = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.class
+          return $api.class
               .CreateClass(this.CreateClassPayload)
               .then((response) => {
-              this.EachBouhawsClass = response.data.CreateClass;
-              Logic.Common.hideLoader();
+              this.EachBouhawsClass = response.data.CreateBouhawsClass;
+              Logic.Common.showLoader({
+                  loading: false,
+                  show: true,
+                  message: `Class was successfully created!`,
+                  type: 'success',
+              });
+              return response.data.CreateBouhawsClass;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14771,14 +14072,61 @@ spurious results.`);
       UpdateClass = () => {
           Logic.Common.showLoader({
               loading: true,
-              show: true,
-              useModal: true,
           });
-          $api.class
+          return $api.class
               .UpdateClass(this.UpdateClassPayload)
               .then((response) => {
-              this.EachBouhawsClass = response.data.UpdateClass;
+              this.EachBouhawsClass = response.data.UpdateBouhawsClass;
               Logic.Common.hideLoader();
+              return response.data.UpdateBouhawsClass;
+          })
+              .catch((error) => {
+              Logic.Common.showError(error, 'Oops!', 'error-alert');
+          });
+      };
+  }
+
+  class Profile extends Common {
+      constructor() {
+          super();
+      }
+      // Base variables
+      UserProfile;
+      LeaderboardUsers;
+      DashboardOverview;
+      SingleUser;
+      // Mutation payloads
+      UpdateProfilePayload;
+      // Queries
+      GetDashboardOverview = () => {
+          return $api.profile.GetDashboardOverview().then((response) => {
+              this.DashboardOverview = response.data;
+              return response.data;
+          });
+      };
+      GetSingleUser = (uuid) => {
+          return $api.profile.GetSingleUser(uuid).then((response) => {
+              this.SingleUser = response.data.SingleUser;
+              return response.data.SingleUser;
+          });
+      };
+      GetLeaderboard = () => {
+          return $api.profile.GetLeaderBoard().then((response) => {
+              this.LeaderboardUsers = response.data?.LeaderBoard;
+              return response.data?.LeaderBoard;
+          });
+      };
+      // Mutation
+      UpdateProfile = () => {
+          Logic.Common.showLoader({
+              loading: true,
+          });
+          return $api.profile
+              .UpdateProfile(this.UpdateProfilePayload)
+              .then((response) => {
+              this.UpdateProfile = response.data.UpdateProfile;
+              Logic.Common.hideLoader();
+              return response.data.UpdateProfile;
           })
               .catch((error) => {
               Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -14794,6 +14142,7 @@ spurious results.`);
       Project: new Project(),
       Course: new Course(),
       Class: new BouhawsClass(),
+      Profile: new Profile(),
   };
 
   exports.Logic = Logic;

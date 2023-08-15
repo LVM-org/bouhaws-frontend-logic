@@ -21,14 +21,14 @@ export interface SelectOption {
 }
 
 export interface LoaderSetup {
-  show: boolean
-  useModal: boolean
-  loading: boolean
+  show?: boolean
+  useModal?: boolean
+  loading?: boolean
   hasError?: boolean
   message?: string
   ctaText?: string
   ctaFunction?: any
-  icon?: 'success-kite' | 'error-kite' | 'error-alert' | 'success-thumb'
+  type?: 'success' | 'error' | 'warning' | 'info'
   title?: string
 }
 
@@ -43,4 +43,5 @@ export interface FetchRule {
   useRouteQuery?: boolean
   queries?: string[]
   alignCurrency?: boolean
+  silentUpdate?: boolean
 }

@@ -36,12 +36,13 @@ export default class ProjectApi extends BaseApiService {
     page: number,
     first: number,
     orderBy: QueryGetProjectsOrderByOrderByClause | string,
+    whereQuery: string = '',
     hasUser: QueryGetProjectsHasUserWhereHasConditions | string = '',
     hasCategory: QueryGetProjectsHasCategoryWhereHasConditions | string = '',
   ) => {
     const requestData = `
 		query Projects($page: Int!, $first: Int!) {
-			GetProjects(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser} ${hasCategory}) {
+			GetProjects(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser} ${hasCategory} ${whereQuery}) {
 			  paginatorInfo {
 				count
 				currentPage
@@ -69,18 +70,24 @@ export default class ProjectApi extends BaseApiService {
 				description
 				requirements
 				photo_url
+				created_at
 				type
-				total_points
 				category{
 				  uuid
 				  title
+				}
+				user_entry{
+				    uuid
 				}
 				entries{
 				  uuid
 				  current_milestone_index
 				  title
 				  description
-				  images
+				  images {
+					url
+					milestone
+				  }
 				  likes{
 					id
 				  }
@@ -92,13 +99,24 @@ export default class ProjectApi extends BaseApiService {
 				  }
 				  created_at
 				}
+				milestones{
+					uuid
+					title
+					points
+					index
+					project {
+						uuid
+					}
+					updated_at
+					created_at
+				}
 			  }
 			}
 		  }
 		`
 
     const response: Promise<OperationResult<{
-      Projects: ProjectPaginator
+      GetProjects: ProjectPaginator
     }>> = this.query(requestData, {
       page,
       first,
@@ -107,7 +125,7 @@ export default class ProjectApi extends BaseApiService {
     return response
   }
 
-  public GetProject = (uuid: string) => {
+  public GetProject = (uuid: string, userUuid: string) => {
     const requestData = `
 		query GetProject($uuid: String!) {
 			Project(uuid: $uuid) {
@@ -130,7 +148,12 @@ export default class ProjectApi extends BaseApiService {
 				photo_url
 				type
 				total_points
+				bouhawsclass {
+					id
+				}
+				created_at
 				category{
+				  id
 				  uuid
 				  title
 				}
@@ -139,7 +162,17 @@ export default class ProjectApi extends BaseApiService {
 				  current_milestone_index
 				  title
 				  description
-				  images
+				  images {
+					url
+					milestone
+				  }
+				  user {
+					name
+					username
+					profile {
+					  photo_url
+					}
+				  }
 				  likes{
 					id
 				  }
@@ -151,12 +184,62 @@ export default class ProjectApi extends BaseApiService {
 				  }
 				  created_at
 				}
+				milestones{
+					uuid
+					title
+					points
+					index
+					project {
+						uuid
+					}
+					updated_at
+					created_at
+				}
 			}
+			GetProjectEntries(
+				first: 1
+				page: 1
+				orderBy: {column: CREATED_AT, order: DESC}
+				hasProject: {column: UUID, operator: EQ, value: "${uuid}"}
+				hasUser: {column: UUID, operator: EQ, value: "${userUuid}"}
+			  ) {
+				data {
+				  uuid
+				  description
+				  user {
+					name
+					uuid
+					profile {
+					  photo_url
+					}
+				  }
+				  project {
+					title
+					uuid
+				  }
+				  current_milestone_index
+				  title
+				  images {
+					url
+					milestone
+				  }
+				  likes {
+					id
+				  }
+				  bookmarks {
+					id
+				  }
+				  comments {
+					id
+				  }
+				}
+			  }
 		  }
 		`
 
     const response: Promise<OperationResult<{
       Project: Project
+      GetProjectEntries: ProjectEntryPaginator
     }>> = this.query(requestData, {
       uuid,
     })
@@ -191,7 +274,7 @@ export default class ProjectApi extends BaseApiService {
 		  }
 		`
     const response: Promise<OperationResult<{
-      ProjectCategories: ProjectCategoryPaginator
+      GetProjectCategories: ProjectCategoryPaginator
     }>> = this.query(requestData, {
       page,
       first,
@@ -225,6 +308,7 @@ export default class ProjectApi extends BaseApiService {
     page: number,
     first: number,
     orderBy: QueryGetProjectEntriesOrderByOrderByClause | string,
+    whereQuery: string = '',
     hasUser: QueryGetProjectEntriesHasUserWhereHasConditions | string = '',
     hasProject:
       | QueryGetProjectEntriesHasProjectWhereHasConditions
@@ -232,7 +316,7 @@ export default class ProjectApi extends BaseApiService {
   ) => {
     const requestData = `
 		query ProjectEntries($page: Int!, $first: Int!) {
-			GetProjectEntries(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser}  ${hasProject}) {
+			GetProjectEntries(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser}  ${hasProject} ${whereQuery}) {
 			  paginatorInfo {
 				count
 				currentPage
@@ -244,8 +328,10 @@ export default class ProjectApi extends BaseApiService {
 			  }
 			  data {
 				uuid
+				description
 				user {
 				  name
+				  username
 				  uuid
 				  profile {
 					photo_url
@@ -257,7 +343,11 @@ export default class ProjectApi extends BaseApiService {
 				}
 				current_milestone_index
 				title
-				images
+				updated_at
+				images {
+					url
+					milestone
+				  }
 				likes {
 				  id
 				}
@@ -286,6 +376,7 @@ export default class ProjectApi extends BaseApiService {
 	query GetProjectEntry($uuid: String!) {
 		ProjectEntry(uuid: $uuid) {
 		  uuid
+		  id
 		  user {
 			name
 			username
@@ -295,11 +386,23 @@ export default class ProjectApi extends BaseApiService {
 		  }
 		  project {
 			title
+			milestones {
+				uuid
+				title
+			}
 		  }
 		  current_milestone_index
 		  title
 		  description
-		  images
+		  category {
+			uuid
+			id
+			title
+		   }
+		  images {
+			url
+			milestone
+		  }
 		  likes {
 			id
 		  }
@@ -308,6 +411,7 @@ export default class ProjectApi extends BaseApiService {
 		  }
 		  comments {
 			uuid
+			id
 			user {
 			  username
 			  name
@@ -318,6 +422,7 @@ export default class ProjectApi extends BaseApiService {
 			content
 			is_reply
 			replied_comment_id
+			created_at
 		  }
 		  created_at
 		}
@@ -345,6 +450,7 @@ export default class ProjectApi extends BaseApiService {
 				$requirements: String!, 
 				$total_points: String!, 
 				$type: String!
+				$bouhaws_class_id: Int
 			) {
 			CreateProject(
 				end_date: $end_date, 
@@ -356,6 +462,7 @@ export default class ProjectApi extends BaseApiService {
 				requirements: $requirements, 
 				total_points: $total_points, 
 				type: $type,
+				bouhaws_class_id: $bouhaws_class_id
 			) {
 				id
 				uuid
@@ -371,6 +478,9 @@ export default class ProjectApi extends BaseApiService {
 				end_date
 				prize
 				currency
+				bouhawsclass {
+					id
+				}
 				description
 				requirements
 				photo_url
@@ -385,7 +495,17 @@ export default class ProjectApi extends BaseApiService {
 				  current_milestone_index
 				  title
 				  description
-				  images
+				  images {
+					url
+					milestone
+				  }
+				  user {
+					name
+					username
+					profile {
+					  photo_url
+					}
+				  }
 				  likes{
 					id
 				  }
@@ -396,6 +516,17 @@ export default class ProjectApi extends BaseApiService {
 					id
 				  }
 				  created_at
+				}
+				milestones{
+					uuid
+					title
+					points
+					index
+					project {
+						uuid
+					}
+					updated_at
+					created_at
 				}
 			}
 		}
@@ -472,6 +603,7 @@ export default class ProjectApi extends BaseApiService {
 				$type: String
 				$status: String
 				$project_uuid: String!
+				$bouhaws_class_id: Int
 			) {
 			UpdateProject(
 				end_date: $end_date, 
@@ -485,10 +617,14 @@ export default class ProjectApi extends BaseApiService {
 				type: $type,
 				status: $status,
 				project_uuid: $project_uuid
+				bouhaws_class_id: $bouhaws_class_id
 			) {
 				id
 				uuid
 				title
+				bouhawsclass {
+					id
+				}
 				user{
 				  uuid
 				  name
@@ -504,7 +640,6 @@ export default class ProjectApi extends BaseApiService {
 				requirements
 				photo_url
 				type
-				total_points
 				category{
 				  uuid
 				  title
@@ -514,7 +649,17 @@ export default class ProjectApi extends BaseApiService {
 				  current_milestone_index
 				  title
 				  description
-				  images
+				  images {
+					url
+					milestone
+				  }
+				  user {
+				  name
+				  username
+				  profile {
+					photo_url
+				  }
+				}
 				  likes{
 					id
 				  }
@@ -525,6 +670,17 @@ export default class ProjectApi extends BaseApiService {
 					id
 				  }
 				  created_at
+				}
+				milestones{
+					uuid
+					title
+					points
+					index
+					project {
+						uuid
+					}
+					updated_at
+					created_at
 				}
 			}
 		}
@@ -603,7 +759,7 @@ export default class ProjectApi extends BaseApiService {
     const requestData = `
 		mutation UpdateProjectEntry( 
 				$description: String, 
-				$images: String, 
+				$images: [EntryImage!], 
 				$project_entry_uuid: String! 
 				$status: String,  
 				$title: String,  
@@ -629,7 +785,10 @@ export default class ProjectApi extends BaseApiService {
 				current_milestone_index
 				title
 				description
-				images
+				images {
+					url
+					milestone
+				  }
 				likes {
 				  id
 				}
@@ -637,6 +796,7 @@ export default class ProjectApi extends BaseApiService {
 				  id
 				}
 				comments {
+					id
 				  uuid
 				  user {
 					username
@@ -687,11 +847,15 @@ export default class ProjectApi extends BaseApiService {
 				$project_id: Int!, 
 				$description: String!, 
 				$title: String!,  
+				$images: [EntryImage!]
+				$project_category_id: String
 			) {
 			JoinProject(
 				project_id: $project_id, 
 				description: $description, 
 				title: $title,  
+				images: $images,
+				project_category_id: $project_category_id
 			) {
 				uuid
 				user {
@@ -706,8 +870,16 @@ export default class ProjectApi extends BaseApiService {
 				}
 				current_milestone_index
 				title
+				category{
+					uuid
+					id
+					title
+				}
 				description
-				images
+				images  {
+					url
+					milestone
+				  }
 				likes {
 				  id
 				}
@@ -761,7 +933,7 @@ export default class ProjectApi extends BaseApiService {
     data: MutationSaveProjectEntryCommentArgs,
   ) => {
     const requestData = `
-	mutation SaveProjectEntryComment($content: String!, $is_reply: Boolean!, $project_entry_id: Int!, $replied_comment_id: Int!) {
+	mutation SaveProjectEntryComment($content: String!, $is_reply: Boolean!, $project_entry_id: Int!, $replied_comment_id: Int) {
 		SaveProjectEntryComment(
 		  content: $content
 		  is_reply: $is_reply
@@ -769,6 +941,7 @@ export default class ProjectApi extends BaseApiService {
 		  replied_comment_id: $replied_comment_id
 		) {
 		  uuid
+		  id
 		  user {
 			name
 			username

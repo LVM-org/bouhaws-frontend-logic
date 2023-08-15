@@ -25,19 +25,30 @@ export default class ClassApi extends BaseApiService {
 				uuid
 				id
 				user {
-				  uuid
-				  name
+					name
+					username
+					uuid
+					profile {
+					  photo_url
+					}
 				}
 				title
 				description
 				created_at
+				projects {
+					id
+				}
+				students {
+					id
+					uuid
+				}
 			  }
 			}
 		  }
 		`
 
     const response: Promise<OperationResult<{
-      BouhawsClasses: BouhawsClassPaginator
+      GetBouhawsClasses: BouhawsClassPaginator
     }>> = this.query(requestData, {
       page,
       first,
@@ -52,8 +63,10 @@ export default class ClassApi extends BaseApiService {
 			BouhawsClass(uuid: $uuid) {
 			  id
 			  uuid
+			  title
 			  user {
 				name
+				username
 				uuid
 				profile {
 				  photo_url
@@ -71,6 +84,14 @@ export default class ClassApi extends BaseApiService {
 				requirements
 				photo_url
 				type
+				user{
+					uuid
+					name
+					username
+					profile{
+					  photo_url
+					}
+				  }
 				total_points
 				category {
 				  uuid
@@ -81,6 +102,14 @@ export default class ClassApi extends BaseApiService {
 				  title
 				  points
 				  index
+				}
+			  }
+			  students {
+				name
+				username
+				uuid
+				profile {
+				  photo_url
 				}
 			  }
 			}
@@ -103,7 +132,11 @@ export default class ClassApi extends BaseApiService {
 		  uuid
 		  user {
 			name
+			username
 			uuid
+			profile {
+			  photo_url
+			}
 		  }
 		  title
 		  description
@@ -113,7 +146,7 @@ export default class ClassApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      CreateClass: BouhawsClass
+      CreateBouhawsClass: BouhawsClass
     }>> = this.mutation(requestData, data)
 
     return response
@@ -131,7 +164,11 @@ export default class ClassApi extends BaseApiService {
 		  uuid
 		  user {
 			name
+			username
 			uuid
+			profile {
+			  photo_url
+			}
 		  }
 		  title
 		  description
@@ -141,7 +178,7 @@ export default class ClassApi extends BaseApiService {
 		`
 
     const response: Promise<OperationResult<{
-      UpdateClass: BouhawsClass
+      UpdateBouhawsClass: BouhawsClass
     }>> = this.mutation(requestData, data)
 
     return response

@@ -30,13 +30,14 @@ export default class AuthApi extends BaseApiService {
 		  profile {
 			photo_url
 			points
+			type
 		  }
 		}
 	  }
 	`
 
     const response: Promise<OperationResult<{
-      GetAuthUser: User
+      AuthUser: User
     }>> = this.query(requestData, {})
 
     return response
@@ -44,8 +45,8 @@ export default class AuthApi extends BaseApiService {
 
   public SignUp = (data: MutationSignUpArgs) => {
     const requestData = `
-	mutation SignUp($email: String!, $password: String!, $username: String!) {
-		SignUp(email: $email, password: $password, username: $username) {
+	mutation SignUp($email: String!, $password: String!, $username: String!, $type: String!) {
+		SignUp(email: $email, password: $password, username: $username, type: $type) {
 		  uuid
 		  email
 		  username
@@ -56,7 +57,7 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      SignUp: AuthResponse
+      SignUp: User
     }>> = this.mutation(requestData, data)
 
     return response

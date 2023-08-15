@@ -231,4 +231,79 @@ export default class ConversationApi extends BaseApiService {
 
     return response
   }
+
+  public SubscribeToConversationMessageCreated = (
+    conversationList: string[],
+    handleSubscription: any,
+  ) => {
+    const requestData = `
+	subscription SubscribeToConversationMessageCreated($conversationList: [String!]!) {
+		conversationMessageCreated(conversationList: $conversationList) {
+		  uuid
+		  type
+		  user {
+			name
+			uuid
+			username
+			profile {
+			  photo_url
+			}
+		  }
+		  content
+		  media
+		  created_at
+		}
+	  }`
+
+    const response = this.subscription(
+      requestData,
+      {
+        conversationList,
+      },
+      handleSubscription,
+    )
+
+    return response
+  }
+
+  public SubscribeToConversationMembership = (
+    userUuid: string,
+    handleSubscription: any,
+  ) => {
+    const requestData = `
+	subscription SubscribeToConversationMembership($userUuid: String!) {
+		conversationMembership(userUuid: $userUuid) {
+		  uuid
+		  id
+		  user {
+			name
+			uuid
+			username
+			profile {
+			  photo_url
+			}
+		  }
+		  associated_users {
+			uuid
+			name
+			username
+			profile {
+			  photo_url
+			}
+		  }
+		  created_at
+		  updated_at
+		}
+	  }`
+
+    const response = this.subscription(
+      requestData,
+      {
+        userUuid,
+      },
+      handleSubscription,
+    )
+
+    return response
+  }
 }

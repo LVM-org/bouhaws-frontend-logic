@@ -25,8 +25,8 @@ export default class Course extends Common {
   // Queries
   public GetCourses = (page: number, first: number) => {
     return $api.course.GetCourses(page, first).then((response) => {
-      this.ManyCourses = response.data?.Courses
-      return response.data?.Courses
+      this.ManyCourses = response.data?.GetCourses
+      return response.data?.GetCourses
     })
   }
 
@@ -40,14 +40,13 @@ export default class Course extends Common {
   public CreateCourse = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.course
+    return $api.course
       .CreateCourse(this.CreateCoursePayload)
       .then((response) => {
         this.EachCourse = response.data.CreateCourse
         Logic.Common.hideLoader()
+        return response.data.CreateCourse
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -57,14 +56,13 @@ export default class Course extends Common {
   public UpdateCourse = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.course
+    return $api.course
       .UpdateCourse(this.UpdateCoursePayload)
       .then((response) => {
         this.EachCourse = response.data.UpdateCourse
         Logic.Common.hideLoader()
+        return response.data.UpdateCourse
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')

@@ -15,6 +15,10 @@ import { Logic } from '..'
 export default class Auth extends Common {
   constructor() {
     super()
+    this.AccessToken = localStorage.getItem('access_token')
+    this.AuthUser = localStorage.getItem('auth_user')
+      ? JSON.parse(localStorage.getItem('auth_user') || '{}')
+      : undefined
   }
 
   // Base variables
@@ -32,14 +36,21 @@ export default class Auth extends Common {
   // Queries
   public GetAuthUser = () => {
     $api.auth.GetAuthUser().then((response) => {
-      if (response.data?.GetAuthUser) {
-        this.AuthUser = response.data?.GetAuthUser
+      if (response.data?.AuthUser) {
+        this.AuthUser = response.data?.AuthUser
         localStorage.setItem('auth_user', JSON.stringify(this.AuthUser))
       } else {
         localStorage.removeItem('auth_user')
         Logic.Common.GoToRoute('/auth/login')
       }
     })
+  }
+
+  public setDefaultAuth = () => {
+    this.AccessToken = localStorage.getItem('access_token')
+    this.AuthUser = localStorage.getItem('auth_user')
+      ? JSON.parse(localStorage.getItem('auth_user') || '{}')
+      : undefined
   }
 
   // Mutations
@@ -60,15 +71,14 @@ export default class Auth extends Common {
     if (formIsValid) {
       Logic.Common.showLoader({
         loading: true,
-        show: true,
-        useModal: true,
       })
-      $api.auth
+      return $api.auth
         .SignUp(this.SignUpPayload)
         .then((response) => {
-          this.SetUpAuth(response.data)
-          this.AuthUser = response.data?.SignUp.user
+          this.AuthUser = response.data?.SignUp
+          localStorage.setItem('auth_email', this.SignUpPayload.email)
           Logic.Common.hideLoader()
+          return response.data.SignUp
         })
         .catch((error: CombinedError) => {
           Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -80,16 +90,15 @@ export default class Auth extends Common {
     if (formIsValid) {
       Logic.Common.showLoader({
         loading: true,
-        show: true,
-        useModal: true,
       })
-      $api.auth
+      return $api.auth
         .SignIn(this.SignInPayload)
         .then((response) => {
-          this.SetUpAuth(response.data)
+          this.SetUpAuth(response.data.SignIn)
           this.AuthUser = response.data?.SignIn.user
           Logic.Common.hideLoader()
           Logic.Common.GoToRoute('/')
+          return response.data.SignIn
         })
         .catch((error: CombinedError) => {
           Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -100,13 +109,12 @@ export default class Auth extends Common {
   public ResendVerifyEmail = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.auth
+    return $api.auth
       .ResendVerifyEmail(this.ResendVerifyEmailPayload)
       .then((response) => {
         Logic.Common.hideLoader()
+        response.data.ResendVerifyEmail
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -117,13 +125,12 @@ export default class Auth extends Common {
     if (formIsValid) {
       Logic.Common.showLoader({
         loading: true,
-        show: true,
-        useModal: true,
       })
-      $api.auth
+      return $api.auth
         .SendResetPasswordEmail(this.ResetPasswordEmailPayload)
         .then((response) => {
           Logic.Common.hideLoader()
+          return response.data.SendResetPasswordEmail
         })
         .catch((error: CombinedError) => {
           Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -135,13 +142,12 @@ export default class Auth extends Common {
     if (formIsValid) {
       Logic.Common.showLoader({
         loading: true,
-        show: true,
-        useModal: true,
       })
-      $api.auth
+      return $api.auth
         .UpdatePassword(this.UpdatePasswordPayload)
         .then((response) => {
           Logic.Common.hideLoader()
+          return response.data.UpdatePassword
         })
         .catch((error: CombinedError) => {
           Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -153,15 +159,13 @@ export default class Auth extends Common {
     if (formIsValid) {
       Logic.Common.showLoader({
         loading: true,
-        show: true,
-        useModal: true,
       })
-      $api.auth
+      return $api.auth
         .VerifyEmailOtp(this.VerifyEmailOtpPayload)
         .then((response) => {
           this.AuthUser = response.data?.VerifyEmailOtp
-
           Logic.Common.hideLoader()
+          response.data.VerifyEmailOtp
         })
         .catch((error: CombinedError) => {
           Logic.Common.showError(error, 'Oops!', 'error-alert')

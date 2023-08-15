@@ -7,6 +7,7 @@ import {
   MutationStartConversationArgs,
   Conversation as ConversationModel,
   ConversationMessagePaginator,
+  ConversationMessage,
 } from '../../gql/graphql'
 import { Logic } from '..'
 
@@ -19,6 +20,7 @@ export default class Conversation extends Common {
   public ManyConversations: ConversationModel[]
   public EachConversation: ConversationModel
   public ConversationMessages: ConversationMessagePaginator
+  public NewConversationMessage: ConversationMessage
 
   // Mutation payloads
   public JoinConversationPayload: MutationJoinConversationArgs
@@ -57,14 +59,13 @@ export default class Conversation extends Common {
   public JoinConversation = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.conversation
+    return $api.conversation
       .JoinConversation(this.JoinConversationPayload)
       .then((response) => {
         this.EachConversation = response.data.JoinConversation
         Logic.Common.hideLoader()
+        return response.data.JoinConversation
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -74,16 +75,15 @@ export default class Conversation extends Common {
   public SaveConversationMessage = () => {
     Logic.Common.showLoader({
       loading: true,
-      show: true,
-      useModal: true,
     })
-    $api.conversation
+    return $api.conversation
       .SaveConversationMessage(this.SaveConversationMessagePayload)
       .then((response) => {
         this.ConversationMessages.data.push(
           response.data.SaveConversationMessage,
         )
         Logic.Common.hideLoader()
+        return response.data.SaveConversationMessage
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
@@ -91,15 +91,43 @@ export default class Conversation extends Common {
   }
 
   public StartConversation = () => {
-    Logic.Common.showLoader({ loading: true, show: true, useModal: true })
-    $api.conversation
+    Logic.Common.showLoader({
+      loading: true,
+    })
+    return $api.conversation
       .StartConversation(this.StartConversationPayload)
       .then((response) => {
-        console.log('StartConversation response:::', response)
+        this.EachConversation = response.data.StartConversation
         Logic.Common.hideLoader()
+        return response.data.StartConversation
       })
       .catch((error: CombinedError) => {
         Logic.Common.showError(error, 'Oops!', 'error-alert')
       })
+  }
+
+  public SubscribeToConversationMessageCreated = (
+    conversationList: string[],
+  ) => {
+    $api.conversation.SubscribeToConversationMessageCreated(
+      conversationList,
+      (result: { conversationMessageCreated: ConversationMessage }) => {
+        if (
+          result.conversationMessageCreated.user.uuid !=
+          Logic.Auth.AuthUser.uuid
+        ) {
+          this.NewConversationMessage = result.conversationMessageCreated
+        }
+      },
+    )
+  }
+
+  public SubscribeToConversationMembership = () => {
+    $api.conversation.SubscribeToConversationMembership(
+      Logic.Auth.AuthUser.uuid,
+      (result: { conversationMembership: Conversation }) => {
+        console.log(result)
+      },
+    )
   }
 }

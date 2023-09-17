@@ -318,13 +318,9 @@ export default class Project extends Common {
   }
 
   public SaveProjectEntryLike = () => {
-    Logic.Common.showLoader({
-      loading: true,
-    })
     return $api.project
       .SaveProjectEntryLike(this.SaveProjectEntryLikePayload)
       .then((response) => {
-        Logic.Common.hideLoader()
         return response.data.SaveProjectEntryLike
       })
       .catch((error: CombinedError) => {

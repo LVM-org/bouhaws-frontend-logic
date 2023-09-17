@@ -64,6 +64,10 @@ export default class ProjectApi extends BaseApiService {
 					photo_url
 				  }
 				}
+				bouhawsclass{
+					uuid
+					title
+				}
 				end_date
 				prize
 				currency
@@ -149,7 +153,8 @@ export default class ProjectApi extends BaseApiService {
 				type
 				total_points
 				bouhawsclass {
-					id
+					uuid
+					title
 				}
 				created_at
 				category{
@@ -167,6 +172,7 @@ export default class ProjectApi extends BaseApiService {
 					milestone
 				  }
 				  user {
+					uuid
 					name
 					username
 					profile {
@@ -327,7 +333,9 @@ export default class ProjectApi extends BaseApiService {
 				total
 			  }
 			  data {
+				id
 				uuid
+				liked
 				description
 				user {
 				  name
@@ -377,6 +385,7 @@ export default class ProjectApi extends BaseApiService {
 		ProjectEntry(uuid: $uuid) {
 		  uuid
 		  id
+		  liked
 		  user {
 			name
 			username

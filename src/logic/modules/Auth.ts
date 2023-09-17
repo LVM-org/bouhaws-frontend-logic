@@ -179,11 +179,16 @@ export default class Auth extends Common {
   }
 
   public SignOut = () => {
+    Logic.Common.showLoader({
+      loading: true,
+    })
     $api.auth
       .SignOut()
       .then((response) => {
         localStorage.removeItem('AuthTokens')
+        localStorage.removeItem('access_token')
         localStorage.removeItem('auth_user')
+        Logic.Common.hideLoader()
         Logic.Common.GoToRoute('/auth/login')
       })
       .catch((error) => {

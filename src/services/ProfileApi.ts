@@ -1,6 +1,15 @@
 import { BaseApiService } from './common/BaseService'
 import { OperationResult } from 'urql'
-import { MutationUpdateProfileArgs, Profile, User } from '../gql/graphql'
+import {
+  MutationUpdateProfileArgs,
+  Notification,
+  Profile,
+  QueryGetProjectEntriesHasUserWhereHasConditionsRelation,
+  QueryGetTransactionsOrderByOrderByClause,
+  TransactionPaginator,
+  User,
+  Wallet,
+} from '../gql/graphql'
 
 export default class ProfileApi extends BaseApiService {
   public GetDashboardOverview = () => {
@@ -105,6 +114,14 @@ export default class ProfileApi extends BaseApiService {
 			photo_url
 			end_date
 			type
+			prize
+			currency
+			created_at
+		    description
+			bouhawsclass{
+				uuid
+				title
+			}
 			milestones {
 			  id
 			  uuid
@@ -112,6 +129,18 @@ export default class ProfileApi extends BaseApiService {
 			  index
 			  title
 			}
+			category{
+				uuid
+				title
+			  }
+			user{
+				uuid
+				name
+				username
+				profile{
+				  photo_url
+				}
+			  }
 			entries {
 			  uuid
 			}
@@ -138,9 +167,131 @@ export default class ProfileApi extends BaseApiService {
     return response
   }
 
+  public GetUserWallet = () => {
+    const requestData = `
+	query GetUserWallet {
+		UserWallet {
+		  uuid
+		  total_balance
+		  debited_amount
+		  credited_amount
+		}
+	  }
+		`
+
+    const response: Promise<OperationResult<{
+      UserWallet: Wallet
+    }>> = this.query(requestData, {})
+
+    return response
+  }
+
+  public GetTransactions = (
+    page: number,
+    first: number,
+    orderBy: QueryGetTransactionsOrderByOrderByClause | string,
+    hasUser: QueryGetProjectEntriesHasUserWhereHasConditionsRelation | string,
+  ) => {
+    const requestData = `
+		query GetTransactions($page: Int!, $first: Int!) {
+			GetTransactions(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser}) {
+			  paginatorInfo {
+				count
+				currentPage
+				firstItem
+				hasMorePages
+				lastItem
+				perPage
+				total
+			  }
+			  data {
+				id
+				uuid
+				description
+				dr_or_cr
+				created_at
+				amount
+				charges
+				wallet_balance
+			  }
+			}
+		  }
+		`
+    const response: Promise<OperationResult<{
+      GetTransactions: TransactionPaginator
+    }>> = this.query(requestData, {
+      page,
+      first,
+    })
+
+    return response
+  }
+
+  public GetMyNotification = () => {
+    const requestData = `
+	query GetMyNotification {
+		MyNotifications {
+		  id
+		  uuid
+		  title
+		  body
+		  type
+		  model_type
+		  read
+		  created_at
+		  project_entry {
+			uuid
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			project {
+			  uuid
+			}
+		  }
+		  project_entry_comment {
+			uuid
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			project_entry {
+			  uuid
+			}
+		  }
+		  project_entry_like {
+			uuid
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			project_entry {
+			  uuid
+			}
+		  }
+		}
+	  }
+		`
+
+    const response: Promise<OperationResult<{
+      MyNotifications: Notification[]
+    }>> = this.query(requestData, {})
+
+    return response
+  }
+
   public UpdateProfile = (data: MutationUpdateProfileArgs) => {
     const requestData = `
-	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String) {
+	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String, $phone_number: String) {
 		UpdateProfile(
 		  bio: $bio
 		  name: $name
@@ -151,6 +302,7 @@ export default class ProfileApi extends BaseApiService {
 		  type: $type
 		  username: $username
 		  year_of_enrollment: $year_of_enrollment
+		  phone_number: $phone_number
 		) {
 		  uuid
 		  photo_url
@@ -206,16 +358,24 @@ export default class ProfileApi extends BaseApiService {
 			school
 			student_number
 			year_of_enrollment
+			type
 		  }
 		  project_entries {
 			id
 			uuid
+			liked
 			user {
 			uuid
 			username
 			profile {
 				photo_url
 			}
+			}
+			likes{
+				uuid
+			}
+			comments{
+				uuid
 			}
 			project {
 			  id
@@ -245,12 +405,21 @@ export default class ProfileApi extends BaseApiService {
 			id
 			uuid
 			title
+			description
+			created_at
 			user {
 			  uuid
 			  username
 			  profile {
 				photo_url
 			  }
+			}
+			projects {
+				id
+			}
+			students {
+				id
+				uuid
 			}
 		  }
 		  projects {
@@ -278,6 +447,22 @@ export default class ProfileApi extends BaseApiService {
     const response: Promise<OperationResult<{
       SingleUser: User
     }>> = this.query(requestData, { uuid })
+
+    return response
+  }
+
+  public MarkNotificationsAsRead = (notification_uuids: string[]) => {
+    const requestData = `
+	mutation MarkNotificationsAsRead($notification_uuids: [String!]!) {
+		MarkNotificationsAsRead(notification_uuids: $notification_uuids) 
+	  }
+	`
+
+    const response: Promise<OperationResult<{
+      MarkNotificationsAsRead: boolean
+    }>> = this.mutation(requestData, {
+      notification_uuids,
+    })
 
     return response
   }

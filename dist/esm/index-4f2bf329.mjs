@@ -1,34 +1,17 @@
-'use strict';
-
-var vue = require('vue');
-var require$$0 = require('util');
-var require$$1 = require('crypto');
-var require$$2 = require('stream');
-var require$$4 = require('buffer');
-var require$$5 = require('events');
-var require$$6 = require('assert');
-var require$$7 = require('net');
-var require$$8 = require('tls');
-var require$$9 = require('child_process');
-var require$$10 = require('fs');
-var require$$11 = require('http');
-var require$$12 = require('https');
-var constants = require('./constants-e53b255a.js');
-
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-var require$$0__default = /*#__PURE__*/_interopDefaultLegacy(require$$0);
-var require$$1__default = /*#__PURE__*/_interopDefaultLegacy(require$$1);
-var require$$2__default = /*#__PURE__*/_interopDefaultLegacy(require$$2);
-var require$$4__default = /*#__PURE__*/_interopDefaultLegacy(require$$4);
-var require$$5__default = /*#__PURE__*/_interopDefaultLegacy(require$$5);
-var require$$6__default = /*#__PURE__*/_interopDefaultLegacy(require$$6);
-var require$$7__default = /*#__PURE__*/_interopDefaultLegacy(require$$7);
-var require$$8__default = /*#__PURE__*/_interopDefaultLegacy(require$$8);
-var require$$9__default = /*#__PURE__*/_interopDefaultLegacy(require$$9);
-var require$$10__default = /*#__PURE__*/_interopDefaultLegacy(require$$10);
-var require$$11__default = /*#__PURE__*/_interopDefaultLegacy(require$$11);
-var require$$12__default = /*#__PURE__*/_interopDefaultLegacy(require$$12);
+import { reactive } from 'vue';
+import require$$0 from 'util';
+import require$$1 from 'crypto';
+import require$$2 from 'stream';
+import require$$4 from 'buffer';
+import require$$5 from 'events';
+import require$$6 from 'assert';
+import require$$7 from 'net';
+import require$$8 from 'tls';
+import require$$9 from 'child_process';
+import require$$10 from 'fs';
+import require$$11 from 'http';
+import require$$12 from 'https';
+import { A as API_URL } from './constants-55955de6.mjs';
 
 var e$1 = {
   NAME: "Name",
@@ -5047,7 +5030,7 @@ v.Consumer;
 v.displayName = "UrqlContext";
 
 class BaseApiService {
-    baseUrl = constants.API_URL;
+    baseUrl = API_URL;
     graphqlInstance;
     constructor() { }
     subscribeToEcho(echoClient, channelName, handleSubscription) {
@@ -5168,6 +5151,8 @@ class AuthApi extends BaseApiService {
 		  username
 		  uuid
 		  email_verified_at
+		  phone_number
+		  email
 		  wallet {
 			credited_amount
 			debited_amount
@@ -5178,6 +5163,11 @@ class AuthApi extends BaseApiService {
 			photo_url
 			points
 			type
+			bio
+			school
+			student_number
+			year_of_enrollment
+			push_notification_enabled
 		  }
 		}
 	  }
@@ -5326,6 +5316,10 @@ class ProjectApi extends BaseApiService {
 					photo_url
 				  }
 				}
+				bouhawsclass{
+					uuid
+					title
+				}
 				end_date
 				prize
 				currency
@@ -5406,7 +5400,8 @@ class ProjectApi extends BaseApiService {
 				type
 				total_points
 				bouhawsclass {
-					id
+					uuid
+					title
 				}
 				created_at
 				category{
@@ -5424,6 +5419,7 @@ class ProjectApi extends BaseApiService {
 					milestone
 				  }
 				  user {
+					uuid
 					name
 					username
 					profile {
@@ -5556,7 +5552,9 @@ class ProjectApi extends BaseApiService {
 				total
 			  }
 			  data {
+				id
 				uuid
+				liked
 				description
 				user {
 				  name
@@ -5602,6 +5600,7 @@ class ProjectApi extends BaseApiService {
 		ProjectEntry(uuid: $uuid) {
 		  uuid
 		  id
+		  liked
 		  user {
 			name
 			username
@@ -6512,6 +6511,14 @@ class ProfileApi extends BaseApiService {
 			photo_url
 			end_date
 			type
+			prize
+			currency
+			created_at
+		    description
+			bouhawsclass{
+				uuid
+				title
+			}
 			milestones {
 			  id
 			  uuid
@@ -6519,6 +6526,18 @@ class ProfileApi extends BaseApiService {
 			  index
 			  title
 			}
+			category{
+				uuid
+				title
+			  }
+			user{
+				uuid
+				name
+				username
+				profile{
+				  photo_url
+				}
+			  }
 			entries {
 			  uuid
 			}
@@ -6539,9 +6558,112 @@ class ProfileApi extends BaseApiService {
         const response = this.query(requestData, {});
         return response;
     };
+    GetUserWallet = () => {
+        const requestData = `
+	query GetUserWallet {
+		UserWallet {
+		  uuid
+		  total_balance
+		  debited_amount
+		  credited_amount
+		}
+	  }
+		`;
+        const response = this.query(requestData, {});
+        return response;
+    };
+    GetTransactions = (page, first, orderBy, hasUser) => {
+        const requestData = `
+		query GetTransactions($page: Int!, $first: Int!) {
+			GetTransactions(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser}) {
+			  paginatorInfo {
+				count
+				currentPage
+				firstItem
+				hasMorePages
+				lastItem
+				perPage
+				total
+			  }
+			  data {
+				id
+				uuid
+				description
+				dr_or_cr
+				created_at
+				amount
+				charges
+				wallet_balance
+			  }
+			}
+		  }
+		`;
+        const response = this.query(requestData, {
+            page,
+            first,
+        });
+        return response;
+    };
+    GetMyNotification = () => {
+        const requestData = `
+	query GetMyNotification {
+		MyNotifications {
+		  id
+		  uuid
+		  title
+		  body
+		  type
+		  model_type
+		  read
+		  created_at
+		  project_entry {
+			uuid
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			project {
+			  uuid
+			}
+		  }
+		  project_entry_comment {
+			uuid
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			project_entry {
+			  uuid
+			}
+		  }
+		  project_entry_like {
+			uuid
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			project_entry {
+			  uuid
+			}
+		  }
+		}
+	  }
+		`;
+        const response = this.query(requestData, {});
+        return response;
+    };
     UpdateProfile = (data) => {
         const requestData = `
-	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String) {
+	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String, $phone_number: String) {
 		UpdateProfile(
 		  bio: $bio
 		  name: $name
@@ -6552,6 +6674,7 @@ class ProfileApi extends BaseApiService {
 		  type: $type
 		  username: $username
 		  year_of_enrollment: $year_of_enrollment
+		  phone_number: $phone_number
 		) {
 		  uuid
 		  photo_url
@@ -6597,16 +6720,24 @@ class ProfileApi extends BaseApiService {
 			school
 			student_number
 			year_of_enrollment
+			type
 		  }
 		  project_entries {
 			id
 			uuid
+			liked
 			user {
 			uuid
 			username
 			profile {
 				photo_url
 			}
+			}
+			likes{
+				uuid
+			}
+			comments{
+				uuid
 			}
 			project {
 			  id
@@ -6636,12 +6767,21 @@ class ProfileApi extends BaseApiService {
 			id
 			uuid
 			title
+			description
+			created_at
 			user {
 			  uuid
 			  username
 			  profile {
 				photo_url
 			  }
+			}
+			projects {
+				id
+			}
+			students {
+				id
+				uuid
 			}
 		  }
 		  projects {
@@ -6666,6 +6806,17 @@ class ProfileApi extends BaseApiService {
 	  }
 	 `;
         const response = this.query(requestData, { uuid });
+        return response;
+    };
+    MarkNotificationsAsRead = (notification_uuids) => {
+        const requestData = `
+	mutation MarkNotificationsAsRead($notification_uuids: [String!]!) {
+		MarkNotificationsAsRead(notification_uuids: $notification_uuids) 
+	  }
+	`;
+        const response = this.mutation(requestData, {
+            notification_uuids,
+        });
         return response;
     };
 }
@@ -14572,7 +14723,7 @@ function requireUrl () {
 	/************************************************************************/
 	/******/([/* 0 */
 	/***/function (module, exports) {
-	  module.exports = require$$0__default["default"];
+	  module.exports = require$$0;
 
 	  /***/
 	}, /* 1 */
@@ -14790,7 +14941,7 @@ function requireUrl () {
 	  /***/
 	}, /* 3 */
 	/***/function (module, exports) {
-	  module.exports = require$$1__default["default"];
+	  module.exports = require$$1;
 
 	  /***/
 	}, /* 4 */
@@ -14833,7 +14984,7 @@ function requireUrl () {
 	  /***/
 	}, /* 5 */
 	/***/function (module, exports) {
-	  module.exports = require$$2__default["default"];
+	  module.exports = require$$2;
 
 	  /***/
 	}, /* 6 */
@@ -19131,12 +19282,12 @@ function requireUrl () {
 	  /***/
 	}, /* 22 */
 	/***/function (module, exports) {
-	  module.exports = require$$4__default["default"];
+	  module.exports = require$$4;
 
 	  /***/
 	}, /* 23 */
 	/***/function (module, exports) {
-	  module.exports = require$$5__default["default"];
+	  module.exports = require$$5;
 
 	  /***/
 	}, /* 24 */
@@ -19835,7 +19986,7 @@ function requireUrl () {
 	  /***/
 	}, /* 28 */
 	/***/function (module, exports) {
-	  module.exports = require$$6__default["default"];
+	  module.exports = require$$6;
 
 	  /***/
 	}, /* 29 */
@@ -20614,12 +20765,12 @@ function requireUrl () {
 	  /***/
 	}, /* 40 */
 	/***/function (module, exports) {
-	  module.exports = require$$7__default["default"];
+	  module.exports = require$$7;
 
 	  /***/
 	}, /* 41 */
 	/***/function (module, exports) {
-	  module.exports = require$$8__default["default"];
+	  module.exports = require$$8;
 
 	  /***/
 	}, /* 42 */
@@ -20730,22 +20881,22 @@ function requireUrl () {
 	  /***/
 	}, /* 43 */
 	/***/function (module, exports) {
-	  module.exports = require$$9__default["default"];
+	  module.exports = require$$9;
 
 	  /***/
 	}, /* 44 */
 	/***/function (module, exports) {
-	  module.exports = require$$10__default["default"];
+	  module.exports = require$$10;
 
 	  /***/
 	}, /* 45 */
 	/***/function (module, exports) {
-	  module.exports = require$$11__default["default"];
+	  module.exports = require$$11;
 
 	  /***/
 	}, /* 46 */
 	/***/function (module, exports) {
-	  module.exports = require$$12__default["default"];
+	  module.exports = require$$12;
 
 	  /***/
 	}, /* 47 */
@@ -24335,7 +24486,7 @@ class Common {
     SetNavigator = (navigator) => {
         this.NavigateTo = navigator;
     };
-    loaderSetup = vue.reactive({
+    loaderSetup = reactive({
         show: false,
         useModal: false,
         hasError: false,
@@ -24407,7 +24558,7 @@ class Common {
         };
         this.loaderSetup = Loader;
     };
-    globalParameters = vue.reactive({
+    globalParameters = reactive({
         currency: 'ngn',
     });
     momentInstance = moment;
@@ -24762,11 +24913,16 @@ class Auth extends Common {
         }
     };
     SignOut = () => {
+        Logic.Common.showLoader({
+            loading: true,
+        });
         $api.auth
             .SignOut()
             .then((response) => {
             localStorage.removeItem('AuthTokens');
+            localStorage.removeItem('access_token');
             localStorage.removeItem('auth_user');
+            Logic.Common.hideLoader();
             Logic.Common.GoToRoute('/auth/login');
         })
             .catch((error) => {
@@ -25172,13 +25328,9 @@ class Project extends Common {
         });
     };
     SaveProjectEntryLike = () => {
-        Logic.Common.showLoader({
-            loading: true,
-        });
         return $api.project
             .SaveProjectEntryLike(this.SaveProjectEntryLikePayload)
             .then((response) => {
-            Logic.Common.hideLoader();
             return response.data.SaveProjectEntryLike;
         })
             .catch((error) => {
@@ -25322,9 +25474,12 @@ class Profile extends Common {
     }
     // Base variables
     UserProfile;
+    UserWallet;
+    UserTransactions;
     LeaderboardUsers;
     DashboardOverview;
     SingleUser;
+    MyNotifications;
     // Mutation payloads
     UpdateProfilePayload;
     // Queries
@@ -25332,6 +25487,30 @@ class Profile extends Common {
         return $api.profile.GetDashboardOverview().then((response) => {
             this.DashboardOverview = response.data;
             return response.data;
+        });
+    };
+    GetUserWallet = () => {
+        return $api.profile.GetUserWallet().then((response) => {
+            this.UserWallet = response.data.UserWallet;
+            return response.data.UserWallet;
+        });
+    };
+    GetTransactions = (page, first, hasUser = '', isUpdate = false) => {
+        return $api.profile
+            .GetTransactions(page, first, `{
+      column: CREATED_AT,
+      order: DESC
+    }`, hasUser)
+            .then((response) => {
+            if (isUpdate) {
+                const currentData = this.UserTransactions.data.concat(response.data?.GetTransactions.data);
+                response.data.GetTransactions.data = currentData;
+                this.UserTransactions = response.data?.GetTransactions;
+            }
+            else {
+                this.UserTransactions = response.data?.GetTransactions;
+            }
+            return response.data?.GetTransactions;
         });
     };
     GetSingleUser = (uuid) => {
@@ -25346,6 +25525,12 @@ class Profile extends Common {
             return response.data?.LeaderBoard;
         });
     };
+    GetMyNotifications = () => {
+        return $api.profile.GetMyNotification().then((response) => {
+            this.MyNotifications = response.data?.MyNotifications;
+            return response.data?.MyNotifications;
+        });
+    };
     // Mutation
     UpdateProfile = () => {
         Logic.Common.showLoader({
@@ -25354,9 +25539,20 @@ class Profile extends Common {
         return $api.profile
             .UpdateProfile(this.UpdateProfilePayload)
             .then((response) => {
-            this.UpdateProfile = response.data.UpdateProfile;
+            this.UserProfile = response.data.UpdateProfile;
             Logic.Common.hideLoader();
             return response.data.UpdateProfile;
+        })
+            .catch((error) => {
+            Logic.Common.showError(error, 'Oops!', 'error-alert');
+        });
+    };
+    MarkNotificationsAsRead = (notification_uuid) => {
+        return $api.profile
+            .MarkNotificationsAsRead(notification_uuid)
+            .then((response) => {
+            this.GetMyNotifications();
+            return response.data.MarkNotificationsAsRead;
         })
             .catch((error) => {
             Logic.Common.showError(error, 'Oops!', 'error-alert');
@@ -25375,5 +25571,4 @@ const Logic = {
     Profile: new Profile(),
 };
 
-exports.$api = $api;
-exports.Logic = Logic;
+export { $api as $, Logic as L };

@@ -1,4 +1,4 @@
-/*! Squareroof Frontend Library v0.0.7 */
+/*! Squareroof Frontend Library v0.0.8 */
 
 import { reactive } from 'vue';
 import require$$0 from 'util';
@@ -5154,6 +5154,8 @@ class AuthApi extends BaseApiService {
 		  username
 		  uuid
 		  email_verified_at
+		  phone_number
+		  email
 		  wallet {
 			credited_amount
 			debited_amount
@@ -5164,6 +5166,11 @@ class AuthApi extends BaseApiService {
 			photo_url
 			points
 			type
+			bio
+			school
+			student_number
+			year_of_enrollment
+			push_notification_enabled
 		  }
 		}
 	  }
@@ -5312,6 +5319,10 @@ class ProjectApi extends BaseApiService {
 					photo_url
 				  }
 				}
+				bouhawsclass{
+					uuid
+					title
+				}
 				end_date
 				prize
 				currency
@@ -5392,7 +5403,8 @@ class ProjectApi extends BaseApiService {
 				type
 				total_points
 				bouhawsclass {
-					id
+					uuid
+					title
 				}
 				created_at
 				category{
@@ -5410,6 +5422,7 @@ class ProjectApi extends BaseApiService {
 					milestone
 				  }
 				  user {
+					uuid
 					name
 					username
 					profile {
@@ -5542,7 +5555,9 @@ class ProjectApi extends BaseApiService {
 				total
 			  }
 			  data {
+				id
 				uuid
+				liked
 				description
 				user {
 				  name
@@ -5588,6 +5603,7 @@ class ProjectApi extends BaseApiService {
 		ProjectEntry(uuid: $uuid) {
 		  uuid
 		  id
+		  liked
 		  user {
 			name
 			username
@@ -6498,6 +6514,14 @@ class ProfileApi extends BaseApiService {
 			photo_url
 			end_date
 			type
+			prize
+			currency
+			created_at
+		    description
+			bouhawsclass{
+				uuid
+				title
+			}
 			milestones {
 			  id
 			  uuid
@@ -6505,6 +6529,18 @@ class ProfileApi extends BaseApiService {
 			  index
 			  title
 			}
+			category{
+				uuid
+				title
+			  }
+			user{
+				uuid
+				name
+				username
+				profile{
+				  photo_url
+				}
+			  }
 			entries {
 			  uuid
 			}
@@ -6525,9 +6561,112 @@ class ProfileApi extends BaseApiService {
         const response = this.query(requestData, {});
         return response;
     };
+    GetUserWallet = () => {
+        const requestData = `
+	query GetUserWallet {
+		UserWallet {
+		  uuid
+		  total_balance
+		  debited_amount
+		  credited_amount
+		}
+	  }
+		`;
+        const response = this.query(requestData, {});
+        return response;
+    };
+    GetTransactions = (page, first, orderBy, hasUser) => {
+        const requestData = `
+		query GetTransactions($page: Int!, $first: Int!) {
+			GetTransactions(first: $first, page: $page, orderBy: ${orderBy}, ${hasUser}) {
+			  paginatorInfo {
+				count
+				currentPage
+				firstItem
+				hasMorePages
+				lastItem
+				perPage
+				total
+			  }
+			  data {
+				id
+				uuid
+				description
+				dr_or_cr
+				created_at
+				amount
+				charges
+				wallet_balance
+			  }
+			}
+		  }
+		`;
+        const response = this.query(requestData, {
+            page,
+            first,
+        });
+        return response;
+    };
+    GetMyNotification = () => {
+        const requestData = `
+	query GetMyNotification {
+		MyNotifications {
+		  id
+		  uuid
+		  title
+		  body
+		  type
+		  model_type
+		  read
+		  created_at
+		  project_entry {
+			uuid
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			project {
+			  uuid
+			}
+		  }
+		  project_entry_comment {
+			uuid
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			project_entry {
+			  uuid
+			}
+		  }
+		  project_entry_like {
+			uuid
+			user {
+			  uuid
+			  username
+			  profile {
+				photo_url
+			  }
+			}
+			project_entry {
+			  uuid
+			}
+		  }
+		}
+	  }
+		`;
+        const response = this.query(requestData, {});
+        return response;
+    };
     UpdateProfile = (data) => {
         const requestData = `
-	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String) {
+	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String, $phone_number: String) {
 		UpdateProfile(
 		  bio: $bio
 		  name: $name
@@ -6538,6 +6677,7 @@ class ProfileApi extends BaseApiService {
 		  type: $type
 		  username: $username
 		  year_of_enrollment: $year_of_enrollment
+		  phone_number: $phone_number
 		) {
 		  uuid
 		  photo_url
@@ -6583,16 +6723,24 @@ class ProfileApi extends BaseApiService {
 			school
 			student_number
 			year_of_enrollment
+			type
 		  }
 		  project_entries {
 			id
 			uuid
+			liked
 			user {
 			uuid
 			username
 			profile {
 				photo_url
 			}
+			}
+			likes{
+				uuid
+			}
+			comments{
+				uuid
 			}
 			project {
 			  id
@@ -6622,12 +6770,21 @@ class ProfileApi extends BaseApiService {
 			id
 			uuid
 			title
+			description
+			created_at
 			user {
 			  uuid
 			  username
 			  profile {
 				photo_url
 			  }
+			}
+			projects {
+				id
+			}
+			students {
+				id
+				uuid
 			}
 		  }
 		  projects {
@@ -6652,6 +6809,17 @@ class ProfileApi extends BaseApiService {
 	  }
 	 `;
         const response = this.query(requestData, { uuid });
+        return response;
+    };
+    MarkNotificationsAsRead = (notification_uuids) => {
+        const requestData = `
+	mutation MarkNotificationsAsRead($notification_uuids: [String!]!) {
+		MarkNotificationsAsRead(notification_uuids: $notification_uuids) 
+	  }
+	`;
+        const response = this.mutation(requestData, {
+            notification_uuids,
+        });
         return response;
     };
 }
@@ -24748,11 +24916,16 @@ class Auth extends Common {
         }
     };
     SignOut = () => {
+        Logic.Common.showLoader({
+            loading: true,
+        });
         $api.auth
             .SignOut()
             .then((response) => {
             localStorage.removeItem('AuthTokens');
+            localStorage.removeItem('access_token');
             localStorage.removeItem('auth_user');
+            Logic.Common.hideLoader();
             Logic.Common.GoToRoute('/auth/login');
         })
             .catch((error) => {
@@ -25158,13 +25331,9 @@ class Project extends Common {
         });
     };
     SaveProjectEntryLike = () => {
-        Logic.Common.showLoader({
-            loading: true,
-        });
         return $api.project
             .SaveProjectEntryLike(this.SaveProjectEntryLikePayload)
             .then((response) => {
-            Logic.Common.hideLoader();
             return response.data.SaveProjectEntryLike;
         })
             .catch((error) => {
@@ -25308,9 +25477,12 @@ class Profile extends Common {
     }
     // Base variables
     UserProfile;
+    UserWallet;
+    UserTransactions;
     LeaderboardUsers;
     DashboardOverview;
     SingleUser;
+    MyNotifications;
     // Mutation payloads
     UpdateProfilePayload;
     // Queries
@@ -25318,6 +25490,30 @@ class Profile extends Common {
         return $api.profile.GetDashboardOverview().then((response) => {
             this.DashboardOverview = response.data;
             return response.data;
+        });
+    };
+    GetUserWallet = () => {
+        return $api.profile.GetUserWallet().then((response) => {
+            this.UserWallet = response.data.UserWallet;
+            return response.data.UserWallet;
+        });
+    };
+    GetTransactions = (page, first, hasUser = '', isUpdate = false) => {
+        return $api.profile
+            .GetTransactions(page, first, `{
+      column: CREATED_AT,
+      order: DESC
+    }`, hasUser)
+            .then((response) => {
+            if (isUpdate) {
+                const currentData = this.UserTransactions.data.concat(response.data?.GetTransactions.data);
+                response.data.GetTransactions.data = currentData;
+                this.UserTransactions = response.data?.GetTransactions;
+            }
+            else {
+                this.UserTransactions = response.data?.GetTransactions;
+            }
+            return response.data?.GetTransactions;
         });
     };
     GetSingleUser = (uuid) => {
@@ -25332,6 +25528,12 @@ class Profile extends Common {
             return response.data?.LeaderBoard;
         });
     };
+    GetMyNotifications = () => {
+        return $api.profile.GetMyNotification().then((response) => {
+            this.MyNotifications = response.data?.MyNotifications;
+            return response.data?.MyNotifications;
+        });
+    };
     // Mutation
     UpdateProfile = () => {
         Logic.Common.showLoader({
@@ -25340,9 +25542,20 @@ class Profile extends Common {
         return $api.profile
             .UpdateProfile(this.UpdateProfilePayload)
             .then((response) => {
-            this.UpdateProfile = response.data.UpdateProfile;
+            this.UserProfile = response.data.UpdateProfile;
             Logic.Common.hideLoader();
             return response.data.UpdateProfile;
+        })
+            .catch((error) => {
+            Logic.Common.showError(error, 'Oops!', 'error-alert');
+        });
+    };
+    MarkNotificationsAsRead = (notification_uuid) => {
+        return $api.profile
+            .MarkNotificationsAsRead(notification_uuid)
+            .then((response) => {
+            this.GetMyNotifications();
+            return response.data.MarkNotificationsAsRead;
         })
             .catch((error) => {
             Logic.Common.showError(error, 'Oops!', 'error-alert');

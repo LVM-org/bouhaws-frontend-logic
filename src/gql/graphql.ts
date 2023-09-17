@@ -175,6 +175,7 @@ export type Mutation = {
   JoinConversation: Conversation;
   /** Join a project */
   JoinProject: ProjectEntry;
+  MarkNotificationsAsRead: Scalars['Boolean'];
   /** Resend verify OTP email to user */
   ResendVerifyEmail: Scalars['Boolean'];
   /** Save a conversation message */
@@ -279,6 +280,11 @@ export type MutationJoinProjectArgs = {
 };
 
 
+export type MutationMarkNotificationsAsReadArgs = {
+  notification_uuids: Array<Scalars['String']>;
+};
+
+
 export type MutationResendVerifyEmailArgs = {
   user_uuid: Scalars['String'];
 };
@@ -362,6 +368,7 @@ export type MutationUpdatePasswordArgs = {
 export type MutationUpdateProfileArgs = {
   bio?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
+  phone_number?: InputMaybe<Scalars['String']>;
   photo_url?: InputMaybe<Scalars['Upload']>;
   push_notification_enabled?: InputMaybe<Scalars['Boolean']>;
   school?: InputMaybe<Scalars['String']>;
@@ -420,6 +427,50 @@ export type MutationVerifyEmailOtpArgs = {
   email: Scalars['String'];
   otp: Scalars['String'];
 };
+
+/** A user notfication */
+export type Notification = {
+  __typename?: 'Notification';
+  /** The notification body */
+  body: Scalars['String'];
+  /** When the conversation message was created. */
+  created_at: Scalars['DateTime'];
+  /** The notifcation extra url */
+  extra_url?: Maybe<Scalars['String']>;
+  /** Unique primary key. */
+  id: Scalars['ID'];
+  /** The notification model type */
+  model_type: NotificationModelType;
+  /** The attached project entry */
+  project_entry?: Maybe<ProjectEntry>;
+  /** The attached project entry comment */
+  project_entry_comment?: Maybe<ProjectEntryComment>;
+  /** The attached project entry like */
+  project_entry_like?: Maybe<ProjectEntryLike>;
+  /** The notification read status */
+  read: Scalars['Boolean'];
+  /** The notification title */
+  title: Scalars['String'];
+  /** The notification type */
+  type: NotificationType;
+  /** When the conversation message was last updated. */
+  updated_at: Scalars['DateTime'];
+  /** Unique UUID */
+  uuid: Scalars['String'];
+};
+
+/** Notification model type */
+export enum NotificationModelType {
+  ProjectEntry = 'PROJECT_ENTRY',
+  ProjectEntryComment = 'PROJECT_ENTRY_COMMENT',
+  ProjectEntryLike = 'PROJECT_ENTRY_LIKE'
+}
+
+/** Notification type */
+export enum NotificationType {
+  Activity = 'ACTIVITY',
+  System = 'SYSTEM'
+}
 
 /** Allows ordering a list of records. */
 export type OrderByClause = {
@@ -591,6 +642,8 @@ export type ProjectEntry = {
   id: Scalars['ID'];
   /** The entry images. This is an array of all the images_cdn_url */
   images?: Maybe<Array<Maybe<EntryImageType>>>;
+  /** Auth user liked this entry */
+  liked: Scalars['Boolean'];
   /** The entry likes */
   likes?: Maybe<Array<ProjectEntryLike>>;
   /** The project itself */
@@ -727,14 +780,18 @@ export type Query = {
   GetProjectEntries: ProjectEntryPaginator;
   /** Get many projects */
   GetProjects: ProjectPaginator;
+  /** Get transactions */
+  GetTransactions: TransactionPaginator;
   /** Get the top 10 users */
   LeaderBoard?: Maybe<Array<Profile>>;
+  MyNotifications: Array<Notification>;
   /** Get a single project */
   Project?: Maybe<Project>;
   /** Get a single project category */
   ProjectCategory?: Maybe<ProjectCategory>;
   /** Get a single project entry */
   ProjectEntry?: Maybe<ProjectEntry>;
+  SingleUser?: Maybe<User>;
   /** Get the authenticated user wallet */
   UserWallet?: Maybe<Wallet>;
 };
@@ -803,6 +860,15 @@ export type QueryGetProjectsArgs = {
 };
 
 
+export type QueryGetTransactionsArgs = {
+  first: Scalars['Int'];
+  hasUser?: InputMaybe<QueryGetTransactionsHasUserWhereHasConditions>;
+  orderBy?: InputMaybe<Array<QueryGetTransactionsOrderByOrderByClause>>;
+  page?: InputMaybe<Scalars['Int']>;
+  where?: InputMaybe<QueryGetTransactionsWhereWhereConditions>;
+};
+
+
 export type QueryProjectArgs = {
   uuid: Scalars['String'];
 };
@@ -814,6 +880,11 @@ export type QueryProjectCategoryArgs = {
 
 
 export type QueryProjectEntryArgs = {
+  uuid: Scalars['String'];
+};
+
+
+export type QuerySingleUserArgs = {
   uuid: Scalars['String'];
 };
 
@@ -1087,6 +1158,85 @@ export type QueryGetProjectsWhereWhereConditionsRelation = {
   relation: Scalars['String'];
 };
 
+/** Allowed column names for Query.GetTransactions.hasUser. */
+export enum QueryGetTransactionsHasUserColumn {
+  Uuid = 'UUID'
+}
+
+/** Dynamic WHERE conditions for the `hasUser` argument on the query `GetTransactions`. */
+export type QueryGetTransactionsHasUserWhereHasConditions = {
+  /** A set of conditions that requires all conditions to match. */
+  AND?: InputMaybe<Array<QueryGetTransactionsHasUserWhereHasConditions>>;
+  /** Check whether a relation exists. Extra conditions or a minimum amount can be applied. */
+  HAS?: InputMaybe<QueryGetTransactionsHasUserWhereHasConditionsRelation>;
+  /** A set of conditions that requires at least one condition to match. */
+  OR?: InputMaybe<Array<QueryGetTransactionsHasUserWhereHasConditions>>;
+  /** The column that is used for the condition. */
+  column?: InputMaybe<QueryGetTransactionsHasUserColumn>;
+  /** The operator that is used for the condition. */
+  operator?: InputMaybe<SqlOperator>;
+  /** The value that is used for the condition. */
+  value?: InputMaybe<Scalars['Mixed']>;
+};
+
+/** Dynamic HAS conditions for WHERE conditions for the `hasUser` argument on the query `GetTransactions`. */
+export type QueryGetTransactionsHasUserWhereHasConditionsRelation = {
+  /** The amount to test. */
+  amount?: InputMaybe<Scalars['Int']>;
+  /** Additional condition logic. */
+  condition?: InputMaybe<QueryGetTransactionsHasUserWhereHasConditions>;
+  /** The comparison operator to test against the amount. */
+  operator?: InputMaybe<SqlOperator>;
+  /** The relation that is checked. */
+  relation: Scalars['String'];
+};
+
+/** Allowed column names for Query.GetTransactions.orderBy. */
+export enum QueryGetTransactionsOrderByColumn {
+  CreatedAt = 'CREATED_AT'
+}
+
+/** Order by clause for Query.GetTransactions.orderBy. */
+export type QueryGetTransactionsOrderByOrderByClause = {
+  /** The column that is used for ordering. */
+  column: QueryGetTransactionsOrderByColumn;
+  /** The direction that is used for ordering. */
+  order: SortOrder;
+};
+
+/** Allowed column names for Query.GetTransactions.where. */
+export enum QueryGetTransactionsWhereColumn {
+  CreatedAt = 'CREATED_AT'
+}
+
+/** Dynamic WHERE conditions for the `where` argument on the query `GetTransactions`. */
+export type QueryGetTransactionsWhereWhereConditions = {
+  /** A set of conditions that requires all conditions to match. */
+  AND?: InputMaybe<Array<QueryGetTransactionsWhereWhereConditions>>;
+  /** Check whether a relation exists. Extra conditions or a minimum amount can be applied. */
+  HAS?: InputMaybe<QueryGetTransactionsWhereWhereConditionsRelation>;
+  /** A set of conditions that requires at least one condition to match. */
+  OR?: InputMaybe<Array<QueryGetTransactionsWhereWhereConditions>>;
+  /** The column that is used for the condition. */
+  column?: InputMaybe<QueryGetTransactionsWhereColumn>;
+  /** The operator that is used for the condition. */
+  operator?: InputMaybe<SqlOperator>;
+  /** The value that is used for the condition. */
+  value?: InputMaybe<Scalars['Mixed']>;
+};
+
+/** Dynamic HAS conditions for WHERE conditions for the `where` argument on the query `GetTransactions`. */
+export type QueryGetTransactionsWhereWhereConditionsRelation = {
+  /** The amount to test. */
+  amount?: InputMaybe<Scalars['Int']>;
+  /** Additional condition logic. */
+  condition?: InputMaybe<QueryGetTransactionsWhereWhereConditions>;
+  /** The comparison operator to test against the amount. */
+  operator?: InputMaybe<SqlOperator>;
+  /** The relation that is checked. */
+  relation: Scalars['String'];
+};
+
 /** The available SQL operators that are used to filter query results. */
 export enum SqlOperator {
   /** Whether a value is within a range of values (`BETWEEN`) */
@@ -1127,6 +1277,24 @@ export enum SortOrder {
   Desc = 'DESC'
 }
 
+export type Subscription = {
+  __typename?: 'Subscription';
+  /** Subscribe to user conversation membership */
+  conversationMembership?: Maybe<Conversation>;
+  /** Subscribe to user conversation messages */
+  conversationMessageCreated?: Maybe<ConversationMessage>;
+};
+
+
+export type SubscriptionConversationMembershipArgs = {
+  userUuid: Scalars['String'];
+};
+
+
+export type SubscriptionConversationMessageCreatedArgs = {
+  conversationList: Array<Scalars['String']>;
+};
+
 /** A single transaction */
 export type Transaction = {
   __typename?: 'Transaction';
@@ -1160,6 +1328,15 @@ export type Transaction = {
   wallet_balance: Scalars['Float'];
 };
 
+/** A paginated list of Transaction items. */
+export type TransactionPaginator = {
+  __typename?: 'TransactionPaginator';
+  /** A list of Transaction items. */
+  data: Array<Transaction>;
+  /** Pagination information about the list of items. */
+  paginatorInfo: PaginatorInfo;
+};
+
 /** Specify if you want to include or exclude trashed results from a query. */
 export enum Trashed {
   /** Only return trashed results. */
@@ -1187,6 +1364,8 @@ export type User = {
   my_classes?: Maybe<Array<BouhawsClass>>;
   /** Non-unique name. */
   name?: Maybe<Scalars['String']>;
+  /** User phone number */
+  phone_number?: Maybe<Scalars['String']>;
   /** User profile */
   profile: Profile;
   /** User project entries */

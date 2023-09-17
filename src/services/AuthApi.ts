@@ -21,6 +21,8 @@ export default class AuthApi extends BaseApiService {
 		  username
 		  uuid
 		  email_verified_at
+		  phone_number
+		  email
 		  wallet {
 			credited_amount
 			debited_amount
@@ -31,6 +33,11 @@ export default class AuthApi extends BaseApiService {
 			photo_url
 			points
 			type
+			bio
+			school
+			student_number
+			year_of_enrollment
+			push_notification_enabled
 		  }
 		}
 	  }

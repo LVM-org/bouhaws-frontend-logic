@@ -1,7 +1,7 @@
 import { BaseApiService } from './common/BaseService'
-import { OperationResult } from 'urql' 
+import { OperationResult } from 'urql'
 import {
-  MutationCreateProjectArgs, 
+  MutationCreateProjectArgs,
   MutationCreateProjectCategoryArgs,
   MutationCreateProjectMilestoneArgs,
   MutationUpdateProjectArgs,
@@ -12,7 +12,14 @@ import {
   MutationSaveProjectEntryBookmarkArgs,
   MutationSaveProjectEntryCommentArgs,
   MutationSaveProjectEntryLikeArgs,
-  MutationUpdateProjectEntryArgs
+  MutationUpdateProjectEntryArgs,
+  Project,
+  ProjectCategory,
+  ProjectMilestone,
+  ProjectEntry,
+  ProjectEntryBookmark,
+  ProjectEntryComment,
+  ProjectEntryLike,
 } from '../gql/graphql'
 
 export default class AuthApi extends BaseApiService {
@@ -46,12 +53,12 @@ export default class AuthApi extends BaseApiService {
 		`
 
     const response: Promise<OperationResult<{
-      CreateProject: any
+      CreateProject: Project
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public CreateProjectCategory = (data: MutationCreateProjectCategoryArgs) => {
     const requestData = `
 		mutation CreateProjectCategory($title: String!) {
@@ -62,13 +69,15 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      CreateProjectCategory: any
+      CreateProjectCategory: ProjectCategory
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public CreateProjectMilestone = (data: MutationCreateProjectMilestoneArgs) => {
+
+  public CreateProjectMilestone = (
+    data: MutationCreateProjectMilestoneArgs,
+  ) => {
     const requestData = `
 		mutation CreateProjectMilestone( 
 				$index: Int!, 
@@ -88,12 +97,12 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      CreateProjectMilestone: any
+      CreateProjectMilestone: ProjectMilestone
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public UpdateProject = (data: MutationUpdateProjectArgs) => {
     const requestData = `
 		mutation UpdateProject(
@@ -126,13 +135,15 @@ export default class AuthApi extends BaseApiService {
 		`
 
     const response: Promise<OperationResult<{
-      UpdateProject: any
+      UpdateProject: Project
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public UpdateProjectMilestone = (data: MutationUpdateProjectMilestoneArgs) => {
+
+  public UpdateProjectMilestone = (
+    data: MutationUpdateProjectMilestoneArgs,
+  ) => {
     const requestData = `
 		mutation UpdateProjectMilestone( 
 				$index: Int!, 
@@ -152,12 +163,12 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      UpdateProjectMilestone: any
+      UpdateProjectMilestone: ProjectMilestone
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public UpdateProjectCategory = (data: MutationUpdateProjectCategoryArgs) => {
     const requestData = `
 		mutation UpdateProjectCategory(  
@@ -174,12 +185,12 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      UpdateProjectCategory: any
+      UpdateProjectCategory: ProjectCategory
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public UpdateProjectEntry = (data: MutationUpdateProjectEntryArgs) => {
     const requestData = `
 		mutation UpdateProjectEntry( 
@@ -202,13 +213,15 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      UpdateProjectEntry: any
+      UpdateProjectEntry: ProjectEntry
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public DeleteProjectMilestone = (data: MutationDeleteProjectMilestoneArgs) => {
+
+  public DeleteProjectMilestone = (
+    data: MutationDeleteProjectMilestoneArgs,
+  ) => {
     const requestData = `
 		mutation DeleteProjectMilestone( 
 				$uuid: String!,  
@@ -222,12 +235,12 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      DeleteProjectMilestone: any
+      DeleteProjectMilestone: ProjectMilestone
     }>> = this.mutation(requestData, data)
 
     return response
   }
-  
+
   public JoinProject = (data: MutationJoinProjectArgs) => {
     const requestData = `
 		mutation JoinProject(
@@ -246,13 +259,15 @@ export default class AuthApi extends BaseApiService {
 		`
 
     const response: Promise<OperationResult<{
-      JoinProject: any
+      JoinProject: Project
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public SaveProjectEntryBookmark = (data: MutationSaveProjectEntryBookmarkArgs) => {
+
+  public SaveProjectEntryBookmark = (
+    data: MutationSaveProjectEntryBookmarkArgs,
+  ) => {
     const requestData = `
 		mutation SaveProjectEntryBookmark( 
 				$project_entry_id: Int!,  
@@ -266,13 +281,15 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      SaveProjectEntryBookmark: any
+      SaveProjectEntryBookmark: ProjectEntryBookmark
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
-  public SaveProjectEntryComment = (data: MutationSaveProjectEntryCommentArgs) => {
+
+  public SaveProjectEntryComment = (
+    data: MutationSaveProjectEntryCommentArgs,
+  ) => {
     const requestData = `
 		mutation SaveProjectEntryComment( 
 				$content: String!, 
@@ -292,12 +309,12 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      SaveProjectEntryComment: any
+      SaveProjectEntryComment: ProjectEntryComment
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public SaveProjectEntryLike = (data: MutationSaveProjectEntryLikeArgs) => {
     const requestData = `
 		mutation SaveProjectEntryLike( 
@@ -312,10 +329,9 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      SaveProjectEntryLike: any
+      SaveProjectEntryLike: ProjectEntryLike
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
 }

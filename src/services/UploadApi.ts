@@ -1,8 +1,6 @@
 import { BaseApiService } from './common/BaseService'
 import { OperationResult } from 'urql'
-import {
-  MutationUploadImageArgs, 
-} from '../gql/graphql'
+import { MutationUploadImageArgs } from '../gql/graphql'
 
 export default class AuthApi extends BaseApiService {
   public UploadImage = (data: MutationUploadImageArgs) => {
@@ -12,14 +10,12 @@ export default class AuthApi extends BaseApiService {
 			) {
 			UploadImage( 
 				image: $image,  
-			) {
-				image
-			}
+			) 
 		}
 		`
 
     const response: Promise<OperationResult<{
-      UploadImage: any
+      UploadImage: String
     }>> = this.mutation(requestData, data)
 
     return response

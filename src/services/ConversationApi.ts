@@ -1,9 +1,11 @@
 import { BaseApiService } from './common/BaseService'
-import { OperationResult } from 'urql' 
+import { OperationResult } from 'urql'
 import {
-  MutationJoinConversationArgs, 
+  Conversation,
+  ConversationMessage,
+  MutationJoinConversationArgs,
   MutationSaveConversationMessageArgs,
-  MutationStartConversationArgs
+  MutationStartConversationArgs,
 } from '../gql/graphql'
 
 export default class AuthApi extends BaseApiService {
@@ -23,13 +25,15 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      JoinConversation: any
+      JoinConversation: Conversation
     }>> = this.mutation(requestData, data)
 
     return response
   }
-  
-  public SaveConversationMessage = (data: MutationSaveConversationMessageArgs) => {
+
+  public SaveConversationMessage = (
+    data: MutationSaveConversationMessageArgs,
+  ) => {
     const requestData = `
 		mutation SaveConversationMessage( 
 				$content: String!, 
@@ -49,12 +53,12 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      SaveConversationMessage: any
+      SaveConversationMessage: ConversationMessage
     }>> = this.mutation(requestData, data)
 
     return response
   }
- 
+
   public StartConversation = (data: MutationStartConversationArgs) => {
     const requestData = `
 		mutation StartConversation(
@@ -69,10 +73,9 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      StartConversation: any
+      StartConversation: Conversation
     }>> = this.mutation(requestData, data)
 
     return response
   }
-  
 }

@@ -13,8 +13,8 @@ import {
 export default class AuthApi extends BaseApiService {
   public SignUp = (data: MutationSignUpArgs) => {
     const requestData = `
-	mutation SignUp($email: String!, $password: String!, $username: String!) {
-		SignUp(email: $email, password: $password, username: $username) {
+	mutation SignUp($email: String!, $password: String!, $username: String!, $type: String!) {
+		SignUp(email: $email, password: $password, username: $username, type: $type) {
 		  uuid
 		  email
 		  username

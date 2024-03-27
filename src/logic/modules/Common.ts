@@ -9,6 +9,11 @@ import {
 } from 'vue-router'
 import { Logic } from '..'
 import { FetchRule, LoaderSetup } from '../types/common'
+import Echo from 'laravel-echo'
+import pusher from 'pusher-js'
+// @ts-ignore
+window.Pusher = pusher
+
 export default class Common {
   public router: Router | undefined = undefined
   public route: RouteLocationNormalized | undefined = undefined
@@ -16,6 +21,8 @@ export default class Common {
   public apiUrl: string | undefined = undefined
 
   public watchInterval: number | undefined = undefined
+
+  public NavigateTo: any
 
   public loadingState = false
 
@@ -25,6 +32,10 @@ export default class Common {
 
   public SetRoute = (route: RouteLocationNormalized) => {
     this.route = route
+  }
+
+  public SetNavigator = (navigator: any) => {
+    this.NavigateTo = navigator
   }
 
   public loaderSetup: LoaderSetup = reactive({
@@ -47,10 +58,36 @@ export default class Common {
     this.router?.push(path)
   }
 
+  public connectToWebsocket = (
+    pusherKey: string,
+    websocketUrl: string,
+    websocketHost: string,
+  ) => {
+    // If using http connection use this
+    // @ts-ignore
+    window.Echo = new Echo({
+      broadcaster: 'pusher',
+      key: pusherKey,
+      cluster: 'mt1',
+      wsHost: `${websocketHost}`, // Your domain
+      encrypted: true,
+      wsPort: 6001, // Your http port
+      disableStats: true, // Change this to your liking this disables statistics
+      forceTLS: true,
+      enabledTransports: ['ws', 'wss'],
+      disabledTransports: ['sockjs', 'xhr_polling', 'xhr_streaming'], // Can be removed
+      auth: {
+        headers: {
+          authorization: `Bearer ${Logic.Auth.AccessToken}`,
+        },
+      },
+      authEndpoint: `${websocketUrl}/graphql/subscriptions/auth`,
+    })
+  }
+
   public showError = (
     error: CombinedError | any,
     title: string,
-    icon: 'error-alert' | 'error-kite' | 'success-kite' | 'success-thumb',
     fallbackMsg = '',
   ) => {
     const message = error.graphQLErrors?.[0]?.message || undefined
@@ -61,9 +98,9 @@ export default class Common {
       useModal: true,
       loading: false,
       hasError: true,
-      message: message != 'null' && message ? message : fallbackMsg,
-      icon,
+      message: message != 'null' ? message : fallbackMsg,
       title,
+      type: 'error',
     })
   }
 
@@ -79,14 +116,16 @@ export default class Common {
     this.loaderSetup = loaderSetup
   }
 
+  public showAlert = (loaderSetup: LoaderSetup) => {
+    this.loaderSetup = loaderSetup
+  }
+
   public goBack = () => {
     window.history.length > 1 ? this.router?.go(-1) : this.router?.push('/')
   }
 
   public hideLoader = () => {
     const Loader: LoaderSetup = {
-      show: false,
-      useModal: false,
       loading: false,
     }
     this.loaderSetup = Loader
@@ -222,49 +261,96 @@ export default class Common {
     return oldData
   }
 
-  public preFetchRouteData = (
-    routeTo: RouteLocationNormalized,
-    _routeFrom: RouteLocationNormalized,
-    next: any,
-  ) => {
-    const allActions: Promise<any>[] = []
-    if (this.loaderSetup.loading) {
-      return
+  public makeid = (length: number) => {
+    let result = ''
+    let characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let charactersLength = characters.length
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength))
     }
+    return result
+  }
 
-    const routeMiddlewares: any = routeTo.meta.middlewares
-
-    // handle fetchRules
-
-    const fetchRules: FetchRule[] = routeMiddlewares.fetchRules
-
-    let BreakException = {}
-
-    try {
-      fetchRules?.forEach((rule) => {
-        if (rule.requireAuth) {
-          // if (!Logic.Auth.AuthUser) {
-          //   this.GoToRoute('/auth/login')
-          //   throw BreakException
-          // }
+  public preFetchRouteData = (
+    routeTo: RouteLocationNormalized | any,
+    _routeFrom: RouteLocationNormalized | any,
+    next: any,
+    usePromise = true,
+  ) => {
+    const globalMiddleWare = (mainResolve: any | undefined) => {
+      const allActions: Promise<any>[] = []
+      if (this.loaderSetup.loading) {
+        if (mainResolve) {
+          mainResolve('')
+        } else {
+          return next()
         }
-        // @ts-ignore
-        const domain = Logic[rule.domain]
+      }
 
-        if (rule.alignCurrency) {
-          if (rule.params[0] != this.globalParameters.currency) {
-            rule.params[0] = this.globalParameters.currency
-            rule.ignoreProperty = true
+      const routeMiddlewares: any = routeTo.meta.middlewares
+
+      // handle fetchRules
+
+      const fetchRules: FetchRule[] = routeMiddlewares.fetchRules
+
+      if (!fetchRules) {
+        if (mainResolve) {
+          mainResolve('')
+        } else {
+          return next()
+        }
+      }
+
+      let BreakException = {}
+
+      try {
+        for (let index = 0; index < fetchRules.length; index++) {
+          const rule: FetchRule = JSON.parse(JSON.stringify(fetchRules[index]))
+
+          if (rule.requireAuth) {
+            if (!Logic.Auth.AuthUser) {
+              this.GoToRoute('/auth/login')
+              throw BreakException
+            }
           }
-        }
+          // @ts-ignore
+          const domain = Logic[rule.domain]
 
-        if (
-          domain[rule.property] == undefined ||
-          (typeof rule.ignoreProperty == 'function' && rule.ignoreProperty()) ||
-          rule.ignoreProperty
-        ) {
-          allActions.push(
-            new Promise((resolve) => {
+          if (rule.alignCurrency) {
+            if (rule.params[0] != this.globalParameters.currency) {
+              rule.params[0] = this.globalParameters.currency
+              rule.ignoreProperty = true
+            }
+          }
+
+          if (
+            domain[rule.property] == undefined ||
+            (typeof rule.ignoreProperty == 'function' &&
+              rule.ignoreProperty()) ||
+            rule.ignoreProperty
+          ) {
+            allActions.push(
+              new Promise((resolve) => {
+                if (rule.useRouteId) {
+                  rule.params.unshift(routeTo.params.id.toString())
+                }
+                if (rule.useRouteQuery) {
+                  rule.queries?.forEach((item) => {
+                    rule.params.unshift(routeTo.query[item])
+                  })
+                }
+                const params = [...new Set(rule.params)]
+
+                const request = domain[rule.method](...params)
+                request?.then((value: any) => {
+                  resolve(value)
+                })
+              }),
+            )
+          } else {
+            if (rule.silentUpdate) {
+              // run in silence
               if (rule.useRouteId) {
                 rule.params.unshift(routeTo.params.id.toString())
               }
@@ -273,37 +359,49 @@ export default class Common {
                   rule.params.unshift(routeTo.query[item])
                 })
               }
-              const request = domain[rule.method](...rule.params)
-              request?.then((value: any) => {
-                resolve(value)
-              })
-            }),
-          )
+              const params = [...new Set(rule.params)]
+              domain[rule.method](...params)
+            }
+          }
         }
-      })
-    } catch (error) {
-      if (error !== BreakException) throw error
-    }
+      } catch (error) {
+        if (error !== BreakException) throw error
+      }
 
-    // save user activities
-    if (routeMiddlewares.tracking_data) {
-      const trackingData: any = routeMiddlewares.tracking_data
-    }
+      // save user activities
+      if (routeMiddlewares.tracking_data) {
+        const trackingData: any = routeMiddlewares.tracking_data
+      }
 
-    if (allActions.length > 0) {
-      this.showLoader({
-        show: true,
-        useModal: true,
-        loading: true,
-      })
+      if (allActions.length > 0) {
+        this.showLoader({
+          loading: true,
+        })
 
-      Promise.all(allActions).then(() => {
+        Promise.all(allActions).then(() => {
+          this.hideLoader()
+          if (mainResolve) {
+            mainResolve('')
+          } else {
+            return next()
+          }
+        })
+      } else {
         this.hideLoader()
-        return next()
+        if (mainResolve) {
+          mainResolve('')
+        } else {
+          return next()
+        }
+      }
+    }
+
+    if (usePromise) {
+      return new Promise((resolve) => {
+        return globalMiddleWare(resolve)
       })
     } else {
-      this.hideLoader()
-      return next()
+      return globalMiddleWare(null)
     }
   }
 }

@@ -1,11 +1,72 @@
 import { BaseApiService } from './common/BaseService'
-import { OperationResult } from 'urql' 
+import { OperationResult } from 'urql'
 import {
-  MutationCreateCourseArgs, 
-  MutationUpdateCourseArgs 
+  Course,
+  CoursePaginator,
+  MutationCreateCourseArgs,
+  MutationUpdateCourseArgs,
 } from '../gql/graphql'
 
-export default class AuthApi extends BaseApiService {
+export default class CourseApi extends BaseApiService {
+  public GetCourses = (page: number, first: number) => {
+    const requestData = `
+		query Courses($page: Int!, $first: Int!) {
+			GetCourses(first: $first, page: $page) {
+			  paginatorInfo {
+				count
+				currentPage
+				firstItem
+				hasMorePages
+				lastItem
+				perPage
+				total
+			  }
+			  data {
+				id
+				uuid
+				code
+				title
+				photo_url
+				created_at
+			  }
+			}
+		  }
+		`
+
+    const response: Promise<OperationResult<{
+      GetCourses: CoursePaginator
+    }>> = this.query(requestData, {})
+
+    return response
+  }
+
+  public GetCourse = (uuid: string) => {
+    const requestData = `
+		query Course($uuid: String!) {
+			Course(uuid: $uuid) {
+			  id
+			  uuid
+			  code
+			  title
+			  photo_url
+			  status
+			  created_at
+			  bouhaws_class {
+				title
+			  }
+			}
+		  }
+			`
+
+    const response: Promise<OperationResult<{
+      Course: Course
+    }>> = this.query(requestData, {
+      uuid,
+    })
+
+    return response
+  }
+
   public CreateCourse = (data: MutationCreateCourseArgs) => {
     const requestData = `
 		mutation CreateCourse (
@@ -20,13 +81,22 @@ export default class AuthApi extends BaseApiService {
 				photo_url: $photo_url, 
 				title: $title
 			) {
+				id
+				uuid
+				code
 				title
+				photo_url
+				status
+				created_at
+				bouhaws_class {
+				  title
+				}
 			}
 		}
 		`
 
     const response: Promise<OperationResult<{
-      CreateCourse: any
+      CreateCourse: Course
     }>> = this.mutation(requestData, data)
 
     return response
@@ -48,16 +118,24 @@ export default class AuthApi extends BaseApiService {
 				status: $status, 
 				title: $title
 			) {
+				id
+				uuid
 				code
+				title
+				photo_url
+				status
+				created_at
+				bouhaws_class {
+				  title
+				}
 			}
 		}
 	`
 
     const response: Promise<OperationResult<{
-      UpdateCourse: any
+      UpdateCourse: Course
     }>> = this.mutation(requestData, data)
 
     return response
-  } 
- 
+  }
 }

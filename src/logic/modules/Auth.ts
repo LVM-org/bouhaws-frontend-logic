@@ -1,6 +1,6 @@
-import { $api } from "../../services";
-import { CombinedError } from "urql";
-import Common from "./Common";
+import { $api } from '../../services'
+import { CombinedError } from 'urql'
+import Common from './Common'
 import {
   MutationSignUpArgs,
   MutationSignInArgs,
@@ -8,234 +8,196 @@ import {
   MutationSendResetPasswordEmailArgs,
   MutationUpdatePasswordArgs,
   MutationVerifyEmailOtpArgs,
-} from "../../gql/graphql";
-import { Logic } from "..";
+  User,
+} from '../../gql/graphql'
+import { Logic } from '..'
 
 export default class Auth extends Common {
   constructor() {
-    super();
+    super()
+    this.AccessToken = localStorage.getItem('access_token')
+    this.AuthUser = localStorage.getItem('auth_user')
+      ? JSON.parse(localStorage.getItem('auth_user') || '{}')
+      : undefined
   }
 
-  public AccessToken: string | null = null;
-  public AuthUser: any | undefined = undefined;
+  // Base variables
+  public AccessToken: string | null = null
+  public AuthUser: User | undefined = undefined
 
-  public SignUpPayload: MutationSignUpArgs = {
-    email: "",
-    password: "",
-    username: "",
-    type: "",
-  };
-  public SignInPayload: MutationSignInArgs = {
-    email: "",
-    password: "",
-  };
-  public ResendVerifyEmailPayload: MutationResendVerifyEmailArgs = {
-    user_uuid: "",
-  };
-  public ResetPasswordEmailPayload: MutationSendResetPasswordEmailArgs = {
-    email: "",
-  };
-  public UpdatePasswordPayload: MutationUpdatePasswordArgs = {
-    old_password: "",
-    password: "",
-    otp: "",
-    user_uuid: "",
-  };
-  public VerifyEmailOtpPayload: MutationVerifyEmailOtpArgs = {
-    email: "",
-    otp: "",
-  };
+  // mutation payloads
+  public SignUpPayload: MutationSignUpArgs | undefined
+  public SignInPayload: MutationSignInArgs | undefined
+  public ResendVerifyEmailPayload: MutationResendVerifyEmailArgs | undefined
+  public ResetPasswordEmailPayload:
+    | MutationSendResetPasswordEmailArgs
+    | undefined
+  public UpdatePasswordPayload: MutationUpdatePasswordArgs | undefined
+  public VerifyEmailOtpPayload: MutationVerifyEmailOtpArgs | undefined
 
-  public HasCheckedUser: boolean = false;
+  // Queries
+  public GetAuthUser = () => {
+    return $api.auth.GetAuthUser().then((response) => {
+      if (response.data?.AuthUser) {
+        this.AuthUser = response.data?.AuthUser
+        localStorage.setItem('auth_user', JSON.stringify(this.AuthUser))
+        localStorage.setItem('account_type', this.AuthUser.profile.type)
+      } else {
+        localStorage.removeItem('auth_user')
+        Logic.Common.GoToRoute('/auth/login')
+      }
+      return response.data
+    })
+  }
 
+  public setDefaultAuth = () => {
+    this.AccessToken = localStorage.getItem('access_token')
+    this.AuthUser = localStorage.getItem('auth_user')
+      ? JSON.parse(localStorage.getItem('auth_user') || '{}')
+      : undefined
+  }
+
+  // Mutations
   private SetUpAuth = (AuthResponse: any | undefined) => {
     if (AuthResponse) {
-      this.AccessToken = AuthResponse.token;
-      this.AuthUser = AuthResponse.user;
+      this.AccessToken = AuthResponse.token
+      this.AuthUser = AuthResponse.user
       // save to localstorage
       localStorage.setItem(
-        "access_token",
-        this.AccessToken ? this.AccessToken : ""
-      );
-      localStorage.setItem("auth_user", JSON.stringify(this.AuthUser));
+        'access_token',
+        this.AccessToken ? this.AccessToken : '',
+      )
+      localStorage.setItem('auth_user', JSON.stringify(this.AuthUser))
     }
-  };
+  }
 
-  //
   public SignUp = (formIsValid: boolean) => {
-    if (formIsValid) {
-      Logic.Common.showLoader({ loading: true, show: false, useModal: true });
-      $api.auth
+    if (formIsValid && this.SignUpPayload) {
+      Logic.Common.showLoader({
+        loading: true,
+      })
+      return $api.auth
         .SignUp(this.SignUpPayload)
         .then((response) => {
-          this.AuthUser = response.data?.SignUp;
-          console.log("signup  response", response);
-          Logic.Common.hideLoader();
-          Logic.Common.GoToRoute("/auth/verify-email");
-          localStorage.setItem(
-            "pending-verification",
-            JSON.stringify({
-              email: this.SignUpPayload.email,
-              password: this.SignUpPayload.password,
-            })
-          );
-          localStorage.setItem("auth_user", JSON.stringify(this.AuthUser));
+          this.AuthUser = response.data?.SignUp
+          localStorage.setItem('auth_email', this.SignUpPayload?.email || '')
+          Logic.Common.hideLoader()
+          return response.data?.SignUp
         })
 
         .catch((error: CombinedError) => {
-          Logic.Common.showError(error, "Oops!", "error-alert");
-        });
+          Logic.Common.showError(error, 'Oops!', 'error-alert')
+        })
     }
-  };
+  }
 
-  //
   public SignIn = (formIsValid: boolean) => {
-    if (formIsValid) {
-      Logic.Common.showLoader({ loading: true, show: false, useModal: true });
-      $api.auth
+    if (formIsValid && this.SignInPayload) {
+      Logic.Common.showLoader({
+        loading: true,
+      })
+      return $api.auth
         .SignIn(this.SignInPayload)
         .then((response) => {
-          console.log("signin  response", response, {
-            authUser: this.AuthUser,
-          });
+          this.SetUpAuth(response.data?.SignIn)
+          this.AuthUser = response.data?.SignIn.user
 
-          if (response?.data?.SignIn?.token) {
-            this.SetUpAuth(response?.data?.SignIn);
-            Logic.Common.hideLoader();
-            Logic.Common.GoToRoute("/");
-          } else {
-            const customError = {
-              name: "Error",
-              message: "Invalid login credentials",
-              graphQLErrors: [{ message: "Invalid login credentials" }],
-            } as unknown as CombinedError;
-
-            Logic.Common.showError(customError, "Oops!", "error-alert");
-          }
+          this.GetAuthUser().then(() => {
+            location.href = '/'
+            Logic.Common.hideLoader()
+          })
+          return response.data?.SignIn
         })
         .catch((error: CombinedError) => {
-          Logic.Common.showError(error, "Oops!", "error-alert");
-        });
+          Logic.Common.showError(error, 'Oops!', 'error-alert')
+        })
     }
-  };
+  }
 
-  //
   public ResendVerifyEmail = () => {
-    Logic.Common.showLoader({ loading: true, show: false, useModal: true });
-    $api.auth
-      .ResendVerifyEmail(this.ResendVerifyEmailPayload)
-      .then((response) => {
-        this.AuthUser = response.data?.ResendVerifyEmail;
-        console.log("ResendVerifyEmail  response", response);
-        const userDetails = (
-          localStorage.getItem("auth_user")
-            ? JSON.parse(localStorage.getItem("auth_user") || "")
-            : {}
-        ) as { email: string; password: string };
-        Logic.Common.showLoader({
-          loading: false,
-          show: true,
-          useModal: true,
-          message: `OTP link sent to ${userDetails.email}`,
-        });
-      })
-      .catch((error: CombinedError) => {
-        Logic.Common.showError(error, "Oops!", "error-alert");
-      });
-  };
+    Logic.Common.showLoader({
+      loading: true,
+    })
+    if (this.ResendVerifyEmailPayload) {
+      return $api.auth
+        .ResendVerifyEmail(this.ResendVerifyEmailPayload)
+        .then((response) => {
+          Logic.Common.hideLoader()
+          response.data?.ResendVerifyEmail
+        })
+        .catch((error: CombinedError) => {
+          Logic.Common.showError(error, 'Oops!', 'error-alert')
+        })
+    }
+  }
 
-  //
   public SendResetPasswordEmail = (formIsValid: boolean) => {
-    if (formIsValid) {
-      Logic.Common.showLoader({ loading: true, show: true, useModal: true });
-      $api.auth
+    if (formIsValid && this.ResetPasswordEmailPayload) {
+      Logic.Common.showLoader({
+        loading: true,
+      })
+      return $api.auth
         .SendResetPasswordEmail(this.ResetPasswordEmailPayload)
         .then((response) => {
-          this.AuthUser = response.data?.SendResetPasswordEmail;
-          console.log("SendResetPasswordEmail  response", response);
-          Logic.Common.hideLoader();
+          Logic.Common.hideLoader()
+          return response.data?.SendResetPasswordEmail
         })
         .catch((error: CombinedError) => {
-          Logic.Common.showError(error, "Oops!", "error-alert");
-        });
+          Logic.Common.showError(error, 'Oops!', 'error-alert')
+        })
     }
-  };
+  }
 
-  //
   public UpdatePassword = (formIsValid: boolean) => {
-    if (formIsValid) {
-      Logic.Common.showLoader({ loading: true, show: true, useModal: true });
-      $api.auth
+    if (formIsValid && this.UpdatePasswordPayload) {
+      Logic.Common.showLoader({
+        loading: true,
+      })
+      return $api.auth
         .UpdatePassword(this.UpdatePasswordPayload)
         .then((response) => {
-          this.AuthUser = response.data?.UpdatePassword;
-          console.log("UpdatePassword  response", response);
-          const { email, password } = (
-            localStorage.getItem("pending-verification")
-              ? JSON.parse(localStorage.getItem("pending-verification") || "")
-              : {}
-          ) as { email: string; password: string };
-
-          Logic.Auth.SignInPayload = {
-            email,
-            password,
-          };
-          Logic.Auth.SignIn(true);
-          Logic.Common.hideLoader();
+          Logic.Common.hideLoader()
+          return response.data?.UpdatePassword
         })
         .catch((error: CombinedError) => {
-          Logic.Common.showError(error, "Oops!", "error-alert");
-        });
+          Logic.Common.showError(error, 'Oops!', 'error-alert')
+        })
     }
-  };
+  }
 
-  //
   public VerifyEmailOtp = (formIsValid: boolean) => {
-    if (formIsValid) {
-      Logic.Common.showLoader({ loading: true, show: false, useModal: true });
-      $api.auth
+    if (formIsValid && this.VerifyEmailOtpPayload) {
+      Logic.Common.showLoader({
+        loading: true,
+      })
+      return $api.auth
         .VerifyEmailOtp(this.VerifyEmailOtpPayload)
         .then((response) => {
-          this.AuthUser = response.data?.VerifyEmailOTP;
-          console.log("VerifyEmailOtp  response", response);
-          Logic.Common.hideLoader();
+          this.AuthUser = response.data?.VerifyEmailOtp
+          Logic.Common.hideLoader()
+          response.data?.VerifyEmailOtp
         })
         .catch((error: CombinedError) => {
-          Logic.Common.showError(
-            error,
-            "Oops!",
-            "error-alert",
-            "Something went wrong"
-          );
-        });
+          Logic.Common.showError(error, 'Oops!', 'Something went wrong')
+        })
     }
-  };
+  }
 
-  public GetCurrentUser = () => {
-    if (!this.HasCheckedUser) {
-      const access_token =
-        localStorage.getItem("access_token") || ("" as string);
-      if (access_token) {
-        this.AccessToken = access_token;
-        const authUser = localStorage.getItem("auth_user") as any;
-        this.AuthUser = (authUser ? JSON.parse(authUser) : {}) as any;
-        // Logic.Common.showLoader({ loading: true, show: false, useModal: true });
-        $api.auth
-          .GetUserData()
-          .then((response) => {
-            console.log(response?.data?.AuthUser);
-            this.AuthUser = response?.data?.AuthUser;
-            this.HasCheckedUser = true;
-            localStorage.setItem("auth_user", JSON.stringify(this.AuthUser));
-            // Logic.Common.hideLoader();
-          })
-          .catch((error: CombinedError) => {
-            Logic.Common.showError(error, "Oops!", "error-alert");
-            localStorage.removeItem("access_token");
-          });
-      } else {
-        localStorage.removeItem("access_token");
-      }
-    }
-  };
+  public SignOut = () => {
+    Logic.Common.showLoader({
+      loading: true,
+    })
+    $api.auth
+      .SignOut()
+      .then((response) => {
+        localStorage.removeItem('AuthTokens')
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('auth_user')
+        Logic.Common.hideLoader()
+        Logic.Common.GoToRoute('/auth/login')
+      })
+      .catch((error) => {
+        //
+      })
+  }
 }

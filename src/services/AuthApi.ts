@@ -8,24 +8,63 @@ import {
   MutationUpdatePasswordArgs,
   MutationVerifyEmailOtpArgs,
   AuthResponse,
+  User,
 } from '../gql/graphql'
 
 export default class AuthApi extends BaseApiService {
-  public SignUp = (data: MutationSignUpArgs) => {
+  public GetAuthUser = () => {
     const requestData = `
-		mutation SignUp($email: String!, $password: String!, $username: String, $type: String!) {
-			SignUp(email: $email, password: $password, username: $username, type: $type) {
-			  uuid
-			  email
-			  username
-			  id
-			  created_at
-			}
+	query GetAuthUser {
+		AuthUser {
+		  id
+		  name
+		  username
+		  uuid
+		  email_verified_at
+		  phone_number
+		  email
+		  wallet {
+			credited_amount
+			debited_amount
+			total_balance
+			updated_at
 		  }
-		`
+		  profile {
+			photo_url
+			points
+			type
+			bio
+			school
+			student_number
+			year_of_enrollment
+			push_notification_enabled
+		  }
+		}
+	  }
+	`
 
     const response: Promise<OperationResult<{
-      SignUp: AuthResponse
+      AuthUser: User
+    }>> = this.query(requestData, {})
+
+    return response
+  }
+
+  public SignUp = (data: MutationSignUpArgs) => {
+    const requestData = `
+	mutation SignUp($email: String!, $password: String!, $username: String!, $type: String!) {
+		SignUp(email: $email, password: $password, username: $username, type: $type) {
+		  uuid
+		  email
+		  username
+		  id
+		  created_at
+		}
+	  }
+	`
+
+    const response: Promise<OperationResult<{
+      SignUp: User
     }>> = this.mutation(requestData, data)
 
     return response
@@ -33,34 +72,33 @@ export default class AuthApi extends BaseApiService {
 
   public SignIn = (data: MutationSignInArgs) => {
     const requestData = `
-		mutation SignIn(
-			$email: String!,
-			$password: String!
-		) {
-			SignIn(
-				email: $email,
-				password: $password
-			) {
-				token
-				user {
-					email
-					username
-					id
-					name
-					profile {
-						photo_url
-						bio
-						id
-						city
-						nationality
-					}
-				}
+	mutation SignIn($email: String!, $password: String!) {
+		SignIn(email: $email, password: $password) {
+		  token
+		  user {
+			id
+			name
+			username
+			uuid
+			email_verified_at
+			wallet {
+				credited_amount
+				debited_amount
+				total_balance
+				updated_at
 			}
+			profile {
+				photo_url
+				points
+				type
+			}
+		  }
 		}
+	  }
 	`
 
     const response: Promise<OperationResult<{
-      SignIn: any
+      SignIn: AuthResponse
     }>> = this.mutation(requestData, data)
 
     return response
@@ -78,7 +116,7 @@ export default class AuthApi extends BaseApiService {
 	`
 
     const response: Promise<OperationResult<{
-      ResendVerifyEmail: any
+      ResendVerifyEmail: Boolean
     }>> = this.mutation(requestData, data)
 
     return response
@@ -93,14 +131,12 @@ export default class AuthApi extends BaseApiService {
 			) {
 			SendResetPasswordEmail(  
 				email: $email,  
-			) {
-				email
-			}
+			)  
 		}
 	`
 
     const response: Promise<OperationResult<{
-      SendResetPasswordEmail: any
+      SendResetPasswordEmail: Boolean
     }>> = this.mutation(requestData, data)
 
     return response
@@ -110,7 +146,7 @@ export default class AuthApi extends BaseApiService {
     const requestData = `
 		mutation UpdatePassword(
 			$old_password: String!, 
-			$otp: String!, 
+			$otp: String, 
 			$password: String!, 
 			$user_uuid: String!,  
 		) {
@@ -119,14 +155,12 @@ export default class AuthApi extends BaseApiService {
 				otp: $otp, 
 				password: $password, 
 				user_uuid: $user_uuid,  
-			) {
-				otp
-			}
+			)  
 		}
 	`
 
     const response: Promise<OperationResult<{
-      UpdatePassword: any
+      UpdatePassword: Boolean
     }>> = this.mutation(requestData, data)
 
     return response
@@ -134,73 +168,31 @@ export default class AuthApi extends BaseApiService {
 
   public VerifyEmailOtp = (data: MutationVerifyEmailOtpArgs) => {
     const requestData = `
-		mutation VerifyEmailOTP(
-			$email: String!,
-			$otp: String!, 
-		) {
-			VerifyEmailOTP(
-				email: $email, 
-				otp: $otp,  
-			) {
-				email
-				id
-			}
+	mutation VerifyEmailOtp($email: String!, $otp: String!) {
+		VerifyEmailOTP(email: $email, otp: $otp) {
+		  id
+		  uuid
+		  name
 		}
+	  }
 	`
-
     const response: Promise<OperationResult<{
-      VerifyEmailOTP: any
+      VerifyEmailOtp: User
     }>> = this.mutation(requestData, data)
 
     return response
   }
 
-  public GetUserData = () => {
+  public SignOut = () => {
     const requestData = `
-		query AuthUser {
-			AuthUser {
-				name
-				phone_number
-				email
-				username
-				uuid
-				profile {
-					bio
-					city
-					photo_url
-					points
-					school
-					type
-					total_point
-					city
-					nationality
-				}
-				project_bookmarked {
-					id
-				}
-				project_entries {
-					likes {
-						id
-						uuid
-					}
-					status
-					title
-					description
-				}
-				projects {
-					description
-					total_points
-					title
-					requirements
-					photo_url
-				}
-			}
-		}
+	mutation SignOut {
+		SignOut
+	  }
 	`
 
     const response: Promise<OperationResult<{
-      AuthUser: any
-    }>> = this.query(requestData, {})
+      SignOut: boolean
+    }>> = this.mutation(requestData, {})
 
     return response
   }

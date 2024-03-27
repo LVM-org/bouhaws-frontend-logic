@@ -48,18 +48,20 @@ export default class Common {
   }
 
   public showError = (
-    error: CombinedError,
+    error: CombinedError | any,
     title: string,
     icon: 'error-alert' | 'error-kite' | 'success-kite' | 'success-thumb',
     fallbackMsg = '',
   ) => {
-    const message = error.graphQLErrors[0].message
+    const message = error.graphQLErrors?.[0]?.message || undefined
+    console.log({ message })
+
     this.showLoader({
       show: true,
       useModal: true,
       loading: false,
       hasError: true,
-      message: message != 'null' ? message : fallbackMsg,
+      message: message != 'null' && message ? message : fallbackMsg,
       icon,
       title,
     })

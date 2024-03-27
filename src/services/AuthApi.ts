@@ -13,16 +13,16 @@ import {
 export default class AuthApi extends BaseApiService {
   public SignUp = (data: MutationSignUpArgs) => {
     const requestData = `
-	mutation SignUp($email: String!, $password: String!, $username: String!, $type: String!) {
-		SignUp(email: $email, password: $password, username: $username, type: $type) {
-		  uuid
-		  email
-		  username
-		  id
-		  created_at
-		}
-	  }
-	`
+		mutation SignUp($email: String!, $password: String!, $username: String, $type: String!) {
+			SignUp(email: $email, password: $password, username: $username, type: $type) {
+			  uuid
+			  email
+			  username
+			  id
+			  created_at
+			}
+		  }
+		`
 
     const response: Promise<OperationResult<{
       SignUp: AuthResponse
@@ -42,6 +42,19 @@ export default class AuthApi extends BaseApiService {
 				password: $password
 			) {
 				token
+				user {
+					email
+					username
+					id
+					name
+					profile {
+						photo_url
+						bio
+						id
+						city
+						nationality
+					}
+				}
 			}
 		}
 	`
@@ -60,9 +73,7 @@ export default class AuthApi extends BaseApiService {
 			) {
 			ResendVerifyEmail(  
 				user_uuid: $user_uuid,  
-			) {
-				user_uuid
-			}
+			) 
 		}
 	`
 
@@ -123,22 +134,73 @@ export default class AuthApi extends BaseApiService {
 
   public VerifyEmailOtp = (data: MutationVerifyEmailOtpArgs) => {
     const requestData = `
-		mutation VerifyEmailOtp(
+		mutation VerifyEmailOTP(
 			$email: String!,
 			$otp: String!, 
 		) {
-			VerifyEmailOtp(
+			VerifyEmailOTP(
 				email: $email, 
 				otp: $otp,  
 			) {
-				token
+				email
+				id
 			}
 		}
 	`
 
     const response: Promise<OperationResult<{
-      VerifyEmailOtp: any
+      VerifyEmailOTP: any
     }>> = this.mutation(requestData, data)
+
+    return response
+  }
+
+  public GetUserData = () => {
+    const requestData = `
+		query AuthUser {
+			AuthUser {
+				name
+				phone_number
+				email
+				username
+				uuid
+				profile {
+					bio
+					city
+					photo_url
+					points
+					school
+					type
+					total_point
+					city
+					nationality
+				}
+				project_bookmarked {
+					id
+				}
+				project_entries {
+					likes {
+						id
+						uuid
+					}
+					status
+					title
+					description
+				}
+				projects {
+					description
+					total_points
+					title
+					requirements
+					photo_url
+				}
+			}
+		}
+	`
+
+    const response: Promise<OperationResult<{
+      AuthUser: any
+    }>> = this.query(requestData, {})
 
     return response
   }

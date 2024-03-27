@@ -93,6 +93,10 @@ export default class Project extends Common {
     status: '',
   }
 
+  public Challenges: any = {}
+
+  public SingleProject: any = {}
+
   //
   public CreateProject = () => {
     Logic.Common.showLoader({ loading: true, show: true, useModal: true })
@@ -192,17 +196,69 @@ export default class Project extends Common {
   }
 
   //
-  public JoinProject = () => {
-    Logic.Common.showLoader({ loading: true, show: true, useModal: true })
-    $api.project
-      .JoinProject(this.JoinProjectPayload)
-      .then((response) => {
-        console.log('JoinProject  response:::', response)
-        Logic.Common.hideLoader()
-      })
-      .catch((error: CombinedError) => {
-        Logic.Common.showError(error, 'Oops!', 'error-alert')
-      })
+  public JoinProject = async () => {
+    try {
+      Logic.Common.showLoader({ loading: true, show: false, useModal: true })
+      if (this.JoinProjectPayload?.images) {
+        // upload all the images
+        const apis = await Promise.all(
+          this.JoinProjectPayload.images.map((image: any) =>
+            $api.upload.UploadImage({ image }),
+          ),
+        )
+        const { title, description, project_id } = this.JoinProjectPayload
+        const payload = {
+          title,
+          description,
+          project_id,
+          images: apis
+            .filter((res: any) => !res.error)
+            .map((response, i) => {
+              return {
+                url: response?.data?.UploadImage,
+                milestone: `Milestone ${i}`,
+              }
+            }),
+        } as MutationJoinProjectArgs
+
+        $api.project
+          .JoinProject(payload)
+          .then((response) => {
+            console.log('JoinProject  response:::', response)
+            Logic.Common.showLoader({
+              loading: false,
+              show: true,
+              useModal: true,
+              message: `Project entry submitted successfully`,
+            })
+          })
+          .catch((error: CombinedError) => {
+            Logic.Common.showError(error, 'Oops!', 'error-alert')
+          })
+      } else {
+        $api.project
+          .JoinProject(this.JoinProjectPayload)
+          .then((response) => {
+            console.log('JoinProject  response:::', response)
+            Logic.Common.showLoader({
+              loading: false,
+              show: true,
+              useModal: true,
+              message: `Project entry submitted successfully`,
+            })
+          })
+          .catch((error: CombinedError) => {
+            Logic.Common.showError(error, 'Oops!', 'error-alert')
+          })
+      }
+      if (this.SingleProject.uuid) {
+        setTimeout(() => {
+          this.GetSingleProject(this.SingleProject.uuid)
+        }, 2000)
+      }
+    } catch (error) {
+      Logic.Common.showError(error, 'Oops!', 'error-alert')
+    }
   }
 
   //
@@ -248,12 +304,115 @@ export default class Project extends Common {
   }
 
   //
-  public UpdateProjectEntry = () => {
-    Logic.Common.showLoader({ loading: true, show: true, useModal: true })
+  public UpdateProjectEntry = async () => {
+    try {
+      Logic.Common.showLoader({ loading: true, show: false, useModal: true })
+      console.log(this.UpdateProjectEntryPayload)
+
+      const imagesToUpload = this.UpdateProjectEntryPayload?.images?.filter(
+        (image: any) => !image?.url,
+      )
+      if (
+        this.UpdateProjectEntryPayload.images &&
+        (imagesToUpload?.length || 0) > 0
+      ) {
+        // upload all the images
+
+        // @ts-ignore
+        const apis = await Promise.all(
+          // @ts-ignore
+          imagesToUpload?.map((image: any) =>
+            $api.upload.UploadImage({ image }),
+          ),
+        )
+        const {
+          title,
+          description,
+          project_entry_uuid,
+        } = this.UpdateProjectEntryPayload
+        const payload = {
+          title,
+          description,
+          project_entry_uuid,
+          images: [
+            ...this.UpdateProjectEntryPayload.images.filter(
+              (image: any) => image.url,
+            ),
+            ...apis
+              .filter((res: any) => !res.error)
+              .map((response: any, i) => {
+                return {
+                  url: response?.data?.UploadImage,
+                  milestone: `Milestone ${i}`,
+                }
+              }),
+          ],
+        } as MutationUpdateProjectEntryArgs
+
+        $api.project
+          .UpdateProjectEntry(payload)
+          .then((response) => {
+            console.log('JoinProject  response:::', response)
+            Logic.Common.showLoader({
+              loading: false,
+              show: true,
+              useModal: true,
+              message: `Project entry updated successfully`,
+            })
+          })
+          .catch((error: CombinedError) => {
+            Logic.Common.showError(error, 'Oops!', 'error-alert')
+          })
+      } else {
+        $api.project
+          .UpdateProjectEntry(this.UpdateProjectEntryPayload)
+          .then((response) => {
+            console.log('UpdateProjectEntry  response:::', response)
+            Logic.Common.showLoader({
+              loading: false,
+              show: true,
+              useModal: true,
+              message: '',
+            })
+          })
+          .catch((error: CombinedError) => {
+            console.error(error, 'er')
+
+            Logic.Common.showError(error, 'Oops!', 'error-alert')
+          })
+      }
+      if (this.SingleProject.uuid) {
+        setTimeout(() => {
+          this.GetSingleProject(this.SingleProject.uuid)
+        }, 2000)
+      }
+    } catch (error) {
+      console.error(error, 'error')
+      Logic.Common.showError(error, 'Oops!', 'error-alert')
+    }
+  }
+
+  public GetChallenges = () => {
+    Logic.Common.showLoader({ loading: true, show: false, useModal: true })
     $api.project
-      .UpdateProjectEntry(this.UpdateProjectEntryPayload)
+      .GetProjects({})
       .then((response) => {
         console.log('UpdateProjectEntry  response:::', response)
+        this.Challenges = response?.data?.GetProjects?.data
+        Logic.Common.hideLoader()
+      })
+      .catch((error: CombinedError) => {
+        Logic.Common.showError(error, 'Oops!', 'error-alert')
+      })
+  }
+
+  public GetSingleProject = (uuid: String) => {
+    Logic.Common.showLoader({ loading: true, show: false, useModal: true })
+    $api.project
+      .GetSingleProject({ uuid })
+      .then((response) => {
+        console.log('UpdateProjectEntry  response:::', response)
+        this.SingleProject = response?.data?.Project
         Logic.Common.hideLoader()
       })
       .catch((error: CombinedError) => {

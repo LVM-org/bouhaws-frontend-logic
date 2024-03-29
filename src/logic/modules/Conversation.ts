@@ -76,10 +76,12 @@ export default class Conversation extends Common {
     }
   }
 
-  public SaveConversationMessage = () => {
-    Logic.Common.showLoader({
-      loading: true,
-    })
+  public SaveConversationMessage = (showLoader = true) => {
+    if (showLoader) {
+      Logic.Common.showLoader({
+        loading: true,
+      })
+    }
     if (this.SaveConversationMessagePayload) {
       return $api.conversation
         .SaveConversationMessage(this.SaveConversationMessagePayload)
@@ -90,7 +92,10 @@ export default class Conversation extends Common {
             )
           }
 
-          Logic.Common.hideLoader()
+          if (showLoader) {
+            Logic.Common.hideLoader()
+          }
+
           return response.data?.SaveConversationMessage
         })
         .catch((error: CombinedError) => {

@@ -254,6 +254,13 @@ export default class Common {
     return moment(time).fromNow()
   }
 
+  public groupArrayBy = (xs: any[], key: string) => {
+    return xs.reduce(function (rv, x) {
+      ;(rv[x[key]] = rv[x[key]] || []).push(x)
+      return rv
+    }, {})
+  }
+
   public updatedData = (oldData: any, newData: any) => {
     if (oldData != undefined && newData != undefined) {
       return { ...oldData, ...newData }

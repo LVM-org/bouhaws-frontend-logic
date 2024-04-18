@@ -8,9 +8,11 @@ export default class AuthApi extends BaseApiService {
 			LeaderBoard {
 				photo_url
 				nationality
+				uuid
 				user {
 					name
 					username
+					uuid
 				}
                 points
                 total_point
@@ -41,8 +43,10 @@ export default class AuthApi extends BaseApiService {
                     type
                     user {
                         username
+						uuid
                         profile {
                           photo_url
+						  uuid
                         }
                       }
 				}
@@ -57,7 +61,7 @@ export default class AuthApi extends BaseApiService {
 					uuid
 				}
 			}
-			spotlightProjects:GetProjectEntries(first: 10, orderBy: {column: ACTIVITIES, order: ASC}) {
+			spotlightProjects:GetProjectEntries(first: 10, orderBy: {column: ACTIVITIES, order: DESC}) {
 				data {
 				  liked
 				  uuid
@@ -76,6 +80,7 @@ export default class AuthApi extends BaseApiService {
 			  }
 			GetProjectEntries(first: 10) {
 				data {
+					id
 					liked
 					likes {
 						id
@@ -107,8 +112,10 @@ export default class AuthApi extends BaseApiService {
 					}
                     user {
                         username
+						uuid
                         profile {
                           photo_url
+						  uuid
                         }
                     }
                     images {
@@ -155,6 +162,7 @@ export default class AuthApi extends BaseApiService {
 			popularProjects:GetProjectEntries(first: 10, orderBy: {column: ACTIVITIES, order: ASC}) {
 				data {
 				  uuid
+				  id
 				  title
 				  images {
 					url
@@ -167,43 +175,45 @@ export default class AuthApi extends BaseApiService {
 			  }
 			  LeaderBoard {
 				photo_url
+				uuid
 				user {
 					name
 					username
-				}
-
-			}
-			challenges:GetProjects(
-                first: 10, 
-                orderBy: {column: CREATED_AT, order: ASC},
-                where: {operator: EQ, value: "challenge", column: TYPE}
-            ) {
-				data {
-					prize
-					created_at
-					currency
-					milestones {
-						index
-						points
-						title
-					}
-					total_points
 					uuid
-                    end_date
-                    description
-                    title
-                    photo_url
-                    type
-                    user {
-                        username
-                        profile {
-                          photo_url
-                        }
-                      }
+					}
 				}
-			}
+				challenges:GetProjects(
+					first: 10, 
+					orderBy: {column: CREATED_AT, order: ASC},
+					where: {operator: EQ, value: "challenge", column: TYPE}
+				) {
+					data {
+						prize
+						created_at
+						currency
+						milestones {
+							index
+							points
+							title
+						}
+						total_points
+						uuid
+						end_date
+						description
+						title
+						photo_url
+						type
+						user {
+							username
+							profile {
+							photo_url
+							}
+						}
+					}
+				}
 			GetProjectEntries(first: 10) {
 				data {
+					id
 					liked
 					likes {
 						id

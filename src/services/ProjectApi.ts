@@ -189,7 +189,19 @@ export default class ProjectApi extends BaseApiService {
 					id
 				  }
 				  comments{
+					content
 					id
+					is_reply
+					replied_comment_id
+					uuid
+					user {
+						name
+						username
+						profile {
+						photo_url
+						}
+					}
+					created_at
 				  }
 				  created_at
 				}

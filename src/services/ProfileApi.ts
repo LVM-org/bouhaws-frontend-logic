@@ -299,7 +299,10 @@ export default class ProfileApi extends BaseApiService {
 
   public UpdateProfile = (data: MutationUpdateProfileArgs) => {
     const requestData = `
-	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String, $phone_number: String) {
+	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String, $phone_number: String, $website_link: String,
+		$instagram_link: String,
+		$twitter_link: String,
+		$cover_image: Upload) {
 		UpdateProfile(
 		  bio: $bio
 		  name: $name
@@ -311,6 +314,10 @@ export default class ProfileApi extends BaseApiService {
 		  username: $username
 		  year_of_enrollment: $year_of_enrollment
 		  phone_number: $phone_number
+		  website_link: $website_link
+		  instagram_link: $instagram_link
+		  twitter_link: $twitter_link
+		  cover_image: $cover_image
 		) {
 		  uuid
 		  photo_url
@@ -320,6 +327,10 @@ export default class ProfileApi extends BaseApiService {
 		  school
 		  year_of_enrollment
 		  type
+		  website_link
+		  instagram_link
+		  twitter_link
+		  cover_image
 		}
 	  }
 	`;
@@ -371,6 +382,10 @@ export default class ProfileApi extends BaseApiService {
 			student_number
 			year_of_enrollment
 			type
+			website_link
+			instagram_link
+			twitter_link
+			cover_image
 		  }
 		  project_entries {
 			id

@@ -39,6 +39,10 @@ export default class AuthApi extends BaseApiService {
 			student_number
 			year_of_enrollment
 			push_notification_enabled
+			website_link
+			instagram_link
+			twitter_link
+			cover_image
 		  }
 		  my_classes {
 			description

@@ -1,5 +1,5 @@
-import { BaseApiService } from './common/BaseService'
-import { OperationResult } from 'urql'
+import { BaseApiService } from "./common/BaseService";
+import { OperationResult } from "urql";
 import {
   MutationUpdateProfileArgs,
   Notification,
@@ -9,7 +9,7 @@ import {
   TransactionPaginator,
   User,
   Wallet,
-} from '../gql/graphql'
+} from "../gql/graphql";
 
 export default class ProfileApi extends BaseApiService {
   public GetDashboardOverview = () => {
@@ -157,15 +157,17 @@ export default class ProfileApi extends BaseApiService {
 		  photo_url
 		}
 	  }
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      AuthUser: User
-      LeaderBoard: Profile[]
-    }>> = this.query(requestData, {})
+    const response: Promise<
+      OperationResult<{
+        AuthUser: User;
+        LeaderBoard: Profile[];
+      }>
+    > = this.query(requestData, {});
 
-    return response
-  }
+    return response;
+  };
 
   public GetUserWallet = () => {
     const requestData = `
@@ -177,20 +179,22 @@ export default class ProfileApi extends BaseApiService {
 		  credited_amount
 		}
 	  }
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      UserWallet: Wallet
-    }>> = this.query(requestData, {})
+    const response: Promise<
+      OperationResult<{
+        UserWallet: Wallet;
+      }>
+    > = this.query(requestData, {});
 
-    return response
-  }
+    return response;
+  };
 
   public GetTransactions = (
     page: number,
     first: number,
     orderBy: QueryGetTransactionsOrderByOrderByClause | string,
-    hasUser: QueryGetProjectEntriesHasUserWhereHasConditionsRelation | string,
+    hasUser: QueryGetProjectEntriesHasUserWhereHasConditionsRelation | string
   ) => {
     const requestData = `
 		query GetTransactions($page: Int!, $first: Int!) {
@@ -216,16 +220,18 @@ export default class ProfileApi extends BaseApiService {
 			  }
 			}
 		  }
-		`
-    const response: Promise<OperationResult<{
-      GetTransactions: TransactionPaginator
-    }>> = this.query(requestData, {
+		`;
+    const response: Promise<
+      OperationResult<{
+        GetTransactions: TransactionPaginator;
+      }>
+    > = this.query(requestData, {
       page,
       first,
-    })
+    });
 
-    return response
-  }
+    return response;
+  };
 
   public GetMyNotification = () => {
     const requestData = `
@@ -280,18 +286,23 @@ export default class ProfileApi extends BaseApiService {
 		  }
 		}
 	  }
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      MyNotifications: Notification[]
-    }>> = this.query(requestData, {})
+    const response: Promise<
+      OperationResult<{
+        MyNotifications: Notification[];
+      }>
+    > = this.query(requestData, {});
 
-    return response
-  }
+    return response;
+  };
 
   public UpdateProfile = (data: MutationUpdateProfileArgs) => {
     const requestData = `
-	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String, $phone_number: String) {
+	mutation UpdateProfile($bio: String, $name: String, $photo_url: Upload, $push_notification_enabled: Boolean, $school: String, $student_number: String, $type: String, $username: String, $year_of_enrollment: String, $phone_number: String, $website_link: String,
+		$instagram_link: String,
+		$twitter_link: String,
+		$cover_image: Upload) {
 		UpdateProfile(
 		  bio: $bio
 		  name: $name
@@ -303,6 +314,10 @@ export default class ProfileApi extends BaseApiService {
 		  username: $username
 		  year_of_enrollment: $year_of_enrollment
 		  phone_number: $phone_number
+		  website_link: $website_link
+		  instagram_link: $instagram_link
+		  twitter_link: $twitter_link
+		  cover_image: $cover_image
 		) {
 		  uuid
 		  photo_url
@@ -312,16 +327,22 @@ export default class ProfileApi extends BaseApiService {
 		  school
 		  year_of_enrollment
 		  type
+		  website_link
+		  instagram_link
+		  twitter_link
+		  cover_image
 		}
 	  }
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      UpdateProfile: any
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        UpdateProfile: any;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public GetLeaderBoard = () => {
     const requestData = `
@@ -335,14 +356,16 @@ export default class ProfileApi extends BaseApiService {
 			photo_url
 		  }
 		}
-	  }`
+	  }`;
 
-    const response: Promise<OperationResult<{
-      LeaderBoard: [User]
-    }>> = this.query(requestData, {})
+    const response: Promise<
+      OperationResult<{
+        LeaderBoard: [User];
+      }>
+    > = this.query(requestData, {});
 
-    return response
-  }
+    return response;
+  };
 
   public GetSingleUser = (uuid: string) => {
     const requestData = `
@@ -359,6 +382,10 @@ export default class ProfileApi extends BaseApiService {
 			student_number
 			year_of_enrollment
 			type
+			website_link
+			instagram_link
+			twitter_link
+			cover_image
 		  }
 		  project_entries {
 			id
@@ -428,6 +455,8 @@ export default class ProfileApi extends BaseApiService {
 			title
 			photo_url
 			end_date
+			currency
+			prize
 			type
 			milestones {
 			  id
@@ -439,31 +468,41 @@ export default class ProfileApi extends BaseApiService {
 			entries {
 			  uuid
 			}
+			user {
+				username
+				profile {
+					photo_url
+				}
+			}
 		  }
 		}
 	  }
-	 `
+	 `;
 
-    const response: Promise<OperationResult<{
-      SingleUser: User
-    }>> = this.query(requestData, { uuid })
+    const response: Promise<
+      OperationResult<{
+        SingleUser: User;
+      }>
+    > = this.query(requestData, { uuid });
 
-    return response
-  }
+    return response;
+  };
 
   public MarkNotificationsAsRead = (notification_uuids: string[]) => {
     const requestData = `
 	mutation MarkNotificationsAsRead($notification_uuids: [String!]!) {
 		MarkNotificationsAsRead(notification_uuids: $notification_uuids) 
 	  }
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      MarkNotificationsAsRead: boolean
-    }>> = this.mutation(requestData, {
+    const response: Promise<
+      OperationResult<{
+        MarkNotificationsAsRead: boolean;
+      }>
+    > = this.mutation(requestData, {
       notification_uuids,
-    })
+    });
 
-    return response
-  }
+    return response;
+  };
 }

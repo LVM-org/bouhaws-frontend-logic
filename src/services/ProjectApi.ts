@@ -1,5 +1,5 @@
-import { BaseApiService } from './common/BaseService'
-import { OperationResult } from 'urql'
+import { BaseApiService } from "./common/BaseService";
+import { OperationResult } from "urql";
 import {
   MutationCreateProjectArgs,
   MutationCreateProjectCategoryArgs,
@@ -30,16 +30,16 @@ import {
   ProjectEntryComment,
   ProjectEntryPaginator,
   ProjectEntryLike,
-} from '../gql/graphql'
+} from "../gql/graphql";
 
 export default class ProjectApi extends BaseApiService {
   public GetProjects = (
     page: number,
     first: number,
     orderBy: QueryGetProjectsOrderByOrderByClause | string,
-    whereQuery: string = '',
-    hasUser: QueryGetProjectsHasUserWhereHasConditions | string = '',
-    hasCategory: QueryGetProjectsHasCategoryWhereHasConditions | string = '',
+    whereQuery: string = "",
+    hasUser: QueryGetProjectsHasUserWhereHasConditions | string = "",
+    hasCategory: QueryGetProjectsHasCategoryWhereHasConditions | string = ""
   ) => {
     const requestData = `
 		query Projects($page: Int!, $first: Int!) {
@@ -118,17 +118,19 @@ export default class ProjectApi extends BaseApiService {
 			  }
 			}
 		  }
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      GetProjects: ProjectPaginator
-    }>> = this.query(requestData, {
+    const response: Promise<
+      OperationResult<{
+        GetProjects: ProjectPaginator;
+      }>
+    > = this.query(requestData, {
       page,
       first,
-    })
+    });
 
-    return response
-  }
+    return response;
+  };
 
   public GetProject = (uuid: string, userUuid: string) => {
     const requestData = `
@@ -187,7 +189,19 @@ export default class ProjectApi extends BaseApiService {
 					id
 				  }
 				  comments{
+					content
 					id
+					is_reply
+					replied_comment_id
+					uuid
+					user {
+						name
+						username
+						profile {
+						photo_url
+						}
+					}
+					created_at
 				  }
 				  created_at
 				}
@@ -242,22 +256,24 @@ export default class ProjectApi extends BaseApiService {
 				}
 			  }
 		  }
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      Project: Project
-      GetProjectEntries: ProjectEntryPaginator
-    }>> = this.query(requestData, {
+    const response: Promise<
+      OperationResult<{
+        Project: Project;
+        GetProjectEntries: ProjectEntryPaginator;
+      }>
+    > = this.query(requestData, {
       uuid,
-    })
+    });
 
-    return response
-  }
+    return response;
+  };
 
   public GetProjectCategories = (
     page: number,
     first: number,
-    orderBy: QueryGetProjectCategoriesOrderByOrderByClause | string,
+    orderBy: QueryGetProjectCategoriesOrderByOrderByClause | string
   ) => {
     const requestData = `
 		query ProjectCategories($page: Int!, $first: Int!) {
@@ -279,16 +295,18 @@ export default class ProjectApi extends BaseApiService {
 			  }
 			}
 		  }
-		`
-    const response: Promise<OperationResult<{
-      GetProjectCategories: ProjectCategoryPaginator
-    }>> = this.query(requestData, {
+		`;
+    const response: Promise<
+      OperationResult<{
+        GetProjectCategories: ProjectCategoryPaginator;
+      }>
+    > = this.query(requestData, {
       page,
       first,
-    })
+    });
 
-    return response
-  }
+    return response;
+  };
 
   public GetProjectCategory = (uuid: string) => {
     const requestData = `
@@ -300,26 +318,26 @@ export default class ProjectApi extends BaseApiService {
 				created_at
 			}
 		  }
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      ProjectCategory: ProjectCategory
-    }>> = this.query(requestData, {
+    const response: Promise<
+      OperationResult<{
+        ProjectCategory: ProjectCategory;
+      }>
+    > = this.query(requestData, {
       uuid,
-    })
+    });
 
-    return response
-  }
+    return response;
+  };
 
   public GetProjectEntries = (
     page: number,
     first: number,
     orderBy: QueryGetProjectEntriesOrderByOrderByClause | string,
-    whereQuery: string = '',
-    hasUser: QueryGetProjectEntriesHasUserWhereHasConditions | string = '',
-    hasProject:
-      | QueryGetProjectEntriesHasProjectWhereHasConditions
-      | string = '',
+    whereQuery: string = "",
+    hasUser: QueryGetProjectEntriesHasUserWhereHasConditions | string = "",
+    hasProject: QueryGetProjectEntriesHasProjectWhereHasConditions | string = ""
   ) => {
     const requestData = `
 		query ProjectEntries($page: Int!, $first: Int!) {
@@ -369,16 +387,18 @@ export default class ProjectApi extends BaseApiService {
 			  }
 			}
 		  }
-		`
-    const response: Promise<OperationResult<{
-      GetProjectEntries: ProjectEntryPaginator
-    }>> = this.query(requestData, {
+		`;
+    const response: Promise<
+      OperationResult<{
+        GetProjectEntries: ProjectEntryPaginator;
+      }>
+    > = this.query(requestData, {
       page,
       first,
-    })
+    });
 
-    return response
-  }
+    return response;
+  };
 
   public GetProjectEntry = (uuid: string) => {
     const requestData = `
@@ -396,6 +416,7 @@ export default class ProjectApi extends BaseApiService {
 		  }
 		  project {
 			title
+			created_at
 			milestones {
 				uuid
 				title
@@ -437,16 +458,18 @@ export default class ProjectApi extends BaseApiService {
 		  created_at
 		}
 	  }
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      ProjectEntry: ProjectEntry
-    }>> = this.query(requestData, {
+    const response: Promise<
+      OperationResult<{
+        ProjectEntry: ProjectEntry;
+      }>
+    > = this.query(requestData, {
       uuid,
-    })
+    });
 
-    return response
-  }
+    return response;
+  };
 
   public CreateProject = (data: MutationCreateProjectArgs) => {
     const requestData = `
@@ -540,14 +563,16 @@ export default class ProjectApi extends BaseApiService {
 				}
 			}
 		}
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      CreateProject: Project
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        CreateProject: Project;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public CreateProjectCategory = (data: MutationCreateProjectCategoryArgs) => {
     const requestData = `
@@ -559,17 +584,19 @@ export default class ProjectApi extends BaseApiService {
 				created_at
 			}
 		} 
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      CreateProjectCategory: ProjectCategory
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        CreateProjectCategory: ProjectCategory;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public CreateProjectMilestone = (
-    data: MutationCreateProjectMilestoneArgs,
+    data: MutationCreateProjectMilestoneArgs
   ) => {
     const requestData = `
 	mutation CreateProjectMilestone($index: Int!, $project_id: String!, $title: String!, $points: String!) {
@@ -590,14 +617,16 @@ export default class ProjectApi extends BaseApiService {
 		  created_at
 		}
 	  }
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      CreateProjectMilestone: ProjectMilestone
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        CreateProjectMilestone: ProjectMilestone;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public UpdateProject = (data: MutationUpdateProjectArgs) => {
     const requestData = `
@@ -694,17 +723,19 @@ export default class ProjectApi extends BaseApiService {
 				}
 			}
 		}
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      UpdateProject: Project
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        UpdateProject: Project;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public UpdateProjectMilestone = (
-    data: MutationUpdateProjectMilestoneArgs,
+    data: MutationUpdateProjectMilestoneArgs
   ) => {
     const requestData = `
 		mutation UpdateProjectMilestone( 
@@ -730,14 +761,16 @@ export default class ProjectApi extends BaseApiService {
 				created_at
 			}
 		}
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      UpdateProjectMilestone: ProjectMilestone
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        UpdateProjectMilestone: ProjectMilestone;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public UpdateProjectCategory = (data: MutationUpdateProjectCategoryArgs) => {
     const requestData = `
@@ -756,14 +789,16 @@ export default class ProjectApi extends BaseApiService {
 				updated_at
 			}
 		}
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      UpdateProjectCategory: ProjectCategory
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        UpdateProjectCategory: ProjectCategory;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public UpdateProjectEntry = (data: MutationUpdateProjectEntryArgs) => {
     const requestData = `
@@ -822,17 +857,19 @@ export default class ProjectApi extends BaseApiService {
 				created_at
 			}
 		}
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      UpdateProjectEntry: ProjectEntry
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        UpdateProjectEntry: ProjectEntry;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public DeleteProjectMilestone = (
-    data: MutationDeleteProjectMilestoneArgs,
+    data: MutationDeleteProjectMilestoneArgs
   ) => {
     const requestData = `
 		mutation DeleteProjectMilestone( 
@@ -842,14 +879,16 @@ export default class ProjectApi extends BaseApiService {
 				uuid: $uuid,  
 			)  
 		}
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      DeleteProjectMilestone: Boolean
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        DeleteProjectMilestone: Boolean;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public JoinProject = (data: MutationJoinProjectArgs) => {
     const requestData = `
@@ -912,17 +951,19 @@ export default class ProjectApi extends BaseApiService {
 				created_at
 			}
 		}
-		`
+		`;
 
-    const response: Promise<OperationResult<{
-      JoinProject: ProjectEntry
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        JoinProject: ProjectEntry;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public SaveProjectEntryBookmark = (
-    data: MutationSaveProjectEntryBookmarkArgs,
+    data: MutationSaveProjectEntryBookmarkArgs
   ) => {
     const requestData = `
 	mutation SaveProjectEntryBookmark($project_entry_id: Int!) {
@@ -930,17 +971,19 @@ export default class ProjectApi extends BaseApiService {
 		  uuid
 		}
 	  }
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      SaveProjectEntryBookmark: ProjectEntryBookmark
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        SaveProjectEntryBookmark: ProjectEntryBookmark;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public SaveProjectEntryComment = (
-    data: MutationSaveProjectEntryCommentArgs,
+    data: MutationSaveProjectEntryCommentArgs
   ) => {
     const requestData = `
 	mutation SaveProjectEntryComment($content: String!, $is_reply: Boolean!, $project_entry_id: Int!, $replied_comment_id: Int) {
@@ -965,14 +1008,16 @@ export default class ProjectApi extends BaseApiService {
 		  created_at
 		}
 	  }
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      SaveProjectEntryComment: ProjectEntryComment
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        SaveProjectEntryComment: ProjectEntryComment;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 
   public SaveProjectEntryLike = (data: MutationSaveProjectEntryLikeArgs) => {
     const requestData = `
@@ -985,12 +1030,14 @@ export default class ProjectApi extends BaseApiService {
 				uuid
 			}
 		}
-	`
+	`;
 
-    const response: Promise<OperationResult<{
-      SaveProjectEntryLike: ProjectEntryLike
-    }>> = this.mutation(requestData, data)
+    const response: Promise<
+      OperationResult<{
+        SaveProjectEntryLike: ProjectEntryLike;
+      }>
+    > = this.mutation(requestData, data);
 
-    return response
-  }
+    return response;
+  };
 }

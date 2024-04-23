@@ -63,4 +63,17 @@ export default class Upload extends Common {
         Logic.Common.showError(error, "Oops!", "error-alert");
       });
   };
+  public UploadImageSingle = async (payload: any) => {
+    // Logic.Common.showLoader({ loading: true, show: false, useModal: true });
+    return await $api.upload
+      .UploadImage(payload)
+      .then((response) => {
+        console.log("UpdateClass  response:::", response);
+        // Logic.Common.hideLoader();
+        return response;
+      })
+      .catch((error: CombinedError) => {
+        Logic.Common.showError(error, "Oops!", "error-alert");
+      });
+  };
 }
